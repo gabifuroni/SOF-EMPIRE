@@ -82,18 +82,7 @@ const Login = () => {
           <div className="mb-8">
             {/* Geometric Symbol */}
             <div className="mb-6 flex justify-center">
-              <svg 
-                width="80" 
-                height="60" 
-                viewBox="0 0 400 300" 
-                className="text-symbol-gold"
-                fill="currentColor"
-              >
-                <path d="M200 50 L250 150 L200 200 L150 150 Z M100 150 Q100 100 150 100 Q200 100 200 150 Q200 200 150 200 Q100 200 100 150 Z M300 150 Q300 100 250 100 Q200 100 200 150 Q200 200 250 200 Q300 200 300 150 Z M150 250 L350 250" 
-                      stroke="currentColor" 
-                      strokeWidth="8" 
-                      fill="none"/>
-              </svg>
+              <img src="/images/SÍMBOLO DOURADO.png" alt="Geometric Symbol" className="w-12 transition-all duration-300" />
             </div>
             <div className="w-16 h-px bg-symbol-gold mx-auto mb-6"></div>
             <p className="brand-subheading text-symbol-gray-600 text-sm uppercase">
