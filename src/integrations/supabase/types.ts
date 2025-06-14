@@ -1,0 +1,470 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  public: {
+    Tables: {
+      categorias_despesas: {
+        Row: {
+          created_at: string
+          id: string
+          is_predefinida: boolean
+          nome_categoria: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_predefinida?: boolean
+          nome_categoria: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_predefinida?: boolean
+          nome_categoria?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      config_formas_pagamento: {
+        Row: {
+          created_at: string
+          id: string
+          is_ativo: boolean
+          nome_metodo: string
+          prazo_recebimento_dias: number
+          taxa_percentual: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_ativo?: boolean
+          nome_metodo: string
+          prazo_recebimento_dias?: number
+          taxa_percentual?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_ativo?: boolean
+          nome_metodo?: string
+          prazo_recebimento_dias?: number
+          taxa_percentual?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      despesas_indiretas_categorias: {
+        Row: {
+          created_at: string
+          id: string
+          is_predefinida: boolean
+          nome_categoria_despesa: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_predefinida?: boolean
+          nome_categoria_despesa: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_predefinida?: boolean
+          nome_categoria_despesa?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      despesas_indiretas_valores: {
+        Row: {
+          categoria_id: string
+          created_at: string
+          id: string
+          mes_referencia: string
+          updated_at: string
+          user_id: string
+          valor_mensal: number
+        }
+        Insert: {
+          categoria_id: string
+          created_at?: string
+          id?: string
+          mes_referencia: string
+          updated_at?: string
+          user_id: string
+          valor_mensal: number
+        }
+        Update: {
+          categoria_id?: string
+          created_at?: string
+          id?: string
+          mes_referencia?: string
+          updated_at?: string
+          user_id?: string
+          valor_mensal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "despesas_indiretas_valores_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "despesas_indiretas_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      materias_primas: {
+        Row: {
+          batch_price: number
+          batch_quantity: number
+          created_at: string
+          id: string
+          name: string
+          unit: string
+          unit_cost: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          batch_price: number
+          batch_quantity: number
+          created_at?: string
+          id?: string
+          name: string
+          unit?: string
+          unit_cost?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          batch_price?: number
+          batch_quantity?: number
+          created_at?: string
+          id?: string
+          name?: string
+          unit?: string
+          unit_cost?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      patentes: {
+        Row: {
+          created_at: string
+          faturamento_minimo_necessario: number
+          icon: string | null
+          id: string
+          nome_patente: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          faturamento_minimo_necessario?: number
+          icon?: string | null
+          id?: string
+          nome_patente: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          faturamento_minimo_necessario?: number
+          icon?: string | null
+          id?: string
+          nome_patente?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          current_patente_id: string | null
+          email: string | null
+          endereco: string | null
+          faturamento_total_acumulado: number
+          id: string
+          nome_profissional_ou_salao: string
+          role: Database["public"]["Enums"]["user_role"]
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_patente_id?: string | null
+          email?: string | null
+          endereco?: string | null
+          faturamento_total_acumulado?: number
+          id: string
+          nome_profissional_ou_salao?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_patente_id?: string | null
+          email?: string | null
+          endereco?: string | null
+          faturamento_total_acumulado?: number
+          id?: string
+          nome_profissional_ou_salao?: string
+          role?: Database["public"]["Enums"]["user_role"]
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_current_patente_id_fkey"
+            columns: ["current_patente_id"]
+            isOneToOne: false
+            referencedRelation: "patentes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      servicos: {
+        Row: {
+          card_tax_rate: number
+          commission_rate: number
+          created_at: string
+          gross_profit: number
+          id: string
+          material_costs: Json | null
+          name: string
+          profit_margin: number
+          sale_price: number
+          service_tax_rate: number
+          total_cost: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_tax_rate?: number
+          commission_rate?: number
+          created_at?: string
+          gross_profit?: number
+          id?: string
+          material_costs?: Json | null
+          name: string
+          profit_margin?: number
+          sale_price: number
+          service_tax_rate?: number
+          total_cost?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_tax_rate?: number
+          commission_rate?: number
+          created_at?: string
+          gross_profit?: number
+          id?: string
+          material_costs?: Json | null
+          name?: string
+          profit_margin?: number
+          sale_price?: number
+          service_tax_rate?: number
+          total_cost?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      transacoes_financeiras: {
+        Row: {
+          category: string | null
+          created_at: string
+          date: string
+          description: string
+          id: string
+          payment_method: string | null
+          tipo_transacao: Database["public"]["Enums"]["tipo_transacao"]
+          updated_at: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          date?: string
+          description: string
+          id?: string
+          payment_method?: string | null
+          tipo_transacao: Database["public"]["Enums"]["tipo_transacao"]
+          updated_at?: string
+          user_id: string
+          valor: number
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          payment_method?: string | null
+          tipo_transacao?: Database["public"]["Enums"]["tipo_transacao"]
+          updated_at?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      is_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
+      update_user_patente: {
+        Args: { user_uuid: string }
+        Returns: undefined
+      }
+    }
+    Enums: {
+      tipo_transacao: "ENTRADA" | "SAIDA"
+      user_role: "user" | "admin"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DefaultSchema = Database[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof Database },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof Database },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof Database },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      tipo_transacao: ["ENTRADA", "SAIDA"],
+      user_role: ["user", "admin"],
+    },
+  },
+} as const
