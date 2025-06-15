@@ -1,6 +1,7 @@
 
 import { usePatentes } from '@/hooks/usePatentes';
 import { useProfile } from '@/hooks/useProfile';
+import { useTransactions } from '@/hooks/useTransactions';
 
 interface PatenteCardProps {
   currentRevenue: number;
@@ -9,8 +10,9 @@ interface PatenteCardProps {
 const PatenteCard = ({ currentRevenue }: PatenteCardProps) => {
   const { patentes, isLoading: patentesLoading } = usePatentes();
   const { profile, isLoading: profileLoading } = useProfile();
+  const { transactions, isLoading: transactionsLoading } = useTransactions();
 
-  if (patentesLoading || profileLoading) {
+  if (patentesLoading || profileLoading || transactionsLoading) {
     return (
       <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse">
         <div className="h-6 bg-symbol-gray-200 rounded mb-4"></div>
@@ -19,8 +21,10 @@ const PatenteCard = ({ currentRevenue }: PatenteCardProps) => {
     );
   }
 
-  // Use accumulated revenue from profile
-  const totalRevenue = profile?.faturamento_total_acumulado || 0;
+  // Calculate total accumulated revenue from transactions (only ENTRADA)
+  const totalRevenue = transactions
+    .filter(transaction => transaction.tipo_transacao === 'ENTRADA')
+    .reduce((sum, transaction) => sum + Number(transaction.valor), 0);
   
   // Find current patente
   const currentPatente = patentes.find(p => 
@@ -90,7 +94,7 @@ const PatenteCard = ({ currentRevenue }: PatenteCardProps) => {
           
           <div className="flex justify-between text-sm">
             <span className="text-symbol-gray-600">
-              Atual: R$ {(currentPatente?.faturamento_minimo_necessario || 0).toLocaleString('pt-BR')}
+              Atual: R$ {totalRevenue.toLocaleString('pt-BR')}
             </span>
             <span className="text-symbol-gray-600">
               Próxima: R$ {nextPatente.faturamento_minimo_necessario.toLocaleString('pt-BR')}

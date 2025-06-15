@@ -1,17 +1,26 @@
+
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { CashFlowEntry } from '@/types';
 import { format } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AddEntryModalProps {
   show: boolean;
   onClose: () => void;
   onSave: (entry: Omit<CashFlowEntry, 'id'>) => void;
   entry?: CashFlowEntry;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  sale_price: number;
 }
 
 const AddEntryModal = ({ show, onClose, onSave, entry }: AddEntryModalProps) => {
@@ -24,6 +33,41 @@ const AddEntryModal = ({ show, onClose, onSave, entry }: AddEntryModalProps) => 
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [services, setServices] = useState<Service[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [loadingServices, setLoadingServices] = useState(false);
+
+  // Load services from database
+  useEffect(() => {
+    const loadServices = async () => {
+      if (!show) return;
+      
+      setLoadingServices(true);
+      try {
+        const { data: user } = await supabase.auth.getUser();
+        if (!user.user) return;
+
+        const { data, error } = await supabase
+          .from('servicos')
+          .select('id, name, sale_price')
+          .eq('user_id', user.user.id)
+          .order('name');
+
+        if (error) {
+          console.error('Error loading services:', error);
+          return;
+        }
+
+        setServices(data || []);
+      } catch (error) {
+        console.error('Error loading services:', error);
+      } finally {
+        setLoadingServices(false);
+      }
+    };
+
+    loadServices();
+  }, [show]);
 
   useEffect(() => {
     if (entry) {
@@ -42,9 +86,36 @@ const AddEntryModal = ({ show, onClose, onSave, entry }: AddEntryModalProps) => 
         paymentMethod: '',
         client: ''
       });
+      setSelectedServices([]);
     }
     setErrors({});
   }, [entry, show]);
+
+  const handleServiceToggle = (serviceId: string, serviceName: string, servicePrice: number) => {
+    setSelectedServices(prev => {
+      const isSelected = prev.includes(serviceId);
+      let newSelection;
+      
+      if (isSelected) {
+        newSelection = prev.filter(id => id !== serviceId);
+      } else {
+        newSelection = [...prev, serviceId];
+      }
+
+      // Update description and amount based on selected services
+      const selectedServicesList = services.filter(s => newSelection.includes(s.id));
+      const totalAmount = selectedServicesList.reduce((sum, s) => sum + s.sale_price, 0);
+      const serviceNames = selectedServicesList.map(s => s.name).join(', ');
+
+      setFormData(prev => ({
+        ...prev,
+        description: serviceNames || prev.description,
+        amount: totalAmount > 0 ? totalAmount.toString() : prev.amount
+      }));
+
+      return newSelection;
+    });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,7 +162,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry }: AddEntryModalProps) => 
 
   return (
     <Dialog open={show} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="brand-heading text-xl text-symbol-black">
             {entry ? 'Editar Entrada Financeira' : 'Adicionar Nova Entrada Financeira'}
@@ -109,6 +180,32 @@ const AddEntryModal = ({ show, onClose, onSave, entry }: AddEntryModalProps) => 
               className="mt-1 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
             />
           </div>
+
+          {/* Services Selection */}
+          {services.length > 0 && (
+            <div>
+              <Label className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Serviços Prestados (Opcional)</Label>
+              {loadingServices ? (
+                <div className="mt-2 text-sm text-symbol-gray-600">Carregando serviços...</div>
+              ) : (
+                <div className="mt-2 space-y-2 max-h-32 overflow-y-auto border border-symbol-gray-300 rounded p-3 bg-symbol-gray-50">
+                  {services.map((service) => (
+                    <div key={service.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={service.id}
+                        checked={selectedServices.includes(service.id)}
+                        onCheckedChange={() => handleServiceToggle(service.id, service.name, service.sale_price)}
+                        className="data-[state=checked]:bg-symbol-gold data-[state=checked]:border-symbol-gold"
+                      />
+                      <Label htmlFor={service.id} className="text-sm text-symbol-black cursor-pointer flex-1">
+                        {service.name} - R$ {service.sale_price.toFixed(2)}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <div>
             <Label htmlFor="description" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Descrição *</Label>

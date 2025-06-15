@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
@@ -9,7 +10,13 @@ import {
   DollarSign,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Scissors,
+  Package,
+  TrendingUp,
+  Receipt,
+  BarChart3,
+  Settings
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,18 +41,18 @@ const Sidebar = ({ userRole, isMobileMenuOpen = false, onCloseMobileMenu }: Side
     {
       section: 'Gestão',
       items: [
-        { icon: FileText, label: 'Serviços & Preços', href: '/services' },
-        { icon: Search, label: 'Matéria-Prima', href: '/materials' },
-        { icon: FileText, label: 'Fluxo de Caixa', href: '/cash-flow' },
-        { icon: FileText, label: 'Despesas Indiretas', href: '/expenses' },
-        { icon: FileText, label: 'Relatório Mensal', href: '/reports' }
+        { icon: Scissors, label: 'Serviços & Preços', href: '/services' },
+        { icon: Package, label: 'Matéria-Prima', href: '/materials' },
+        { icon: TrendingUp, label: 'Fluxo de Caixa', href: '/cash-flow' },
+        { icon: Receipt, label: 'Despesas', href: '/expenses' },
+        { icon: BarChart3, label: 'Relatório Mensal', href: '/reports' }
       ]
     },
     {
       section: 'Configurações',
       items: [
         { icon: User, label: 'Perfil', href: '/profile' },
-        { icon: FileText, label: 'Parâmetros do Negócio', href: '/payment-settings' }
+        { icon: Settings, label: 'Parâmetros do Negócio', href: '/payment-settings' }
       ]
     }
   ];
@@ -85,13 +92,13 @@ const Sidebar = ({ userRole, isMobileMenuOpen = false, onCloseMobileMenu }: Side
               <div className="text-center flex-1">
                 {/* Geometric Symbol */}
                 <div className="mb-2 flex justify-center">
-                  <img src="/images/SÍMBOLO DOURADO.png" alt="Geometric Symbol" className="w-12 transition-all duration-300" />
+                  <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="Geometric Symbol" className="w-12 transition-all duration-300" />
                 </div>
                 <div className="w-8 h-px bg-symbol-gold mx-auto"></div>
               </div>
             ) : (
               <div className="flex justify-center w-full">
-                <img src="/images/SÍMBOLO DOURADO.png" alt="Geometric Symbol" className="w-8 transition-all duration-300" />
+                <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="Geometric Symbol" className="w-8 transition-all duration-300" />
               </div>
             )}
             
@@ -208,18 +215,7 @@ const Sidebar = ({ userRole, isMobileMenuOpen = false, onCloseMobileMenu }: Side
           <div className="text-center">
             {/* Geometric Symbol */}
             <div className="mb-1 flex justify-center">
-              <svg 
-                width="32" 
-                height="24" 
-                viewBox="0 0 400 300" 
-                className="text-symbol-gold"
-                fill="currentColor"
-              >
-                <path d="M200 50 L250 150 L200 200 L150 150 Z M100 150 Q100 100 150 100 Q200 100 200 150 Q200 200 150 200 Q100 200 100 150 Z M300 150 Q300 100 250 100 Q200 100 200 150 Q200 200 250 200 Q300 200 300 150 Z M150 250 L350 250" 
-                      stroke="currentColor" 
-                      strokeWidth="8" 
-                      fill="none"/>
-              </svg>
+              <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="Geometric Symbol" className="w-8 transition-all duration-300" />
             </div>
             <div className="w-8 h-px bg-symbol-gold mx-auto"></div>
           </div>

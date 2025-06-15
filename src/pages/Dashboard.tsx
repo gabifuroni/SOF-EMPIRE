@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { Calendar, TrendingUp, FileText, User, Target, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import PatenteCard from '@/components/dashboard/PatenteCard';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
@@ -12,8 +14,11 @@ import { useTransactions } from '@/hooks/useTransactions';
 
 const Dashboard = () => {
   const [monthlyGoal, setMonthlyGoal] = useState(10000);
+  const [goalType, setGoalType] = useState<'financial' | 'attendance'>('financial');
+  const [attendanceGoal, setAttendanceGoal] = useState(50);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState(monthlyGoal.toString());
+  const [attendanceGoalInput, setAttendanceGoalInput] = useState(attendanceGoal.toString());
   
   const { profile, isLoading: profileLoading } = useProfile();
   const { transactions, isLoading: transactionsLoading } = useTransactions();
@@ -38,6 +43,10 @@ const Dashboard = () => {
 
   const estimatedProfit = monthlyRevenue - monthlyExpenses;
   const profitMargin = monthlyRevenue > 0 ? (estimatedProfit / monthlyRevenue) * 100 : 0;
+
+  // Calculate attendance count (number of entries)
+  const monthlyAttendance = currentMonthEntries
+    .filter(entry => entry.tipo_transacao === 'ENTRADA').length;
   
   // Calculate monthly data for chart (last 6 months)
   const monthlyData = [];
@@ -61,21 +70,47 @@ const Dashboard = () => {
     });
   }
 
-  const goalProgress = (monthlyRevenue / monthlyGoal) * 100;
-  const remainingToGoal = Math.max(0, monthlyGoal - monthlyRevenue);
+  // Calculate goal progress based on type
+  const getCurrentValue = () => {
+    return goalType === 'financial' ? monthlyRevenue : monthlyAttendance;
+  };
+
+  const getCurrentGoal = () => {
+    return goalType === 'financial' ? monthlyGoal : attendanceGoal;
+  };
+
+  const goalProgress = (getCurrentValue() / getCurrentGoal()) * 100;
+  const remainingToGoal = Math.max(0, getCurrentGoal() - getCurrentValue());
 
   const handleSaveGoal = () => {
-    const newGoal = parseFloat(goalInput) || 0;
-    setMonthlyGoal(newGoal);
+    if (goalType === 'financial') {
+      const newGoal = parseFloat(goalInput) || 0;
+      setMonthlyGoal(newGoal);
+      localStorage.setItem('monthlyGoal', newGoal.toString());
+    } else {
+      const newGoal = parseInt(attendanceGoalInput) || 0;
+      setAttendanceGoal(newGoal);
+      localStorage.setItem('attendanceGoal', newGoal.toString());
+    }
+    localStorage.setItem('goalType', goalType);
     setIsEditingGoal(false);
-    localStorage.setItem('monthlyGoal', newGoal.toString());
   };
 
   useEffect(() => {
     const savedGoal = localStorage.getItem('monthlyGoal');
+    const savedAttendanceGoal = localStorage.getItem('attendanceGoal');
+    const savedGoalType = localStorage.getItem('goalType') as 'financial' | 'attendance';
+    
     if (savedGoal) {
       setMonthlyGoal(parseFloat(savedGoal));
       setGoalInput(savedGoal);
+    }
+    if (savedAttendanceGoal) {
+      setAttendanceGoal(parseInt(savedAttendanceGoal));
+      setAttendanceGoalInput(savedAttendanceGoal);
+    }
+    if (savedGoalType) {
+      setGoalType(savedGoalType);
     }
   }, []);
 
@@ -90,7 +125,15 @@ const Dashboard = () => {
     );
   }
 
+  // Extract first and last name from full name
+  const getFirstAndLastName = (fullName: string) => {
+    const names = fullName.trim().split(' ');
+    if (names.length === 1) return names[0];
+    return `${names[0]} ${names[names.length - 1]}`;
+  };
+
   const userName = profile?.nome_profissional_ou_salao || 'Usuário';
+  const displayName = getFirstAndLastName(userName);
 
   return (
     <div className="space-y-8 p-6 animate-minimal-fade">
@@ -98,7 +141,7 @@ const Dashboard = () => {
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="brand-heading text-3xl text-symbol-black mb-2">
-            Bem-vinda, {userName}
+            Bem-vinda(o), {displayName}
           </h1>
           <div className="w-12 h-px bg-symbol-gold mb-4"></div>
           <p className="brand-body text-symbol-gray-600">
@@ -140,7 +183,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Monthly Goal Card */}
+        {/* Monthly Goal Card with Flexible Type */}
         <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-purple-50/50 to-purple-100/30 border-purple-200/50">
           <div className="flex items-center justify-between mb-4">
             <Target className="text-purple-600" size={20} />
@@ -159,12 +202,31 @@ const Dashboard = () => {
           
           {isEditingGoal ? (
             <div className="space-y-3">
+              {/* Goal Type Selection */}
+              <RadioGroup value={goalType} onValueChange={(value) => setGoalType(value as 'financial' | 'attendance')}>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="financial" id="financial" />
+                  <Label htmlFor="financial" className="text-xs">Meta Financeira</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="attendance" id="attendance" />
+                  <Label htmlFor="attendance" className="text-xs">Meta de Atendimentos</Label>
+                </div>
+              </RadioGroup>
+
+              {/* Goal Input */}
               <Input
                 type="number"
-                value={goalInput}
-                onChange={(e) => setGoalInput(e.target.value)}
+                value={goalType === 'financial' ? goalInput : attendanceGoalInput}
+                onChange={(e) => {
+                  if (goalType === 'financial') {
+                    setGoalInput(e.target.value);
+                  } else {
+                    setAttendanceGoalInput(e.target.value);
+                  }
+                }}
                 className="text-sm bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-                placeholder="Meta mensal"
+                placeholder={goalType === 'financial' ? "Meta financeira" : "Meta de atendimentos"}
               />
               <div className="flex gap-2">
                 <Button
@@ -180,6 +242,7 @@ const Dashboard = () => {
                   onClick={() => {
                     setIsEditingGoal(false);
                     setGoalInput(monthlyGoal.toString());
+                    setAttendanceGoalInput(attendanceGoal.toString());
                   }}
                   className="text-xs px-2 py-1 border-symbol-gray-300 text-symbol-gray-700"
                 >
@@ -190,7 +253,13 @@ const Dashboard = () => {
           ) : (
             <>
               <div className="brand-heading text-2xl text-symbol-black mb-1">
-                R$ {monthlyGoal.toLocaleString('pt-BR')}
+                {goalType === 'financial' 
+                  ? `R$ ${getCurrentGoal().toLocaleString('pt-BR')}`
+                  : `${getCurrentGoal()} atendimentos`
+                }
+              </div>
+              <div className="text-xs text-purple-600 mb-2">
+                {goalType === 'financial' ? 'Meta Financeira' : 'Meta de Atendimentos'}
               </div>
               <div className="space-y-2">
                 <div className="w-full bg-symbol-gray-200 h-2 overflow-hidden rounded-full">
@@ -204,7 +273,10 @@ const Dashboard = () => {
                     {goalProgress.toFixed(1)}%
                   </span>
                   <span className="text-symbol-gray-600">
-                    Faltam: R$ {remainingToGoal.toLocaleString('pt-BR')}
+                    Faltam: {goalType === 'financial' 
+                      ? `R$ ${remainingToGoal.toLocaleString('pt-BR')}`
+                      : `${remainingToGoal} atendimentos`
+                    }
                   </span>
                 </div>
               </div>

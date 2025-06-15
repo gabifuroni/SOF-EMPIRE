@@ -82,7 +82,7 @@ const Login = () => {
           <div className="mb-8">
             {/* Geometric Symbol */}
             <div className="mb-6 flex justify-center">
-              <img src="/images/SÍMBOLO DOURADO.png" alt="Geometric Symbol" className="w-12 transition-all duration-300" />
+              <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="Geometric Symbol" className="w-12 transition-all duration-300" />
             </div>
             <div className="w-16 h-px bg-symbol-gold mx-auto mb-6"></div>
             <p className="brand-subheading text-symbol-gray-600 text-sm uppercase">
