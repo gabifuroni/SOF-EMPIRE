@@ -1,13 +1,13 @@
-
 import { useState } from 'react';
 import AddEntryModal from '@/components/cash-flow/AddEntryModal';
 import AddExpenseModal from '@/components/cash-flow/AddExpenseModal';
 import DailyCashFlowHeader from '@/components/cash-flow/DailyCashFlowHeader';
 import DailyCashFlowMetrics from '@/components/cash-flow/DailyCashFlowMetrics';
 import DailyCashFlowTable from '@/components/cash-flow/DailyCashFlowTable';
-import { format } from 'date-fns';
+import { format, getDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useBusinessParams } from '@/hooks/useBusinessParams';
 
 const DailyCashFlow = () => {
   const today = new Date();
@@ -15,6 +15,7 @@ const DailyCashFlow = () => {
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
 
   const { transactions, isLoading, addTransaction, deleteTransaction } = useTransactions();
+  const { params } = useBusinessParams();
 
   // Filter today's entries
   const todayEntries = transactions.filter(entry => {
@@ -33,7 +34,16 @@ const DailyCashFlow = () => {
     .reduce((sum, entry) => sum + Number(entry.valor), 0);
 
   const saldoDia = totalEntradas - totalSaidas;
+  
+  // Calculate daily attendance goal
+  const workingDaysPerMonth = Math.floor(params.workingDaysPerYear / 12);
+  const dailyAttendanceGoal = Math.ceil(params.attendanceGoal / workingDaysPerMonth);
+  
+  // Count today's attendances (entries)
+  const todayAttendances = todayEntries.filter(entry => entry.tipo_transacao === 'ENTRADA').length;
+  const remainingAttendances = Math.max(0, dailyAttendanceGoal - todayAttendances);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAddEntry = async (entryData: any) => {
     try {
       await addTransaction.mutateAsync({
@@ -49,6 +59,7 @@ const DailyCashFlow = () => {
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAddExpense = async (expenseData: any) => {
     try {
       await addTransaction.mutateAsync({
@@ -89,12 +100,13 @@ const DailyCashFlow = () => {
         today={today}
         onAddEntry={() => setIsAddEntryModalOpen(true)}
         onAddExpense={() => setIsAddExpenseModalOpen(true)}
-      />
-
-      <DailyCashFlowMetrics
+      />      <DailyCashFlowMetrics
         totalEntradas={totalEntradas}
         totalSaidas={totalSaidas}
         saldoDia={saldoDia}
+        dailyAttendanceGoal={dailyAttendanceGoal}
+        todayAttendances={todayAttendances}
+        remainingAttendances={remainingAttendances}
       />
 
       <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">

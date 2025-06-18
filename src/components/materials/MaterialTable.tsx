@@ -62,7 +62,7 @@ const MaterialTable = ({ materials, onEdit, onDelete }: MaterialTableProps) => {
               Valor Pago no Lote
             </TableHead>
             <TableHead className="font-medium text-elite-charcoal-700">
-              Custo Unitário Calculado
+              Unidade de Medida
             </TableHead>
             <TableHead className="font-medium text-elite-charcoal-700 text-center">
               Ações
@@ -87,8 +87,7 @@ const MaterialTable = ({ materials, onEdit, onDelete }: MaterialTableProps) => {
                 R$ {material.batchPrice.toFixed(2)}
               </TableCell>
               <TableCell className="font-medium text-elite-rose-600">
-                R$ {material.unitCost.toFixed(2)}/{material.unit}
-                <span className="text-xs text-elite-charcoal-400 ml-1">(calculado)</span>
+                {material.unit}
               </TableCell>
               <TableCell className="text-center">
                 <div className="flex justify-center gap-2">

@@ -1,16 +1,17 @@
-
 import { useState, useEffect } from 'react';
-import { Calendar, TrendingUp, FileText, User, Target, Edit } from 'lucide-react';
+import { Calendar, TrendingUp, FileText, User, Target, Edit, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import PatenteCard from '@/components/dashboard/PatenteCard';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link } from 'react-router-dom';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 import { useProfile } from '@/hooks/useProfile';
 import { useTransactions } from '@/hooks/useTransactions';
+import { useBusinessParams } from '@/hooks/useBusinessParams';
 
 const Dashboard = () => {
   const [monthlyGoal, setMonthlyGoal] = useState(10000);
@@ -19,9 +20,9 @@ const Dashboard = () => {
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState(monthlyGoal.toString());
   const [attendanceGoalInput, setAttendanceGoalInput] = useState(attendanceGoal.toString());
-  
-  const { profile, isLoading: profileLoading } = useProfile();
+    const { profile, isLoading: profileLoading } = useProfile();
   const { transactions, isLoading: transactionsLoading } = useTransactions();
+  const { params: businessParams } = useBusinessParams();
 
   // Calculate current month revenue
   const currentMonth = new Date();
@@ -40,9 +41,11 @@ const Dashboard = () => {
   const monthlyExpenses = currentMonthEntries
     .filter(entry => entry.tipo_transacao === 'SAIDA')
     .reduce((sum, entry) => sum + Number(entry.valor), 0);
-
   const estimatedProfit = monthlyRevenue - monthlyExpenses;
   const profitMargin = monthlyRevenue > 0 ? (estimatedProfit / monthlyRevenue) * 100 : 0;
+    // Calculate expense percentage of revenue
+  const expensePercentage = monthlyRevenue > 0 ? (monthlyExpenses / monthlyRevenue) * 100 : 0;
+  const expectedTotalExpenses = businessParams.despesasIndiretasDepreciacao + businessParams.despesasDiretas;
 
   // Calculate attendance count (number of entries)
   const monthlyAttendance = currentMonthEntries
@@ -134,9 +137,31 @@ const Dashboard = () => {
 
   const userName = profile?.nome_profissional_ou_salao || 'Usuário';
   const displayName = getFirstAndLastName(userName);
-
   return (
-    <div className="space-y-8 p-6 animate-minimal-fade">
+    <div className="space-y-8 p-6 animate-minimal-fade">      {/* Alert System */}
+      {(profitMargin < businessParams.lucroDesejado || expensePercentage > expectedTotalExpenses) && (
+        <div className="space-y-3">
+          {profitMargin < businessParams.lucroDesejado && (
+            <Alert className="border-red-200 bg-red-50">
+              <AlertTriangle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                <strong>Atenção:</strong> Margem de lucro atual ({profitMargin.toFixed(1)}%) está abaixo do desejado ({businessParams.lucroDesejado}%). 
+                Revise seus custos e preços.
+              </AlertDescription>
+            </Alert>
+          )}
+          {expensePercentage > expectedTotalExpenses && (
+            <Alert className="border-orange-200 bg-orange-50">
+              <AlertTriangle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                <strong>Alerta:</strong> Despesas totais ({expensePercentage.toFixed(1)}%) ultrapassaram o esperado ({expectedTotalExpenses}%). 
+                Controle seus gastos mensais.
+              </AlertDescription>
+            </Alert>
+          )}
+        </div>
+      )}
+      
       {/* Header Section */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-8">
         <div>

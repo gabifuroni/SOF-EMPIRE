@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,11 +16,12 @@ import {
   Percent
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useBusinessParams } from '@/hooks/useBusinessParams';
 
 interface PaymentMethod {
   id: string;
   name: string;
-  icon: any;
+  icon: React.ComponentType;
   isActive: boolean;
   distributionPercentage: number;
   taxRate: number;
@@ -34,6 +35,7 @@ interface Holiday {
 
 const PaymentSettings = () => {
   const { toast } = useToast();
+  const { params, updateParams } = useBusinessParams();
   
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
     {
@@ -98,15 +100,15 @@ const PaymentSettings = () => {
 
   // Number of professionals
   const [numProfessionals, setNumProfessionals] = useState(2);
-
   // Margins state - Fixed calculation to auto-adjust
   const [lucroDesejado, setLucroDesejado] = useState(15.0);
   const [despesasIndiretasDepreciacao, setDespesasIndiretasDepreciacao] = useState(35.0);
+  const [impostosRate, setImpostosRate] = useState(8.0);
   
   // Auto-calculate despesas diretas to make total = 100%
   const despesasDiretas = 100 - lucroDesejado - despesasIndiretasDepreciacao;
 
-  const updatePaymentMethod = (id: string, field: keyof PaymentMethod, value: any) => {
+  const updatePaymentMethod = (id: string, field: keyof PaymentMethod, value: string | number | boolean) => {
     setPaymentMethods(prev => 
       prev.map(method => 
         method.id === id 
@@ -178,7 +180,15 @@ const PaymentSettings = () => {
         variant: "destructive"
       });
       return;
-    }
+    }    // Save to context
+    updateParams({
+      paymentMethods,
+      lucroDesejado,
+      despesasIndiretasDepreciacao,
+      despesasDiretas,
+      impostosRate,
+      workingDaysPerYear: calculateWorkingDaysPerYear()
+    });
 
     toast({
       title: "Sucesso!",
@@ -270,12 +280,32 @@ const PaymentSettings = () => {
               <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-symbol-gray-600 text-sm">%</span>
             </div>
           </div>
-        </div>
-
-        <div className="mt-6 p-4 bg-symbol-beige/20 rounded-lg">
+        </div>        <div className="mt-6 p-4 bg-symbol-beige/20 rounded-lg">
           <span className="brand-body text-sm font-medium text-symbol-black">
             Total das margens: 100.0%
           </span>
+        </div>
+        
+        {/* Tax Rate Section */}
+        <div className="mt-6 p-4 bg-symbol-gold/10 rounded-lg">
+          <Label className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide mb-3 block">
+            Taxa de Impostos (%)
+          </Label>
+          <div className="relative max-w-xs">
+            <Input
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              value={impostosRate}
+              onChange={(e) => setImpostosRate(parseFloat(e.target.value) || 0)}
+              className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black pr-8"
+            />
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-symbol-gray-600 text-sm">%</span>
+          </div>
+          <p className="text-xs text-symbol-gray-500 mt-1">
+            Taxa fixa de impostos aplicada aos serviços
+          </p>
         </div>
       </div>
 

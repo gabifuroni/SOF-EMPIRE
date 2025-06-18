@@ -1,15 +1,25 @@
 
-import { TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Target } from 'lucide-react';
 
 interface DailyCashFlowMetricsProps {
   totalEntradas: number;
   totalSaidas: number;
   saldoDia: number;
+  dailyAttendanceGoal?: number;
+  todayAttendances?: number;
+  remainingAttendances?: number;
 }
 
-const DailyCashFlowMetrics = ({ totalEntradas, totalSaidas, saldoDia }: DailyCashFlowMetricsProps) => {
+const DailyCashFlowMetrics = ({ 
+  totalEntradas, 
+  totalSaidas, 
+  saldoDia, 
+  dailyAttendanceGoal, 
+  todayAttendances, 
+  remainingAttendances 
+}: DailyCashFlowMetricsProps) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-emerald-50/50 to-emerald-100/30 border-emerald-200/50">
         <div className="flex items-center justify-between mb-4">
           <TrendingUp className="text-emerald-600" size={20} />
@@ -46,11 +56,36 @@ const DailyCashFlowMetrics = ({ totalEntradas, totalSaidas, saldoDia }: DailyCas
           <h3 className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wider">
             Saldo do Dia
           </h3>
-        </div>
-        <div className={`brand-heading text-2xl mb-1 ${saldoDia >= 0 ? 'text-symbol-black' : 'text-red-600'}`}>
+        </div>        <div className={`brand-heading text-2xl mb-1 ${saldoDia >= 0 ? 'text-symbol-black' : 'text-red-600'}`}>
           R$ {saldoDia.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </div>
       </div>
+      
+      {/* Meta de Atendimentos - só mostra se os dados foram fornecidos */}
+      {dailyAttendanceGoal !== undefined && todayAttendances !== undefined && remainingAttendances !== undefined && (
+        <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-purple-50/50 to-purple-100/30 border-purple-200/50">
+          <div className="flex items-center justify-between mb-4">
+            <Target className="text-purple-600" size={20} />
+          </div>
+          <div className="mb-2">
+            <h3 className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wider">
+              Meta de Atendimentos
+            </h3>
+          </div>
+          <div className="brand-heading text-2xl text-symbol-black mb-1">
+            {todayAttendances} / {dailyAttendanceGoal}
+          </div>
+          <div className="text-sm text-symbol-gray-600">
+            {remainingAttendances > 0 ? `Faltam ${remainingAttendances}` : 'Meta atingida! 🎉'}
+          </div>
+          <div className="mt-2 bg-purple-200 rounded-full h-2">
+            <div 
+              className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${Math.min(100, (todayAttendances / dailyAttendanceGoal) * 100)}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

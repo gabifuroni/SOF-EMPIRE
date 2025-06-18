@@ -1,8 +1,8 @@
-
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Trash2, BarChart3 } from 'lucide-react';
 import { Service } from '@/types';
+import { useBusinessParams } from '@/hooks/useBusinessParams';
 
 interface ServiceTableProps {
   services: Service[];
@@ -12,6 +12,8 @@ interface ServiceTableProps {
 }
 
 const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTableProps) => {
+  const { params } = useBusinessParams();
+
   if (services.length === 0) {
     return (
       <div className="text-center py-12">
@@ -36,13 +38,21 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
             <TableHead className="font-semibold text-elite-charcoal-800">Nome do Serviço</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Preço de Venda</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Custo Total</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Desp. Diretas (%)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Custo Operacional</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Lucro Bruto</TableHead>
-            <TableHead className="font-semibold text-elite-charcoal-800">Margem (%)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Margem Op. (%)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {services.map((service) => (
+          {services.map((service) => {
+            const directExpensePercentage = service.salePrice > 0 ? (service.totalCost / service.salePrice) * 100 : 0;
+            const operationalCost = (service.salePrice * params.despesasIndiretasDepreciacao) / 100;
+            const operationalProfit = service.grossProfit - operationalCost;
+            const operationalMargin = service.salePrice > 0 ? (operationalProfit / service.salePrice) * 100 : 0;
+            
+            return (
             <TableRow key={service.id} className="hover:bg-elite-pearl-50">
               <TableCell className="font-medium text-elite-charcoal-900">
                 {service.name}
@@ -53,11 +63,17 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
               <TableCell className="text-elite-charcoal-700">
                 R$ {service.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </TableCell>
+              <TableCell className="text-red-600 font-medium">
+                R$ {service.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({directExpensePercentage.toFixed(1)}%)
+              </TableCell>
+              <TableCell className="text-blue-600 font-medium">
+                R$ {operationalCost.toFixed(2)} ({params.despesasIndiretasDepreciacao.toFixed(1)}%)
+              </TableCell>
               <TableCell className="text-elite-beige-700 font-medium">
                 R$ {service.grossProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </TableCell>
-              <TableCell className="text-elite-beige-700 font-medium">
-                {service.profitMargin.toFixed(1)}%
+              <TableCell className="text-green-600 font-medium">
+                {operationalMargin.toFixed(1)}%
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
@@ -88,7 +104,8 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
                 </div>
               </TableCell>
             </TableRow>
-          ))}
+            );
+          })}
         </TableBody>
       </Table>
     </div>

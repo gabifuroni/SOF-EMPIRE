@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { BusinessParamsProvider } from "@/contexts/BusinessParamsContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -70,9 +71,10 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
+      <BusinessParamsProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
         <BrowserRouter>
           <Routes>
             {/* Admin Routes */}
@@ -117,6 +119,7 @@ const App = () => {
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </BusinessParamsProvider>
     </QueryClientProvider>
   );
 };
