@@ -35,22 +35,42 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="font-semibold text-elite-charcoal-800">Nome do Serviço</TableHead>
-            <TableHead className="font-semibold text-elite-charcoal-800">Preço de Venda</TableHead>
-            <TableHead className="font-semibold text-elite-charcoal-800">Custo Total</TableHead>
-            <TableHead className="font-semibold text-elite-charcoal-800">Desp. Diretas (%)</TableHead>
-            <TableHead className="font-semibold text-elite-charcoal-800">Custo Operacional</TableHead>
-            <TableHead className="font-semibold text-elite-charcoal-800">Lucro Bruto</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Serviço</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Preço ($)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Comissão (%)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Valor Comissão ($)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Cartão (%)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Cartão ($)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Imposto (%)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Imposto ($)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Total ($)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Total (%)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Margem Op. ($)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Margem Op. (%)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Custo Op. ($)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Custo Op. (%)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Lucro Parcial ($)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Lucro Parcial (%)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {services.map((service) => {
-            const directExpensePercentage = service.salePrice > 0 ? (service.totalCost / service.salePrice) * 100 : 0;
+            // Cálculos dos custos diretos
+            const commissionCost = (service.salePrice * service.commissionRate) / 100;
+            const cardTaxCost = (service.salePrice * params.weightedAverageRate) / 100;
+            const taxCost = (service.salePrice * params.impostosRate) / 100;
+            const totalDirectCosts = service.totalCost;
+            const directExpensePercentage = service.salePrice > 0 ? (totalDirectCosts / service.salePrice) * 100 : 0;
+            
+            // Cálculos operacionais
             const operationalCost = (service.salePrice * params.despesasIndiretasDepreciacao) / 100;
             const operationalProfit = service.grossProfit - operationalCost;
             const operationalMargin = service.salePrice > 0 ? (operationalProfit / service.salePrice) * 100 : 0;
+            
+            // Lucro parcial (após custos operacionais)
+            const partialProfit = operationalProfit;
+            const partialProfitMargin = service.salePrice > 0 ? (partialProfit / service.salePrice) * 100 : 0;
             
             return (
             <TableRow key={service.id} className="hover:bg-elite-pearl-50">
@@ -60,20 +80,47 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
               <TableCell className="text-elite-charcoal-700">
                 R$ {service.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </TableCell>
-              <TableCell className="text-elite-charcoal-700">
-                R$ {service.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <TableCell className="text-orange-600">
+                {service.commissionRate.toFixed(1)}%
+              </TableCell>
+              <TableCell className="text-orange-600">
+                R$ {commissionCost.toFixed(2)}
+              </TableCell>
+              <TableCell className="text-blue-600">
+                {params.weightedAverageRate.toFixed(1)}%
+              </TableCell>
+              <TableCell className="text-blue-600">
+                R$ {cardTaxCost.toFixed(2)}
+              </TableCell>
+              <TableCell className="text-purple-600">
+                {params.impostosRate.toFixed(1)}%
+              </TableCell>
+              <TableCell className="text-purple-600">
+                R$ {taxCost.toFixed(2)}
               </TableCell>
               <TableCell className="text-red-600 font-medium">
-                R$ {service.totalCost.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({directExpensePercentage.toFixed(1)}%)
+                R$ {totalDirectCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </TableCell>
-              <TableCell className="text-blue-600 font-medium">
-                R$ {operationalCost.toFixed(2)} ({params.despesasIndiretasDepreciacao.toFixed(1)}%)
+              <TableCell className="text-red-600 font-medium">
+                {directExpensePercentage.toFixed(1)}%
               </TableCell>
-              <TableCell className="text-elite-beige-700 font-medium">
-                R$ {service.grossProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <TableCell className="text-green-600 font-medium">
+                R$ {operationalProfit.toFixed(2)}
               </TableCell>
               <TableCell className="text-green-600 font-medium">
                 {operationalMargin.toFixed(1)}%
+              </TableCell>
+              <TableCell className="text-blue-600">
+                R$ {operationalCost.toFixed(2)}
+              </TableCell>
+              <TableCell className="text-blue-600">
+                {params.despesasIndiretasDepreciacao.toFixed(1)}%
+              </TableCell>
+              <TableCell className="text-emerald-600 font-bold">
+                R$ {partialProfit.toFixed(2)}
+              </TableCell>
+              <TableCell className="text-emerald-600 font-bold">
+                {partialProfitMargin.toFixed(1)}%
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">

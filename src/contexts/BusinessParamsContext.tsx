@@ -16,6 +16,8 @@ interface BusinessParams {
   weightedAverageRate: number;
   workingDaysPerYear: number;
   attendanceGoal: number;
+  monthlyGoal: number;
+  goalType: 'financial' | 'attendance';
   paymentMethods: PaymentMethod[];
 }
 
@@ -29,8 +31,7 @@ const BusinessParamsContext = createContext<BusinessParamsContextType | undefine
 
 export { BusinessParamsContext };
 
-export const BusinessParamsProvider = ({ children }: { children: ReactNode }) => {
-  const [params, setParams] = useState<BusinessParams>({
+export const BusinessParamsProvider = ({ children }: { children: ReactNode }) => {  const [params, setParams] = useState<BusinessParams>({
     lucroDesejado: 15.0,
     despesasIndiretasDepreciacao: 35.0,
     despesasDiretas: 50.0,
@@ -38,6 +39,8 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
     weightedAverageRate: 0,
     workingDaysPerYear: 240,
     attendanceGoal: 50,
+    monthlyGoal: 10000,
+    goalType: 'financial',
     paymentMethods: [
       {
         id: 'credit',
