@@ -68,15 +68,23 @@ const Sidebar = ({ userRole, isMobileMenuOpen = false, onCloseMobileMenu }: Side
   ];
 
   const menuItems = userRole === 'admin' ? adminMenuItems : professionalMenuItems;
-
   const handleLinkClick = () => {
     if (onCloseMobileMenu) {
       onCloseMobileMenu();
     }
   };
 
+  console.log('Sidebar render - isMobileMenuOpen:', isMobileMenuOpen);
+
   return (
-    <>
+    <>      {/* Mobile Backdrop */}
+      {isMobileMenuOpen && (
+        <div 
+          className="lg:hidden fixed inset-0 bg-black/50 z-[50] transition-opacity duration-300"
+          onClick={onCloseMobileMenu}
+        />
+      )}
+
       {/* Desktop Sidebar */}
       <div className={cn(
         "hidden lg:flex symbol-sidebar text-symbol-white transition-all duration-300 ease-in-out flex-col relative",
@@ -203,13 +211,18 @@ const Sidebar = ({ userRole, isMobileMenuOpen = false, onCloseMobileMenu }: Side
             )}
           </div>
         </div>
-      </div>
-
-      {/* Mobile Sidebar - unchanged */}
-      <div className={cn(
-        "lg:hidden fixed inset-y-0 left-0 z-50 w-80 symbol-sidebar text-symbol-white transform transition-transform duration-300 ease-in-out",
-        isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
+      </div>      {/* Mobile Sidebar - unchanged */}
+      <div 
+        className={cn(
+          "lg:hidden fixed inset-y-0 left-0 z-[60] w-80 symbol-sidebar text-symbol-white transform transition-transform duration-300 ease-in-out",
+          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+        style={{ 
+          transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
+          visibility: 'visible',
+          display: 'block'
+        }}
+      >
         {/* Mobile Header */}
         <div className="p-4 border-b border-symbol-gray-800 flex items-center justify-between">
           <div className="text-center">

@@ -32,16 +32,32 @@ const DailyCashFlow = () => {
   const totalSaidas = todayEntries
     .filter(entry => entry.tipo_transacao === 'SAIDA')
     .reduce((sum, entry) => sum + Number(entry.valor), 0);
-
   const saldoDia = totalEntradas - totalSaidas;
   
-  // Calculate daily attendance goal
-  const workingDaysPerMonth = Math.floor(params.workingDaysPerYear / 12);
-  const dailyAttendanceGoal = Math.ceil(params.attendanceGoal / workingDaysPerMonth);
+  // Calculate daily goal based on goal type from Dashboard
+  let dailyGoal = 0;
+  let currentProgress = 0;
+  let remainingToGoal = 0;
+  let goalLabel = '';
+  let goalUnit = '';
   
-  // Count today's attendances (entries)
-  const todayAttendances = todayEntries.filter(entry => entry.tipo_transacao === 'ENTRADA').length;
-  const remainingAttendances = Math.max(0, dailyAttendanceGoal - todayAttendances);
+  const workingDaysPerMonth = Math.floor(params.workingDaysPerYear / 12);
+  
+  if (params.goalType === 'financial') {
+    // Meta financeira - baseada no faturamento
+    dailyGoal = params.monthlyGoal / workingDaysPerMonth;
+    currentProgress = totalEntradas;
+    goalLabel = 'Meta de Faturamento';
+    goalUnit = 'R$';
+  } else {
+    // Meta de atendimentos - baseada no número de atendimentos
+    dailyGoal = Math.ceil(params.attendanceGoal / workingDaysPerMonth);
+    currentProgress = todayEntries.filter(entry => entry.tipo_transacao === 'ENTRADA').length;
+    goalLabel = 'Meta de Atendimentos';
+    goalUnit = '';
+  }
+  
+  remainingToGoal = Math.max(0, dailyGoal - currentProgress);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAddEntry = async (entryData: any) => {
@@ -104,9 +120,11 @@ const DailyCashFlow = () => {
         totalEntradas={totalEntradas}
         totalSaidas={totalSaidas}
         saldoDia={saldoDia}
-        dailyAttendanceGoal={dailyAttendanceGoal}
-        todayAttendances={todayAttendances}
-        remainingAttendances={remainingAttendances}
+        dailyGoal={dailyGoal}
+        currentProgress={currentProgress}
+        remainingToGoal={remainingToGoal}
+        goalLabel={goalLabel}
+        goalUnit={goalUnit}
       />
 
       <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">

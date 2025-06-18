@@ -20,9 +20,9 @@ const Dashboard = () => {
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState(monthlyGoal.toString());
   const [attendanceGoalInput, setAttendanceGoalInput] = useState(attendanceGoal.toString());
-    const { profile, isLoading: profileLoading } = useProfile();
+  const { profile, isLoading: profileLoading } = useProfile();
   const { transactions, isLoading: transactionsLoading } = useTransactions();
-  const { params: businessParams } = useBusinessParams();
+  const { params: businessParams, updateParams } = useBusinessParams();
 
   // Calculate current month revenue
   const currentMonth = new Date();
@@ -84,38 +84,74 @@ const Dashboard = () => {
 
   const goalProgress = (getCurrentValue() / getCurrentGoal()) * 100;
   const remainingToGoal = Math.max(0, getCurrentGoal() - getCurrentValue());
-
   const handleSaveGoal = () => {
     if (goalType === 'financial') {
       const newGoal = parseFloat(goalInput) || 0;
       setMonthlyGoal(newGoal);
       localStorage.setItem('monthlyGoal', newGoal.toString());
+      // Atualizar contexto
+      updateParams({
+        monthlyGoal: newGoal,
+        goalType: goalType
+      });
     } else {
       const newGoal = parseInt(attendanceGoalInput) || 0;
       setAttendanceGoal(newGoal);
       localStorage.setItem('attendanceGoal', newGoal.toString());
+      // Atualizar contexto
+      updateParams({
+        attendanceGoal: newGoal,
+        goalType: goalType
+      });
     }
     localStorage.setItem('goalType', goalType);
     setIsEditingGoal(false);
   };
-
   useEffect(() => {
+    // Sync with business params context first
+    if (businessParams.monthlyGoal !== monthlyGoal) {
+      setMonthlyGoal(businessParams.monthlyGoal);
+      setGoalInput(businessParams.monthlyGoal.toString());
+    }
+    if (businessParams.attendanceGoal !== attendanceGoal) {
+      setAttendanceGoal(businessParams.attendanceGoal);
+      setAttendanceGoalInput(businessParams.attendanceGoal.toString());
+    }
+    if (businessParams.goalType !== goalType) {
+      setGoalType(businessParams.goalType);
+    }
+
+    // Then check localStorage for any overrides
     const savedGoal = localStorage.getItem('monthlyGoal');
     const savedAttendanceGoal = localStorage.getItem('attendanceGoal');
     const savedGoalType = localStorage.getItem('goalType') as 'financial' | 'attendance';
     
     if (savedGoal) {
-      setMonthlyGoal(parseFloat(savedGoal));
-      setGoalInput(savedGoal);
+      const goal = parseFloat(savedGoal);
+      setMonthlyGoal(goal);
+      setGoalInput(goal.toString());
+      // Update context if different
+      if (goal !== businessParams.monthlyGoal) {
+        updateParams({ monthlyGoal: goal });
+      }
     }
     if (savedAttendanceGoal) {
-      setAttendanceGoal(parseInt(savedAttendanceGoal));
-      setAttendanceGoalInput(savedAttendanceGoal);
+      const goal = parseInt(savedAttendanceGoal);
+      setAttendanceGoal(goal);
+      setAttendanceGoalInput(goal.toString());
+      // Update context if different
+      if (goal !== businessParams.attendanceGoal) {
+        updateParams({ attendanceGoal: goal });
+      }
     }
     if (savedGoalType) {
       setGoalType(savedGoalType);
+      // Update context if different
+      if (savedGoalType !== businessParams.goalType) {
+        updateParams({ goalType: savedGoalType });
+      }
     }
-  }, []);
+  }, [businessParams, updateParams, monthlyGoal, attendanceGoal, goalType]);
 
   if (profileLoading || transactionsLoading) {
     return (
