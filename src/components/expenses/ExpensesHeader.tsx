@@ -47,12 +47,11 @@ const ExpensesHeader = ({
           Gerencie suas despesas diretas e indiretas
         </p>
       </div>
-      
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
           <Calendar className="w-4 h-4 text-symbol-gray-600" />
           <Select value={selectedMonth} onValueChange={onMonthChange}>
-            <SelectTrigger className="w-40 bg-symbol-gray-50 border-symbol-gray-300">
+            <SelectTrigger className="w-full sm:w-40 bg-symbol-gray-50 border-symbol-gray-300">
               <SelectValue placeholder="Selecione o mês" />
             </SelectTrigger>
             <SelectContent>
@@ -66,7 +65,7 @@ const ExpensesHeader = ({
         </div>
         
         <Select value={selectedYear} onValueChange={onYearChange}>
-          <SelectTrigger className="w-32 bg-symbol-gray-50 border-symbol-gray-300">
+          <SelectTrigger className="w-full sm:w-32 bg-symbol-gray-50 border-symbol-gray-300">
             <SelectValue placeholder="Ano" />
           </SelectTrigger>
           <SelectContent>
@@ -80,7 +79,7 @@ const ExpensesHeader = ({
         
         <Button 
           onClick={onSave}
-          className="bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
+          className="w-full sm:w-auto bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
         >
           <Save className="w-4 h-4 mr-2" />
           Salvar Alterações
