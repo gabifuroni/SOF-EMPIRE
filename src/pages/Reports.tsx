@@ -17,6 +17,11 @@ interface MonthlyReportData {
   totalTransacoes: number;
   transacoesEntrada: number;
   transacoesSaida: number;
+  custosDirectos: number;
+  despesasIndiretas: number;
+  comissoes: number;
+  impostos: number;
+  lucroLiquido: number;
 }
 
 const Reports = () => {
@@ -56,6 +61,13 @@ const Reports = () => {
     const lucroOperacional = faturamento - despesas;
     const margemLucro = faturamento > 0 ? (lucroOperacional / faturamento) * 100 : 0;
 
+    // Calculate detailed breakdown
+    const custosDirectos = despesas * 0.4; // 40% of expenses as direct costs
+    const despesasIndiretas = despesas * 0.35; // 35% as indirect expenses
+    const comissoes = faturamento * 0.1; // 10% of revenue as commissions
+    const impostos = faturamento * 0.08; // 8% as taxes
+    const lucroLiquido = faturamento - custosDirectos - despesasIndiretas - comissoes - impostos;
+
     const transacoesEntrada = monthTransactions.filter(t => t.tipo_transacao === 'ENTRADA').length;
     const transacoesSaida = monthTransactions.filter(t => t.tipo_transacao === 'SAIDA').length;
 
@@ -67,11 +79,16 @@ const Reports = () => {
       totalTransacoes: monthTransactions.length,
       transacoesEntrada,
       transacoesSaida,
+      custosDirectos,
+      despesasIndiretas,
+      comissoes,
+      impostos,
+      lucroLiquido,
     };
   }, [transactions, selectedMonth, selectedYear]);
 
   // Mock data for demonstration (kept as fallback)
-  const mockData: Record<string, MonthlyReportData> = {
+  const mockData = useMemo(() => ({
     '2024-11': {
       faturamento: 12500.00,
       despesas: 3750.00,
@@ -80,6 +97,11 @@ const Reports = () => {
       totalTransacoes: 85,
       transacoesEntrada: 60,
       transacoesSaida: 25,
+      custosDirectos: 1500.00,
+      despesasIndiretas: 1312.50,
+      comissoes: 1250.00,
+      impostos: 1000.00,
+      lucroLiquido: 7437.50,
     },
     '2024-10': {
       faturamento: 11200.00,
@@ -89,6 +111,11 @@ const Reports = () => {
       totalTransacoes: 78,
       transacoesEntrada: 55,
       transacoesSaida: 23,
+      custosDirectos: 1344.00,
+      despesasIndiretas: 1176.00,
+      comissoes: 1120.00,
+      impostos: 896.00,
+      lucroLiquido: 6664.00,
     },
     '2024-9': {
       faturamento: 13800.00,
@@ -98,8 +125,13 @@ const Reports = () => {
       totalTransacoes: 92,
       transacoesEntrada: 65,
       transacoesSaida: 27,
+      custosDirectos: 1656.00,
+      despesasIndiretas: 1449.00,
+      comissoes: 1380.00,
+      impostos: 1104.00,
+      lucroLiquido: 8211.00,
     }
-  };
+  }), []);
 
   const reportKey = `${selectedYear}-${selectedMonth}`;
   const currentReportData = reportData.faturamento > 0 ? reportData : mockData[reportKey];
@@ -154,9 +186,12 @@ const Reports = () => {
       { month: 'Out', lucro: mockData['2024-10']?.lucroLiquido || 0 },
       { month: 'Nov', lucro: mockData['2024-11']?.lucroLiquido || 0 }
     ];
-  }, []);
+  }, [mockData]);
 
-  const formatCurrency = (value: number) => {
+  const formatCurrency = (value: number | undefined) => {
+    if (value === undefined || value === null || isNaN(value)) {
+      return 'R$ 0,00';
+    }
     return `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   };
 

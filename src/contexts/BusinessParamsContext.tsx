@@ -46,7 +46,6 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
     goalType: 'financial',
     paymentMethods: []
   });
-
   // Sincronizar com dados do banco quando carregados
   useEffect(() => {
     if (!isLoading && dbPaymentMethods.length > 0) {
@@ -63,8 +62,7 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
         paymentMethods: mappedPaymentMethods,
         weightedAverageRate: dbCalculateWeightedAverageRate()
       }));
-    }
-  }, [dbPaymentMethods, isLoading, dbCalculateWeightedAverageRate]);
+    }  }, [dbPaymentMethods, isLoading, dbCalculateWeightedAverageRate]); // Added back the dependency
 
   const calculateWeightedAverageRate = useCallback(() => {
     if (dbPaymentMethods.length > 0) {
@@ -94,13 +92,8 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
       return updated;
     });
   };
-  useEffect(() => {
-    // Calculate initial weighted average rate
-    setParams(prev => ({
-      ...prev,
-      weightedAverageRate: calculateWeightedAverageRate()
-    }));
-  }, [calculateWeightedAverageRate]);
+
+  // Remove the useEffect that was causing infinite loop - the calculation is already handled above
   const value = {
     params,
     updateParams,

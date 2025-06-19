@@ -1,5 +1,5 @@
 import type { Tables } from '@/integrations/supabase/types';
-import type { Service, Material, MaterialCost } from '@/types';
+import type { Service, Material, MaterialCost, ExpenseCategory, MonthlyExpense } from '@/types';
 
 // Converte dados do banco (snake_case) para tipos da aplicação (camelCase)
 export const convertServiceFromDb = (dbService: Tables<'servicos'>): Service => {
@@ -67,4 +67,106 @@ export const convertMaterialToDb = (material: Omit<Material, 'id'>): Omit<Tables
     unit: material.unit,
     unit_cost: material.unitCost,
   };
+};
+
+// Converte categoria de despesa do banco para tipo da aplicação
+export const convertExpenseCategoryFromDb = (dbCategory: Tables<'despesas_indiretas_categorias'>): ExpenseCategory => {
+  return {
+    id: dbCategory.id,
+    name: dbCategory.nome_categoria_despesa,
+    isCustom: !dbCategory.is_predefinida,
+  };
+};
+
+// Converte categoria de despesa da aplicação para formato do banco
+export const convertExpenseCategoryToDb = (category: Omit<ExpenseCategory, 'id'>): Omit<Tables<'despesas_indiretas_categorias'>, 'id' | 'user_id' | 'created_at' | 'updated_at'> => {
+  return {
+    nome_categoria_despesa: category.name,
+    is_predefinida: !category.isCustom,
+  };
+};
+
+// Converte valores de despesa indireta do banco para tipo da aplicação
+export const convertMonthlyExpenseFromDb = (dbExpenses: Tables<'despesas_indiretas_valores'>[], categoryId: string, year: number): MonthlyExpense => {
+  const monthlyExpense: MonthlyExpense = {
+    categoryId,
+    year,
+    january: 0,
+    february: 0,
+    march: 0,
+    april: 0,
+    may: 0,
+    june: 0,
+    july: 0,
+    august: 0,
+    september: 0,
+    october: 0,
+    november: 0,
+    december: 0,
+  };
+  // Map database month references to expense object properties
+  const monthMap: Record<string, keyof Omit<MonthlyExpense, 'categoryId' | 'year'>> = {
+    'janeiro': 'january',
+    'fevereiro': 'february',
+    'março': 'march',
+    'abril': 'april',
+    'maio': 'may',
+    'junho': 'june',
+    'julho': 'july',
+    'agosto': 'august',
+    'setembro': 'september',
+    'outubro': 'october',
+    'novembro': 'november',
+    'dezembro': 'december',
+  };
+  // Fill in the values from database records
+  dbExpenses
+    .filter(expense => expense.categoria_id === categoryId)
+    .forEach(expense => {
+      const monthKey = monthMap[expense.mes_referencia];
+      if (monthKey) {
+        monthlyExpense[monthKey] = expense.valor_mensal;
+      }
+    });
+
+  return monthlyExpense;
+};
+
+// Converte valores de despesa da aplicação para formato do banco
+export const convertMonthlyExpenseToDb = (expense: MonthlyExpense, userId: string): Omit<Tables<'despesas_indiretas_valores'>, 'id' | 'created_at' | 'updated_at'>[] => {
+  const monthMap: Record<keyof MonthlyExpense, string> = {
+    categoryId: '',
+    year: '',
+    january: 'janeiro',
+    february: 'fevereiro',
+    march: 'março',
+    april: 'abril',
+    may: 'maio',
+    june: 'junho',
+    july: 'julho',
+    august: 'agosto',
+    september: 'setembro',
+    october: 'outubro',
+    november: 'novembro',
+    december: 'dezembro',
+  };
+
+  const dbRecords: Omit<Tables<'despesas_indiretas_valores'>, 'id' | 'created_at' | 'updated_at'>[] = [];
+
+  // Create one record per month
+  Object.entries(monthMap).forEach(([monthKey, monthName]) => {
+    if (monthKey !== 'categoryId' && monthKey !== 'year' && monthName) {
+      const value = expense[monthKey as keyof MonthlyExpense] as number;
+      if (value > 0) { // Only create records for non-zero values
+        dbRecords.push({
+          categoria_id: expense.categoryId,
+          mes_referencia: monthName,
+          valor_mensal: value,
+          user_id: userId,
+        });
+      }
+    }
+  });
+
+  return dbRecords;
 };
