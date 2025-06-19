@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Plus, Minus, Filter, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { Plus, Minus, Filter, TrendingUp, TrendingDown, DollarSign, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -290,7 +290,7 @@ const CashFlow = () => {
       </div>
 
       {/* Cash Flow Table */}
-      <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="mb-6">
           <h3 className="brand-heading text-xl text-symbol-black mb-2">
             Lançamentos Financeiros
@@ -298,11 +298,69 @@ const CashFlow = () => {
           <div className="w-8 h-px bg-symbol-beige"></div>
         </div>
         
-        <CashFlowTable 
-          entries={filteredEntries}
-          onEdit={openEditModal}
-          onDelete={handleDeleteEntry}
-        />
+        {/* Mobile View: Card List */}
+        <div className="space-y-4 lg:hidden">
+          {filteredEntries.map((entry) => (
+            <div key={entry.id} className="symbol-card p-4 bg-symbol-gray-50 border border-symbol-gray-200">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex-1">
+                  <h4 className="brand-subheading text-symbol-black font-medium text-sm mb-1">
+                    {entry.description}
+                  </h4>
+                  <p className="text-xs text-symbol-gray-500">
+                    {format(new Date(entry.date), 'dd/MM/yyyy')}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-sm font-medium ${
+                    entry.tipo_transacao === 'ENTRADA' 
+                      ? 'text-green-600' 
+                      : 'text-red-600'
+                  }`}>
+                    {entry.tipo_transacao === 'ENTRADA' ? '+' : '-'} R$ {Number(entry.valor).toFixed(2)}
+                  </span>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => openEditModal(entry)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit className="w-3 h-3" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteEntry(entry.id)}
+                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              {entry.payment_method && (
+                <p className="text-xs text-symbol-gray-600">
+                  <span className="font-medium">Método:</span> {entry.payment_method}
+                </p>
+              )}
+              {entry.category && (
+                <p className="text-xs text-symbol-gray-600">
+                  <span className="font-medium">Categoria:</span> {entry.category}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden lg:block">
+          <CashFlowTable 
+            entries={filteredEntries}
+            onEdit={openEditModal}
+            onDelete={handleDeleteEntry}
+          />
+        </div>
       </div>
 
       <AddEntryModal

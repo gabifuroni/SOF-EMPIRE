@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import MaterialTable from '@/components/materials/MaterialTable';
 import AddMaterialModal from '@/components/materials/AddMaterialModal';
@@ -106,7 +106,7 @@ const Materials = () => {
       </div>
 
       {/* Materials Table */}
-      <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="mb-6">
           <h2 className="brand-heading text-xl text-symbol-black mb-2">
             Lista de Matérias-Primas
@@ -114,11 +114,48 @@ const Materials = () => {
           <div className="w-8 h-px bg-symbol-beige"></div>
         </div>
         
-        <MaterialTable 
-          materials={materials}
-          onEdit={openEditModal}
-          onDelete={handleDeleteMaterial}
-        />
+        {/* Mobile View: Card List */}
+        <div className="space-y-4 md:hidden">
+          {materials.map((material) => (
+            <div key={material.id} className="symbol-card p-4 bg-symbol-gray-50 border border-symbol-gray-200">
+              <div className="flex justify-between items-start mb-3">
+                <h3 className="brand-subheading text-symbol-black font-medium text-sm">{material.name}</h3>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openEditModal(material)}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Edit className="w-3 h-3" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDeleteMaterial(material.id)}
+                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
+              <div className="text-sm text-symbol-gray-600 space-y-1">
+                <p><span className="font-medium">Preço do Lote:</span> R$ {material.batchPrice.toFixed(2)}</p>
+                <p><span className="font-medium">Qtd. do Lote:</span> {material.batchQuantity} {material.unit}</p>
+                <p><span className="font-medium">Custo/Unidade:</span> R$ {material.unitCost.toFixed(2)}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden md:block">
+          <MaterialTable 
+            materials={materials}
+            onEdit={openEditModal}
+            onDelete={handleDeleteMaterial}
+          />
+        </div>
       </div>
 
       <AddMaterialModal

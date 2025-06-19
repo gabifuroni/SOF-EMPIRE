@@ -222,7 +222,7 @@ const Profile = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Seção 1: Dados Cadastrais */}
-        <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+        <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
           <div className="mb-6">
             <h2 className="brand-subheading text-symbol-black text-lg mb-2 flex items-center gap-3">
               <User size={20} className="text-symbol-gray-600" />
@@ -364,7 +364,7 @@ const Profile = () => {
         </div>
 
         {/* Seção 2: Segurança */}
-        <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+        <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
           <div className="mb-6">
             <h2 className="brand-subheading text-symbol-black text-lg mb-2 flex items-center gap-3">
               <Shield size={20} className="text-symbol-gray-600" />

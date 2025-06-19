@@ -324,3 +324,46 @@ body {
     --switch-unchecked-bg: theme('colors.symbol.gray.300');
   }
 }
+
+/* Mobile-first responsive utilities */
+@layer components {
+  .form-grid {
+    /* Starts as 1 column, becomes 2 on small screens and up */
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6;
+  }
+  
+  .form-grid-triple {
+    /* Starts as 1 column, becomes 3 on large screens and up */
+    @apply grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6;
+  }
+  
+  .card-grid {
+    /* Starts as 1, becomes 2 on sm, 3 on lg, 4 on xl */
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6;
+  }
+  
+  .metric-grid {
+    /* Starts as 1, becomes 2 on sm, 3 on lg */
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6;
+  }
+  
+  .dashboard-grid {
+    /* Starts as 1, becomes 2 on lg, 3 on xl */
+    @apply grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6;
+  }
+  
+  .responsive-buttons {
+    /* Stack buttons vertically on mobile, horizontally on larger screens */
+    @apply flex flex-col sm:flex-row gap-3;
+  }
+  
+  .responsive-card-padding {
+    /* Less padding on mobile, more on larger screens */
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+  
+  .responsive-section-padding {
+    /* Responsive padding for main sections */
+    @apply p-4 sm:p-6 lg:p-8;
+  }
+}

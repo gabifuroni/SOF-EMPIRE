@@ -712,10 +712,8 @@ const PaymentSettings = () => {
         <p className="brand-body text-symbol-gray-600">
           Configure todos os parâmetros do seu negócio para cálculos precisos
         </p>
-      </div>
-
-      {/* Margins Configuration Section - Fixed alignment */}
-      <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+      </div>      {/* Margins Configuration Section - Fixed alignment */}
+      <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Percent className="text-symbol-gold" size={20} />
@@ -817,10 +815,8 @@ const PaymentSettings = () => {
             {isSaving ? 'Salvando...' : 'Salvar Configurações de Margens'}
           </Button>
         </div>
-      </div>
-
-      {/* Depreciation Section */}
-      <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+      </div>      {/* Depreciation Section */}
+      <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Calculator className="text-symbol-gold" size={20} />
@@ -892,10 +888,8 @@ const PaymentSettings = () => {
             {isSaving ? 'Salvando...' : 'Salvar Dados de Depreciação'}
           </Button>
         </div>
-      </div>
-
-      {/* Working Days Section */}
-      <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+      </div>      {/* Working Days Section */}
+      <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Calendar className="text-symbol-gold" size={20} />
@@ -942,10 +936,9 @@ const PaymentSettings = () => {
           {/* Holidays */}
           <div>
             <h3 className="brand-subheading text-symbol-black text-lg mb-4">Feriados do Ano</h3>
-            
-            {/* Add new holiday */}
+              {/* Add new holiday */}
             <div className="mb-4 space-y-2">
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Input
                   type="date"
                   value={newHolidayDate}
@@ -1013,7 +1006,7 @@ const PaymentSettings = () => {
           </Button>
         </div>
       </div>      {/* Number of Professionals */}
-      <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
             <Users className="text-symbol-gold" size={20} />
@@ -1112,10 +1105,8 @@ const PaymentSettings = () => {
             </div>
           );
         })}
-      </div>
-
-      {/* Desktop Table View */}
-      <div className="hidden sm:block symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+      </div>      {/* Desktop Table View */}
+      <div className="hidden sm:block symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="mb-6">
           <h2 className="brand-heading text-xl text-symbol-black mb-2">
             Percentual de recebimento por Forma de Pagamento
@@ -1211,9 +1202,8 @@ const PaymentSettings = () => {
                 </td>
               </tr>            </tbody>
           </table>
-        </div>        
-        {/* Action buttons */}
-        <div className="mt-4 flex justify-center gap-3">
+        </div>          {/* Action buttons */}
+        <div className="mt-4 flex flex-col sm:flex-row justify-center gap-3">
           {Math.abs(totalDistribution - 100) > 0.01 && (
             <Button
               onClick={normalizeDistributionPercentages}
@@ -1255,7 +1245,7 @@ const PaymentSettings = () => {
       </div>
 
       {/* Summary Card */}
-      <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="mb-6">
           <h2 className="brand-heading text-xl text-symbol-black mb-2">
             Resumo dos Cálculos

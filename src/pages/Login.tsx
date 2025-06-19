@@ -82,10 +82,10 @@ const Login = () => {
           <div className="mb-8">
             {/* Geometric Symbol */}
             <div className="mb-2 flex justify-center">
-              <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="Geometric Symbol" className="w-12 transition-all duration-300" />
+              <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="Geometric Symbol" className="w-20 transition-all duration-300" />
             </div>
             <h1 className="brand-heading text-2xl text-symbol-black mb-2 font-bold tracking-wider">
-              SOF IMPÉRIO
+              SOF IMPIRE
             </h1>
             <p className="brand-subheading text-symbol-gray-600 text-sm uppercase tracking-wider">
               Sistema de Organização Financeira
@@ -231,12 +231,6 @@ const Login = () => {
           </form>
         </div>
 
-        {/* Footer */}
-        <div className="text-center mt-8 animate-minimal-fade" style={{ animationDelay: '0.4s' }}>
-          <p className="brand-body text-symbol-gray-400 text-xs uppercase tracking-widest">
-            Sistema Premium para Profissionais da Beleza
-          </p>
-        </div>
       </div>
     </div>
   );

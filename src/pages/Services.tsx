@@ -100,7 +100,7 @@ const Services = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-blue-50/50 to-blue-100/30 border-blue-200/50">
+        <div className="symbol-card p-4 sm:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-blue-50/50 to-blue-100/30 border-blue-200/50">
           <div className="flex items-center justify-between mb-4">
             <BarChart3 className="text-blue-600" size={20} />
           </div>
@@ -161,7 +161,7 @@ const Services = () => {
       </div>
 
       {/* Services Table */}
-      <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="mb-6">
           <h2 className="brand-heading text-xl text-symbol-black mb-2">
             Lista de Serviços

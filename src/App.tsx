@@ -115,7 +115,7 @@ const App = () => {
                     onLogout={handleLogout}
                     onToggleMobileMenu={handleToggleMobileMenu}
                   />
-                  <main className="flex-1 overflow-auto p-4 sm:p-6">
+                  <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
                     <Routes>
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/daily-cash-flow" element={<DailyCashFlow />} />

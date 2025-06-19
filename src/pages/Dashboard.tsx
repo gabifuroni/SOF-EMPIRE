@@ -216,9 +216,8 @@ const Dashboard = () => {
       </div>
 
             {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link to="/daily-cash-flow" className="block">
-          <div className="symbol-card p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-gradient-to-br from-amber-50/40 to-amber-100/20 border-amber-200/40 hover:border-amber-300/60">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">        <Link to="/daily-cash-flow" className="block">
+          <div className="symbol-card p-4 sm:p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-gradient-to-br from-amber-50/40 to-amber-100/20 border-amber-200/40 hover:border-amber-300/60">
             <div className="text-center space-y-4">
               <div className="w-12 h-12 bg-amber-100/60 flex items-center justify-center mx-auto group-hover:bg-amber-200/80 transition-colors rounded-lg">
                 <Calendar className="text-amber-700 group-hover:text-amber-800 transition-colors" size={24} />
@@ -233,10 +232,8 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-        </Link>
-
-        <Link to="/services" className="block">
-          <div className="symbol-card p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-gradient-to-br from-purple-50/40 to-purple-100/20 border-purple-200/40 hover:border-purple-300/60">
+        </Link>        <Link to="/services" className="block">
+          <div className="symbol-card p-4 sm:p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-gradient-to-br from-purple-50/40 to-purple-100/20 border-purple-200/40 hover:border-purple-300/60">
             <div className="text-center space-y-4">
               <div className="w-12 h-12 bg-purple-100/60 flex items-center justify-center mx-auto group-hover:bg-purple-200/80 transition-colors rounded-lg">
                 <FileText className="text-purple-700 group-hover:text-purple-800 transition-colors" size={24} />
@@ -251,10 +248,8 @@ const Dashboard = () => {
               </div>
             </div>
           </div>
-        </Link>
-
-        <Link to="/reports" className="block">
-          <div className="symbol-card p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-gradient-to-br from-rose-50/40 to-rose-100/20 border-rose-200/40 hover:border-rose-300/60">
+        </Link>        <Link to="/reports" className="block">
+          <div className="symbol-card p-4 sm:p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-gradient-to-br from-rose-50/40 to-rose-100/20 border-rose-200/40 hover:border-rose-300/60">
             <div className="text-center space-y-4">
               <div className="w-12 h-12 bg-rose-100/60 flex items-center justify-center mx-auto group-hover:bg-rose-200/80 transition-colors rounded-lg">
                 <User className="text-rose-700 group-hover:text-rose-800 transition-colors" size={24} />
