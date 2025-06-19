@@ -9,6 +9,14 @@ export interface User {
   status: 'active' | 'inactive';
   createdAt: Date;
   monthlyRevenue?: number;
+  // New expanded fields from profile
+  nomeSalao?: string;
+  descricaoSalao?: string;
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  fotoPerfil?: string;
+  currentPatenteId?: string;
 }
 
 export interface PatenteLevel {

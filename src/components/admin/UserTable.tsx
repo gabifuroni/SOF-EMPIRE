@@ -6,9 +6,10 @@ import { User } from '@/types';
 interface UserTableProps {
   users: User[];
   onToggleUserStatus: (userId: string) => void;
+  onEditUser: (user: User) => void;
 }
 
-const UserTable = ({ users, onToggleUserStatus }: UserTableProps) => {
+const UserTable = ({ users, onToggleUserStatus, onEditUser }: UserTableProps) => {
   const getPatenteName = (revenue: number) => {
     if (revenue >= 20000) return 'Imperatrizes Elite';
     if (revenue >= 15000) return 'Empire Queens';
@@ -33,6 +34,8 @@ const UserTable = ({ users, onToggleUserStatus }: UserTableProps) => {
                 <th className="text-left py-3 px-2 font-medium text-elite-charcoal-700">Nome</th>
                 <th className="text-left py-3 px-2 font-medium text-elite-charcoal-700">Email</th>
                 <th className="text-left py-3 px-2 font-medium text-elite-charcoal-700">Salão</th>
+                <th className="text-left py-3 px-2 font-medium text-elite-charcoal-700">Cidade</th>
+                <th className="text-left py-3 px-2 font-medium text-elite-charcoal-700">Telefone</th>
                 <th className="text-left py-3 px-2 font-medium text-elite-charcoal-700">Patente</th>
                 <th className="text-left py-3 px-2 font-medium text-elite-charcoal-700">Status</th>
                 <th className="text-left py-3 px-2 font-medium text-elite-charcoal-700">Ações</th>
@@ -43,7 +46,9 @@ const UserTable = ({ users, onToggleUserStatus }: UserTableProps) => {
                 <tr key={user.id} className="border-b border-elite-pearl-200 hover:bg-elite-pearl-100/50">
                   <td className="py-3 px-2 text-elite-charcoal-800">{user.name}</td>
                   <td className="py-3 px-2 text-elite-charcoal-600">{user.email}</td>
-                  <td className="py-3 px-2 text-elite-charcoal-600">{user.salonName}</td>
+                  <td className="py-3 px-2 text-elite-charcoal-600">{user.nomeSalao || user.salonName}</td>
+                  <td className="py-3 px-2 text-elite-charcoal-600">{user.cidade ? `${user.cidade}${user.estado ? `, ${user.estado}` : ''}` : '-'}</td>
+                  <td className="py-3 px-2 text-elite-charcoal-600">{user.phone || '-'}</td>
                   <td className="py-3 px-2">
                     <span className="inline-flex items-center gap-1 px-2 py-1 bg-elite-champagne-100 text-elite-champagne-700 rounded-full text-sm">
                       {getPatenteName(user.monthlyRevenue || 0)}
@@ -59,14 +64,24 @@ const UserTable = ({ users, onToggleUserStatus }: UserTableProps) => {
                     </span>
                   </td>
                   <td className="py-3 px-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => onToggleUserStatus(user.id)}
-                      className="text-xs"
-                    >
-                      {user.status === 'active' ? 'Desativar' : 'Ativar'}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onEditUser(user)}
+                        className="text-xs border-elite-champagne-300 text-elite-champagne-700 hover:bg-elite-champagne-50"
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => onToggleUserStatus(user.id)}
+                        className="text-xs"
+                      >
+                        {user.status === 'active' ? 'Desativar' : 'Ativar'}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

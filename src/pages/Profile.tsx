@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -6,25 +6,51 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { User, Camera, Shield, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useProfile } from '@/hooks/useProfile';
 
 const Profile = () => {
   const { toast } = useToast();
+  const { profile, updateProfile, isLoading } = useProfile();
+  
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [passwordStrength, setPasswordStrength] = useState('');
   
   const [formData, setFormData] = useState({
-    name: 'Marina Silva',
-    salonName: 'Salon Elite Marina',
-    phone: '(11) 99999-9999',
-    email: 'marina@salonelite.com',
-    address: 'Rua das Flores, 123',
-    city: 'São Paulo',
-    state: 'SP',
-    description: 'Salão especializado em tratamentos de beleza premium com mais de 10 anos de experiência.',
+    name: '',
+    salonName: '',
+    phone: '',
+    email: '',
+    address: '',
+    city: '',
+    state: '',
+    description: '',
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
+
+  // Sincronizar dados do perfil com o formulário
+  useEffect(() => {
+    if (profile) {
+      setFormData({
+        name: profile.nome_profissional_ou_salao || '',
+        salonName: profile.nome_salao || '',
+        phone: profile.telefone || '',
+        email: profile.email || '',
+        address: profile.endereco || '',
+        city: profile.cidade || '',
+        state: profile.estado || '',
+        description: profile.descricao_salao || '',
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+      
+      if (profile.foto_perfil) {
+        setProfileImage(profile.foto_perfil);
+      }
+    }
+  }, [profile]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));

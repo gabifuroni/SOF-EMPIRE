@@ -19,7 +19,12 @@ const AddUserModal = ({ show, onClose, onAddUser }: AddUserModalProps) => {
     email: '',
     salonName: '',
     phone: '',
-    password: ''
+    password: '',
+    nomeSalao: '',
+    descricaoSalao: '',
+    endereco: '',
+    cidade: '',
+    estado: ''
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
@@ -43,7 +48,12 @@ const AddUserModal = ({ show, onClose, onAddUser }: AddUserModalProps) => {
           email: newUser.email,
           password: newUser.password,
           salonName: newUser.salonName,
-          phone: newUser.phone
+          phone: newUser.phone,
+          nomeSalao: newUser.nomeSalao,
+          descricaoSalao: newUser.descricaoSalao,
+          endereco: newUser.endereco,
+          cidade: newUser.cidade,
+          estado: newUser.estado
         },
         headers: {
           Authorization: `Bearer ${session.access_token}`,
@@ -63,11 +73,27 @@ const AddUserModal = ({ show, onClose, onAddUser }: AddUserModalProps) => {
         phone: newUser.phone,
         status: 'active' as const,
         createdAt: new Date(),
-        monthlyRevenue: 0
+        monthlyRevenue: 0,
+        nomeSalao: newUser.nomeSalao,
+        descricaoSalao: newUser.descricaoSalao,
+        endereco: newUser.endereco,
+        cidade: newUser.cidade,
+        estado: newUser.estado
       };
       
       onAddUser(user);
-      setNewUser({ name: '', email: '', salonName: '', phone: '', password: '' });
+      setNewUser({ 
+        name: '', 
+        email: '', 
+        salonName: '', 
+        phone: '', 
+        password: '',
+        nomeSalao: '',
+        descricaoSalao: '',
+        endereco: '',
+        cidade: '',
+        estado: ''
+      });
       onClose();
 
       toast({
@@ -75,11 +101,11 @@ const AddUserModal = ({ show, onClose, onAddUser }: AddUserModalProps) => {
         description: `${newUser.name} foi adicionado ao sistema.`,
       });
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao criar usuário:', error);
       toast({
         title: "Erro ao criar usuário",
-        description: error.message || "Ocorreu um erro inesperado.",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
         variant: "destructive",
       });
     } finally {
@@ -156,6 +182,63 @@ const AddUserModal = ({ show, onClose, onAddUser }: AddUserModalProps) => {
               className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
               disabled={loading}
             />
+          </div>
+
+          <div>
+            <Label htmlFor="nomeSalao" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Nome do Salão (Opcional)</Label>
+            <Input
+              id="nomeSalao"
+              value={newUser.nomeSalao}
+              onChange={(e) => setNewUser({...newUser, nomeSalao: e.target.value})}
+              className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="descricaoSalao" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Descrição do Salão (Opcional)</Label>
+            <Input
+              id="descricaoSalao"
+              value={newUser.descricaoSalao}
+              onChange={(e) => setNewUser({...newUser, descricaoSalao: e.target.value})}
+              className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
+              disabled={loading}
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="endereco" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Endereço (Opcional)</Label>
+            <Input
+              id="endereco"
+              value={newUser.endereco}
+              onChange={(e) => setNewUser({...newUser, endereco: e.target.value})}
+              className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
+              disabled={loading}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>  
+              <Label htmlFor="cidade" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Cidade (Opcional)</Label>
+              <Input
+                id="cidade"
+                value={newUser.cidade}
+                onChange={(e) => setNewUser({...newUser, cidade: e.target.value})}
+                className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
+                disabled={loading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="estado" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Estado (Opcional)</Label>
+              <Input
+                id="estado"
+                value={newUser.estado}
+                onChange={(e) => setNewUser({...newUser, estado: e.target.value})}
+                className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
+                disabled={loading}
+              />
+            </div>
           </div>
           
           <div className="flex gap-2 pt-4">

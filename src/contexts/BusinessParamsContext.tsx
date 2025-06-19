@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { useUserGoals } from '@/hooks/useUserGoals';
 
 interface PaymentMethod {
   id: string;
@@ -20,6 +22,11 @@ interface BusinessParams {
   monthlyGoal: number;
   goalType: 'financial' | 'attendance';
   paymentMethods: PaymentMethod[];
+  // Novos campos dos parâmetros do negócio
+  depreciacaoValorMobilizado: number;
+  depreciacaoTotalMesDepreciado: number;
+  depreciacaoMensal: number;
+  equipeNumeroProfissionais: number;
 }
 
 interface BusinessParamsContextType {
@@ -34,7 +41,13 @@ const BusinessParamsContext = createContext<BusinessParamsContextType | undefine
 export { BusinessParamsContext };
 
 export const BusinessParamsProvider = ({ children }: { children: ReactNode }) => {
-  const { paymentMethods: dbPaymentMethods, isLoading, calculateWeightedAverageRate: dbCalculateWeightedAverageRate } = usePaymentMethods();  const [params, setParams] = useState<BusinessParams>({
+  const { paymentMethods: dbPaymentMethods, isLoading: paymentMethodsLoading, calculateWeightedAverageRate: dbCalculateWeightedAverageRate } = usePaymentMethods();
+  const { settings: businessSettings, isLoading: settingsLoading } = useBusinessSettings();
+  const { goals: userGoals, isLoading: goalsLoading } = useUserGoals();
+  
+  const isLoading = paymentMethodsLoading || settingsLoading || goalsLoading;
+
+  const [params, setParams] = useState<BusinessParams>({
     lucroDesejado: 15.0,
     despesasIndiretasDepreciacao: 35.0,
     despesasDiretas: 50.0,
@@ -44,11 +57,14 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
     attendanceGoal: 50,
     monthlyGoal: 10000,
     goalType: 'financial',
-    paymentMethods: []
-  });
-  // Sincronizar com dados do banco quando carregados
+    paymentMethods: [],
+    depreciacaoValorMobilizado: 100000,
+    depreciacaoTotalMesDepreciado: 8700,
+    depreciacaoMensal: 1450,
+    equipeNumeroProfissionais: 1,
+  });  // Sincronizar com dados do banco quando carregados
   useEffect(() => {
-    if (!isLoading && dbPaymentMethods.length > 0) {
+    if (!paymentMethodsLoading && dbPaymentMethods.length > 0) {
       const mappedPaymentMethods: PaymentMethod[] = dbPaymentMethods.map(pm => ({
         id: pm.id,
         name: pm.nome_metodo,
@@ -62,7 +78,37 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
         paymentMethods: mappedPaymentMethods,
         weightedAverageRate: dbCalculateWeightedAverageRate()
       }));
-    }  }, [dbPaymentMethods, isLoading, dbCalculateWeightedAverageRate]); // Added back the dependency
+    }
+  }, [dbPaymentMethods, paymentMethodsLoading, dbCalculateWeightedAverageRate]);
+
+  // Sincronizar com configurações do negócio
+  useEffect(() => {
+    if (!settingsLoading && businessSettings) {
+      setParams(prev => ({
+        ...prev,
+        lucroDesejado: businessSettings.lucroDesejado,
+        impostosRate: businessSettings.taxaImpostos,
+        weightedAverageRate: businessSettings.taxaMediaPonderada,
+        workingDaysPerYear: businessSettings.diasTrabalhadosAno,
+        depreciacaoValorMobilizado: businessSettings.depreciacaoValorMobilizado,
+        depreciacaoTotalMesDepreciado: businessSettings.depreciacaoTotalMesDepreciado,
+        depreciacaoMensal: businessSettings.depreciacaoMensal,
+        equipeNumeroProfissionais: businessSettings.equipeNumeroProfissionais,
+      }));
+    }
+  }, [businessSettings, settingsLoading]);
+
+  // Sincronizar com metas do usuário
+  useEffect(() => {
+    if (!goalsLoading && userGoals) {
+      setParams(prev => ({
+        ...prev,
+        goalType: userGoals.tipoMeta === 'financeira' ? 'financial' : 'attendance',
+        monthlyGoal: userGoals.valorMetaMensal,
+        attendanceGoal: userGoals.metaAtendimentosMensal || 50,
+      }));
+    }
+  }, [userGoals, goalsLoading]);
 
   const calculateWeightedAverageRate = useCallback(() => {
     if (dbPaymentMethods.length > 0) {

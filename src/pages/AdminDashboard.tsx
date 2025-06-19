@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { User as UserType } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,14 +7,17 @@ import { LogOut } from 'lucide-react';
 import AdminMetrics from '@/components/admin/AdminMetrics';
 import UserTable from '@/components/admin/UserTable';
 import AddUserModal from '@/components/admin/AddUserModal';
+import EditUserModal from '@/components/admin/EditUserModal';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState<UserType[]>([]);
   const [showAddUser, setShowAddUser] = useState(false);
+  const [showEditUser, setShowEditUser] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -27,8 +30,15 @@ const AdminDashboard = () => {
           email,
           telefone,
           endereco,
+          cidade,
+          estado,
+          nome_salao,
+          descricao_salao,
+          foto_perfil,
           role,
+          status,
           faturamento_total_acumulado,
+          current_patente_id,
           created_at
         `);
 
@@ -40,54 +50,86 @@ const AdminDashboard = () => {
         name: profile.nome_profissional_ou_salao || 'Usuário',
         email: profile.email || '',
         role: profile.role === 'admin' ? 'admin' : 'professional',
-        salonName: profile.endereco || '',
+        salonName: profile.nome_salao || profile.endereco || '',
         phone: profile.telefone || '',
-        status: 'active' as const,
+        status: (profile.status as 'active' | 'inactive') || 'active',
         createdAt: new Date(profile.created_at),
-        monthlyRevenue: Number(profile.faturamento_total_acumulado) || 0
+        monthlyRevenue: Number(profile.faturamento_total_acumulado) || 0,
+        nomeSalao: profile.nome_salao || '',
+        descricaoSalao: profile.descricao_salao || '',
+        endereco: profile.endereco || '',
+        cidade: profile.cidade || '',
+        estado: profile.estado || '',
+        fotoPerfil: profile.foto_perfil || '',
+        currentPatenteId: profile.current_patente_id || ''
       })) || [];
 
       setUsers(usersData);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao carregar usuários:', error);
       toast({
         title: "Erro ao carregar usuários",
-        description: error.message || "Ocorreu um erro inesperado.",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [loadUsers]);
 
   const handleAddUser = async (userData: Omit<UserType, 'id'>) => {
     // Recarregar a lista de usuários para mostrar o novo usuário
     await loadUsers();
   };
 
+  const handleEditUser = (user: UserType) => {
+    setEditingUser(user);
+    setShowEditUser(true);
+  };
+
+  const handleUpdateUser = (updatedUser: UserType) => {
+    setUsers(users.map(user => 
+      user.id === updatedUser.id ? updatedUser : user
+    ));
+    setShowEditUser(false);
+    setEditingUser(null);
+  };
+
   const toggleUserStatus = async (userId: string) => {
     try {
-      // Aqui você pode implementar a lógica para ativar/desativar usuários
-      // Por enquanto, apenas atualizamos localmente
+      const user = users.find(u => u.id === userId);
+      if (!user) return;
+
+      const newStatus = user.status === 'active' ? 'inactive' : 'active';
+      
+      // Update status in database
+      const { error } = await supabase
+        .from('profiles')
+        .update({ status: newStatus })
+        .eq('id', userId);
+
+      if (error) throw error;
+
+      // Update local state
       setUsers(users.map(user => 
         user.id === userId 
-          ? { ...user, status: user.status === 'active' ? 'inactive' : 'active' as 'active' | 'inactive' }
+          ? { ...user, status: newStatus }
           : user
       ));
 
       toast({
         title: "Status do usuário atualizado",
-        description: "O status foi alterado com sucesso.",
+        description: `Usuário ${newStatus === 'active' ? 'ativado' : 'desativado'} com sucesso.`,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao alterar status do usuário:', error);
       toast({
         title: "Erro ao alterar status",
-        description: error.message || "Ocorreu um erro inesperado.",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
         variant: "destructive",
       });
     }
@@ -102,11 +144,11 @@ const AdminDashboard = () => {
         title: "Logout realizado",
         description: "Você foi desconectado com sucesso.",
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao fazer logout:', error);
       toast({
         title: "Erro ao fazer logout",
-        description: error.message || "Ocorreu um erro inesperado.",
+        description: error instanceof Error ? error.message : "Ocorreu um erro inesperado.",
         variant: "destructive",
       });
     }
@@ -152,12 +194,23 @@ const AdminDashboard = () => {
         onAddUser={handleAddUser}
       />
 
+      <EditUserModal
+        show={showEditUser}
+        onClose={() => setShowEditUser(false)}
+        onUpdateUser={handleUpdateUser}
+        user={editingUser}
+      />
+
       {loading ? (
         <div className="flex items-center justify-center py-8">
           <div className="w-8 h-8 border-4 border-elite-champagne-300 border-t-elite-champagne-600 rounded-full animate-spin"></div>
         </div>
       ) : (
-        <UserTable users={users} onToggleUserStatus={toggleUserStatus} />
+        <UserTable 
+          users={users} 
+          onToggleUserStatus={toggleUserStatus}
+          onEditUser={handleEditUser}
+        />
       )}
     </div>
   );

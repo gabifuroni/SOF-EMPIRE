@@ -199,38 +199,56 @@ export type Database = {
       }
       profiles: {
         Row: {
+          cidade: string | null
           created_at: string
           current_patente_id: string | null
+          descricao_salao: string | null
           email: string | null
           endereco: string | null
+          estado: string | null
           faturamento_total_acumulado: number
+          foto_perfil: string | null
           id: string
           nome_profissional_ou_salao: string
+          nome_salao: string | null
           role: Database["public"]["Enums"]["user_role"]
+          status: string | null
           telefone: string | null
           updated_at: string
         }
         Insert: {
+          cidade?: string | null
           created_at?: string
           current_patente_id?: string | null
+          descricao_salao?: string | null
           email?: string | null
           endereco?: string | null
+          estado?: string | null
           faturamento_total_acumulado?: number
+          foto_perfil?: string | null
           id: string
           nome_profissional_ou_salao?: string
+          nome_salao?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          status?: string | null
           telefone?: string | null
           updated_at?: string
         }
         Update: {
+          cidade?: string | null
           created_at?: string
           current_patente_id?: string | null
+          descricao_salao?: string | null
           email?: string | null
           endereco?: string | null
+          estado?: string | null
           faturamento_total_acumulado?: number
+          foto_perfil?: string | null
           id?: string
           nome_profissional_ou_salao?: string
+          nome_salao?: string | null
           role?: Database["public"]["Enums"]["user_role"]
+          status?: string | null
           telefone?: string | null
           updated_at?: string
         }
@@ -299,7 +317,10 @@ export type Database = {
           date: string
           description: string
           id: string
+          is_recurring: boolean | null
           payment_method: string | null
+          recurring_frequency: string | null
+          servico_id: string | null
           tipo_transacao: Database["public"]["Enums"]["tipo_transacao"]
           updated_at: string
           user_id: string
@@ -311,7 +332,10 @@ export type Database = {
           date?: string
           description: string
           id?: string
+          is_recurring?: boolean | null
           payment_method?: string | null
+          recurring_frequency?: string | null
+          servico_id?: string | null
           tipo_transacao: Database["public"]["Enums"]["tipo_transacao"]
           updated_at?: string
           user_id: string
@@ -323,11 +347,89 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          is_recurring?: boolean | null
           payment_method?: string | null
+          recurring_frequency?: string | null
+          servico_id?: string | null
           tipo_transacao?: Database["public"]["Enums"]["tipo_transacao"]
           updated_at?: string
           user_id?: string
           valor?: number
+        }
+        Relationships: []
+      }
+      metas_usuario: {
+        Row: {
+          created_at: string
+          id: string
+          meta_atendimentos_mensal: number | null
+          tipo_meta: string
+          updated_at: string
+          user_id: string
+          valor_meta_mensal: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meta_atendimentos_mensal?: number | null
+          tipo_meta: string
+          updated_at?: string
+          user_id: string
+          valor_meta_mensal?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meta_atendimentos_mensal?: number | null
+          tipo_meta?: string
+          updated_at?: string
+          user_id?: string
+          valor_meta_mensal?: number
+        }
+        Relationships: []
+      }
+      parametros_negocio: {
+        Row: {
+          created_at: string
+          depreciacao_mensal: number
+          depreciacao_total_mes_depreciado: number
+          depreciacao_valor_mobilizado: number
+          dias_trabalhados_ano: number
+          equipe_numero_profissionais: number
+          id: string
+          lucro_desejado: number
+          taxa_impostos: number
+          taxa_media_ponderada: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          depreciacao_mensal?: number
+          depreciacao_total_mes_depreciado?: number
+          depreciacao_valor_mobilizado?: number
+          dias_trabalhados_ano?: number
+          equipe_numero_profissionais?: number
+          id?: string
+          lucro_desejado?: number
+          taxa_impostos?: number
+          taxa_media_ponderada?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          depreciacao_mensal?: number
+          depreciacao_total_mes_depreciado?: number
+          depreciacao_valor_mobilizado?: number
+          dias_trabalhados_ano?: number
+          equipe_numero_profissionais?: number
+          id?: string
+          lucro_desejado?: number
+          taxa_impostos?: number
+          taxa_media_ponderada?: number
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

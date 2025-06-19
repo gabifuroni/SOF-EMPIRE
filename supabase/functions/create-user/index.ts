@@ -54,7 +54,18 @@ serve(async (req) => {
     }
 
     // Get the request body
-    const { name, email, password, salonName, phone } = await req.json()
+    const { 
+      name, 
+      email, 
+      password, 
+      salonName, 
+      phone, 
+      nomeSalao, 
+      descricaoSalao, 
+      endereco, 
+      cidade, 
+      estado 
+    } = await req.json()
 
     // Create the user
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
@@ -82,7 +93,11 @@ serve(async (req) => {
           nome_profissional_ou_salao: name,
           email: email,
           telefone: phone,
-          endereco: salonName
+          endereco: endereco || salonName,
+          nome_salao: nomeSalao,
+          descricao_salao: descricaoSalao,
+          cidade: cidade,
+          estado: estado
         })
         .eq('id', authData.user.id)
 
