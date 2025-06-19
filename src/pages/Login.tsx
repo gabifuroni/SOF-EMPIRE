@@ -81,12 +81,14 @@ const Login = () => {
         <div className="text-center mb-12 animate-minimal-fade">
           <div className="mb-8">
             {/* Geometric Symbol */}
-            <div className="mb-6 flex justify-center">
+            <div className="mb-2 flex justify-center">
               <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="Geometric Symbol" className="w-12 transition-all duration-300" />
             </div>
-            <div className="w-16 h-px bg-symbol-gold mx-auto mb-6"></div>
-            <p className="brand-subheading text-symbol-gray-600 text-sm uppercase">
-              Minimalista • Moderno • Elegante • Sofisticado
+            <h1 className="brand-heading text-2xl text-symbol-black mb-2 font-bold tracking-wider">
+              SOF IMPÉRIO
+            </h1>
+            <p className="brand-subheading text-symbol-gray-600 text-sm uppercase tracking-wider">
+              Sistema de Organização Financeira
             </p>
           </div>
         </div>
