@@ -8,12 +8,24 @@ import { User, Camera, Shield, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useProfile } from '@/hooks/useProfile';
 
+interface ProfileUpdateData {
+  nome_profissional_ou_salao?: string;
+  telefone?: string;
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  nome_salao?: string;
+  descricao_salao?: string;
+  foto_perfil?: string;
+}
+
 const Profile = () => {
   const { toast } = useToast();
   const { profile, updateProfile, isLoading } = useProfile();
   
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [passwordStrength, setPasswordStrength] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -46,8 +58,11 @@ const Profile = () => {
         confirmPassword: ''
       });
       
+      // Definir foto de perfil se existir
       if (profile.foto_perfil) {
         setProfileImage(profile.foto_perfil);
+      } else {
+        setProfileImage(null);
       }
     }
   }, [profile]);
@@ -78,7 +93,7 @@ const Profile = () => {
     }
   };
 
-  const handleSaveProfile = () => {
+  const handleSaveProfile = async () => {
     // Validação básica
     if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
       toast({
@@ -89,12 +104,53 @@ const Profile = () => {
       return;
     }
 
-    // Simular salvamento
-    toast({
-      title: "Sucesso!",
-      description: "Perfil atualizado com sucesso!",
-      variant: "default"
-    });
+    setIsSaving(true);
+    
+    try {
+      // Preparar dados para atualização (usando os nomes corretos das colunas do banco)
+      const updateData: ProfileUpdateData = {
+        nome_profissional_ou_salao: formData.name || '',
+        telefone: formData.phone || '',
+        endereco: formData.address || '',
+        cidade: formData.city || '',
+        estado: formData.state || '',
+        nome_salao: formData.salonName || '',
+        descricao_salao: formData.description || '',
+      };
+
+      // Adicionar foto de perfil se foi alterada
+      if (profileImage && profileImage !== profile?.foto_perfil) {
+        updateData.foto_perfil = profileImage;
+      }
+
+      console.log('Dados para atualização:', updateData);
+
+      // Chamar a função de atualização do hook
+      await updateProfile.mutateAsync(updateData);
+
+      // Limpar campos de senha após salvamento bem-sucedido
+      setFormData(prev => ({
+        ...prev,
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      }));
+
+      toast({
+        title: "Sucesso!",
+        description: "Perfil atualizado com sucesso!",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Erro ao salvar perfil:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar perfil. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const getPasswordStrengthColor = () => {
@@ -396,10 +452,11 @@ const Profile = () => {
       <div className="flex justify-center pt-8">
         <Button 
           onClick={handleSaveProfile}
-          className="bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-4 px-8 transition-all duration-300 flex items-center gap-3 uppercase tracking-wider text-sm"
+          disabled={isSaving || isLoading}
+          className="bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-4 px-8 transition-all duration-300 flex items-center gap-3 uppercase tracking-wider text-sm disabled:opacity-50"
         >
           <Save size={20} />
-          Salvar Alterações
+          {isSaving ? 'Salvando...' : 'Salvar Alterações'}
         </Button>
       </div>
     </div>

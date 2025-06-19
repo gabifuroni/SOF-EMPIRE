@@ -33,7 +33,7 @@ const Header = ({ user, onLogout, onToggleMobileMenu }: HeaderProps) => {
   const displayName = getFirstAndLastName(fullName);
   
   // Extract salon name from endereco field
-  const salonName = profile?.endereco || '';
+  const salonName = profile?.nome_salao || '';
 
   return (
     <header className="bg-symbol-white/80 backdrop-blur-sm border-b border-symbol-gray-200 px-4 sm:px-6 py-4 sticky top-0 z-30">
