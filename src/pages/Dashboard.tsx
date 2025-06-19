@@ -12,6 +12,7 @@ import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 import { useProfile } from '@/hooks/useProfile';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
+import { usePatentes } from '@/hooks/usePatentes';
 
 const Dashboard = () => {
   const [monthlyGoal, setMonthlyGoal] = useState(10000);
@@ -19,10 +20,10 @@ const Dashboard = () => {
   const [attendanceGoal, setAttendanceGoal] = useState(50);
   const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [goalInput, setGoalInput] = useState(monthlyGoal.toString());
-  const [attendanceGoalInput, setAttendanceGoalInput] = useState(attendanceGoal.toString());
-  const { profile, isLoading: profileLoading } = useProfile();
+  const [attendanceGoalInput, setAttendanceGoalInput] = useState(attendanceGoal.toString());  const { profile, isLoading: profileLoading } = useProfile();
   const { transactions, isLoading: transactionsLoading } = useTransactions();
-  const { params: businessParams, updateParams } = useBusinessParams();
+  const { params: businessParams, updateParams, isLoading: businessParamsLoading } = useBusinessParams();
+  const { patentes, getCurrentPatente, getNextPatente, isLoading: patentesLoading } = usePatentes();
 
   // Calculate current month revenue
   const currentMonth = new Date();
@@ -41,17 +42,25 @@ const Dashboard = () => {
   const monthlyExpenses = currentMonthEntries
     .filter(entry => entry.tipo_transacao === 'SAIDA')
     .reduce((sum, entry) => sum + Number(entry.valor), 0);
+
   const estimatedProfit = monthlyRevenue - monthlyExpenses;
   const profitMargin = monthlyRevenue > 0 ? (estimatedProfit / monthlyRevenue) * 100 : 0;
-    // Calculate expense percentage of revenue
   const expensePercentage = monthlyRevenue > 0 ? (monthlyExpenses / monthlyRevenue) * 100 : 0;
   const expectedTotalExpenses = businessParams.despesasIndiretasDepreciacao + businessParams.despesasDiretas;
 
   // Calculate attendance count (number of entries)
   const monthlyAttendance = currentMonthEntries
     .filter(entry => entry.tipo_transacao === 'ENTRADA').length;
+
+  // Get current patente based on total accumulated revenue
+  const currentPatente = profile?.faturamento_total_acumulado 
+    ? getCurrentPatente(profile.faturamento_total_acumulado)
+    : null;
   
-  // Calculate monthly data for chart (last 6 months)
+  const nextPatente = profile?.faturamento_total_acumulado 
+    ? getNextPatente(profile.faturamento_total_acumulado)
+    : null;
+  
   const monthlyData = [];
   for (let i = 5; i >= 0; i--) {
     const date = subMonths(currentMonth, i);
@@ -73,7 +82,6 @@ const Dashboard = () => {
     });
   }
 
-  // Calculate goal progress based on type
   const getCurrentValue = () => {
     return goalType === 'financial' ? monthlyRevenue : monthlyAttendance;
   };
@@ -89,7 +97,6 @@ const Dashboard = () => {
       const newGoal = parseFloat(goalInput) || 0;
       setMonthlyGoal(newGoal);
       localStorage.setItem('monthlyGoal', newGoal.toString());
-      // Atualizar contexto
       updateParams({
         monthlyGoal: newGoal,
         goalType: goalType
@@ -98,7 +105,6 @@ const Dashboard = () => {
       const newGoal = parseInt(attendanceGoalInput) || 0;
       setAttendanceGoal(newGoal);
       localStorage.setItem('attendanceGoal', newGoal.toString());
-      // Atualizar contexto
       updateParams({
         attendanceGoal: newGoal,
         goalType: goalType
@@ -108,7 +114,6 @@ const Dashboard = () => {
     setIsEditingGoal(false);
   };
   useEffect(() => {
-    // Sync with business params context first
     if (businessParams.monthlyGoal !== monthlyGoal) {
       setMonthlyGoal(businessParams.monthlyGoal);
       setGoalInput(businessParams.monthlyGoal.toString());
@@ -121,7 +126,6 @@ const Dashboard = () => {
       setGoalType(businessParams.goalType);
     }
 
-    // Then check localStorage for any overrides
     const savedGoal = localStorage.getItem('monthlyGoal');
     const savedAttendanceGoal = localStorage.getItem('attendanceGoal');
     const savedGoalType = localStorage.getItem('goalType') as 'financial' | 'attendance';
@@ -130,7 +134,6 @@ const Dashboard = () => {
       const goal = parseFloat(savedGoal);
       setMonthlyGoal(goal);
       setGoalInput(goal.toString());
-      // Update context if different
       if (goal !== businessParams.monthlyGoal) {
         updateParams({ monthlyGoal: goal });
       }
@@ -139,21 +142,19 @@ const Dashboard = () => {
       const goal = parseInt(savedAttendanceGoal);
       setAttendanceGoal(goal);
       setAttendanceGoalInput(goal.toString());
-      // Update context if different
       if (goal !== businessParams.attendanceGoal) {
         updateParams({ attendanceGoal: goal });
       }
     }
     if (savedGoalType) {
       setGoalType(savedGoalType);
-      // Update context if different
       if (savedGoalType !== businessParams.goalType) {
         updateParams({ goalType: savedGoalType });
       }
     }
   }, [businessParams, updateParams, monthlyGoal, attendanceGoal, goalType]);
 
-  if (profileLoading || transactionsLoading) {
+  if (profileLoading || transactionsLoading || businessParamsLoading || patentesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -164,7 +165,6 @@ const Dashboard = () => {
     );
   }
 
-  // Extract first and last name from full name
   const getFirstAndLastName = (fullName: string) => {
     const names = fullName.trim().split(' ');
     if (names.length === 1) return names[0];
@@ -174,7 +174,7 @@ const Dashboard = () => {
   const userName = profile?.nome_profissional_ou_salao || 'Usuário';
   const displayName = getFirstAndLastName(userName);
   return (
-    <div className="space-y-8 p-6 animate-minimal-fade">      {/* Alert System */}
+    <div className="space-y-8 p-6 animate-minimal-fade">     
       {(profitMargin < businessParams.lucroDesejado || expensePercentage > expectedTotalExpenses) && (
         <div className="space-y-3">
           {profitMargin < businessParams.lucroDesejado && (
@@ -198,7 +198,6 @@ const Dashboard = () => {
         </div>
       )}
       
-      {/* Header Section */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="brand-heading text-3xl text-symbol-black mb-2">
@@ -206,12 +205,73 @@ const Dashboard = () => {
           </h1>
           <div className="w-12 h-px bg-symbol-gold mb-4"></div>
           <p className="brand-body text-symbol-gray-600">
-            Visão geral do seu salão em tempo real
+            Visão geral do seu negócio em tempo real
           </p>
         </div>
       </div>
 
-      {/* Main Metrics Grid - 3 cards in top row */}
+      {/* Patent Card - Full width row */}
+      <div className="w-full">
+        <PatenteCard currentRevenue={profile?.faturamento_total_acumulado || 0} />
+      </div>
+
+            {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Link to="/daily-cash-flow" className="block">
+          <div className="symbol-card p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-gradient-to-br from-amber-50/40 to-amber-100/20 border-amber-200/40 hover:border-amber-300/60">
+            <div className="text-center space-y-4">
+              <div className="w-12 h-12 bg-amber-100/60 flex items-center justify-center mx-auto group-hover:bg-amber-200/80 transition-colors rounded-lg">
+                <Calendar className="text-amber-700 group-hover:text-amber-800 transition-colors" size={24} />
+              </div>
+              <div>
+                <h3 className="brand-subheading text-symbol-black text-sm uppercase tracking-wider mb-2">
+                  Adicionar Entrada
+                </h3>
+                <p className="brand-body text-symbol-gray-600 text-sm">
+                  Registre um novo atendimento
+                </p>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link to="/services" className="block">
+          <div className="symbol-card p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-gradient-to-br from-purple-50/40 to-purple-100/20 border-purple-200/40 hover:border-purple-300/60">
+            <div className="text-center space-y-4">
+              <div className="w-12 h-12 bg-purple-100/60 flex items-center justify-center mx-auto group-hover:bg-purple-200/80 transition-colors rounded-lg">
+                <FileText className="text-purple-700 group-hover:text-purple-800 transition-colors" size={24} />
+              </div>
+              <div>
+                <h3 className="brand-subheading text-symbol-black text-sm uppercase tracking-wider mb-2">
+                  Gerenciar Serviços
+                </h3>
+                <p className="brand-body text-symbol-gray-600 text-sm">
+                  Configure preços e custos
+                </p>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        <Link to="/reports" className="block">
+          <div className="symbol-card p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-gradient-to-br from-rose-50/40 to-rose-100/20 border-rose-200/40 hover:border-rose-300/60">
+            <div className="text-center space-y-4">
+              <div className="w-12 h-12 bg-rose-100/60 flex items-center justify-center mx-auto group-hover:bg-rose-200/80 transition-colors rounded-lg">
+                <User className="text-rose-700 group-hover:text-rose-800 transition-colors" size={24} />
+              </div>
+              <div>
+                <h3 className="brand-subheading text-symbol-black text-sm uppercase tracking-wider mb-2">
+                  Ver Relatórios
+                </h3>
+                <p className="brand-body text-symbol-gray-600 text-sm">
+                  Análise financeira detalhada
+                </p>
+              </div>
+            </div>
+          </div>
+        </Link>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-blue-50/50 to-blue-100/30 border-blue-200/50">
           <div className="flex items-center justify-between mb-4">
@@ -346,11 +406,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Patent Card - Full width row */}
-      <div className="w-full">
-        <PatenteCard currentRevenue={profile?.faturamento_total_acumulado || 0} />
-      </div>
-
       {/* Revenue Trend Chart */}
       <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="space-y-6">
@@ -404,64 +459,9 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Link to="/daily-cash-flow" className="block">
-          <div className="symbol-card p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-gradient-to-br from-amber-50/40 to-amber-100/20 border-amber-200/40 hover:border-amber-300/60">
-            <div className="text-center space-y-4">
-              <div className="w-12 h-12 bg-amber-100/60 flex items-center justify-center mx-auto group-hover:bg-amber-200/80 transition-colors rounded-lg">
-                <Calendar className="text-amber-700 group-hover:text-amber-800 transition-colors" size={24} />
-              </div>
-              <div>
-                <h3 className="brand-subheading text-symbol-black text-sm uppercase tracking-wider mb-2">
-                  Adicionar Entrada
-                </h3>
-                <p className="brand-body text-symbol-gray-600 text-sm">
-                  Registre um novo atendimento
-                </p>
-              </div>
-            </div>
-          </div>
-        </Link>
-
-        <Link to="/services" className="block">
-          <div className="symbol-card p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-gradient-to-br from-purple-50/40 to-purple-100/20 border-purple-200/40 hover:border-purple-300/60">
-            <div className="text-center space-y-4">
-              <div className="w-12 h-12 bg-purple-100/60 flex items-center justify-center mx-auto group-hover:bg-purple-200/80 transition-colors rounded-lg">
-                <FileText className="text-purple-700 group-hover:text-purple-800 transition-colors" size={24} />
-              </div>
-              <div>
-                <h3 className="brand-subheading text-symbol-black text-sm uppercase tracking-wider mb-2">
-                  Gerenciar Serviços
-                </h3>
-                <p className="brand-body text-symbol-gray-600 text-sm">
-                  Configure preços e custos
-                </p>
-              </div>
-            </div>
-          </div>
-        </Link>
-
-        <Link to="/reports" className="block">
-          <div className="symbol-card p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-gradient-to-br from-rose-50/40 to-rose-100/20 border-rose-200/40 hover:border-rose-300/60">
-            <div className="text-center space-y-4">
-              <div className="w-12 h-12 bg-rose-100/60 flex items-center justify-center mx-auto group-hover:bg-rose-200/80 transition-colors rounded-lg">
-                <User className="text-rose-700 group-hover:text-rose-800 transition-colors" size={24} />
-              </div>
-              <div>
-                <h3 className="brand-subheading text-symbol-black text-sm uppercase tracking-wider mb-2">
-                  Ver Relatórios
-                </h3>
-                <p className="brand-body text-symbol-gray-600 text-sm">
-                  Análise financeira detalhada
-                </p>
-              </div>
-            </div>
-          </div>
-        </Link>
-      </div>
     </div>
   );
 };
 
+// Dashboard component export
 export default Dashboard;

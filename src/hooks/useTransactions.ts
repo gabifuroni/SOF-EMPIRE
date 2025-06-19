@@ -6,16 +6,34 @@ import type { Tables, TablesInsert } from '@/integrations/supabase/types';
 type Transaction = Tables<'transacoes_financeiras'>;
 type TransactionInsert = TablesInsert<'transacoes_financeiras'>;
 
-export const useTransactions = () => {
+interface DateRange {
+  start?: string;
+  end?: string;
+}
+
+export const useTransactions = (dateRange?: DateRange) => {
   const queryClient = useQueryClient();
 
   const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ['transactions'],
+    queryKey: ['transactions', dateRange],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      let query = supabase
         .from('transacoes_financeiras')
         .select('*')
+        .eq('user_id', user.id)
         .order('date', { ascending: false });
+
+      if (dateRange?.start) {
+        query = query.gte('date', dateRange.start);
+      }
+      if (dateRange?.end) {
+        query = query.lte('date', dateRange.end);
+      }
+      
+      const { data, error } = await query;
       
       if (error) throw error;
       return data;
@@ -41,6 +59,7 @@ export const useTransactions = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] }); // Para atualizar patente
     },
   });
 

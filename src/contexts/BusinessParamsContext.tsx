@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 
 interface PaymentMethod {
   id: string;
@@ -25,13 +26,15 @@ interface BusinessParamsContextType {
   params: BusinessParams;
   updateParams: (newParams: Partial<BusinessParams>) => void;
   calculateWeightedAverageRate: () => number;
+  isLoading: boolean;
 }
 
 const BusinessParamsContext = createContext<BusinessParamsContextType | undefined>(undefined);
 
 export { BusinessParamsContext };
 
-export const BusinessParamsProvider = ({ children }: { children: ReactNode }) => {  const [params, setParams] = useState<BusinessParams>({
+export const BusinessParamsProvider = ({ children }: { children: ReactNode }) => {
+  const { paymentMethods: dbPaymentMethods, isLoading, calculateWeightedAverageRate: dbCalculateWeightedAverageRate } = usePaymentMethods();  const [params, setParams] = useState<BusinessParams>({
     lucroDesejado: 15.0,
     despesasIndiretasDepreciacao: 35.0,
     despesasDiretas: 50.0,
@@ -41,38 +44,34 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
     attendanceGoal: 50,
     monthlyGoal: 10000,
     goalType: 'financial',
-    paymentMethods: [
-      {
-        id: 'credit',
-        name: 'Crédito',
-        isActive: true,
-        distributionPercentage: 50.0,
-        taxRate: 3.20
-      },
-      {
-        id: 'credit_installment',
-        name: 'Crédito Parcelado',
-        isActive: true,
-        distributionPercentage: 5.0,
-        taxRate: 6.34
-      },
-      {
-        id: 'debit',
-        name: 'Débito',
-        isActive: true,
-        distributionPercentage: 15.0,
-        taxRate: 1.39
-      },
-      {
-        id: 'cash',
-        name: 'Dinheiro/Cheque',
-        isActive: true,
-        distributionPercentage: 30.0,
-        taxRate: 0.00
-      }
-    ]
+    paymentMethods: []
   });
+
+  // Sincronizar com dados do banco quando carregados
+  useEffect(() => {
+    if (!isLoading && dbPaymentMethods.length > 0) {
+      const mappedPaymentMethods: PaymentMethod[] = dbPaymentMethods.map(pm => ({
+        id: pm.id,
+        name: pm.nome_metodo,
+        isActive: pm.is_ativo,
+        distributionPercentage: pm.prazo_recebimento_dias, // Usando como proxy para distribuição
+        taxRate: pm.taxa_percentual
+      }));
+
+      setParams(prev => ({
+        ...prev,
+        paymentMethods: mappedPaymentMethods,
+        weightedAverageRate: dbCalculateWeightedAverageRate()
+      }));
+    }
+  }, [dbPaymentMethods, isLoading, dbCalculateWeightedAverageRate]);
+
   const calculateWeightedAverageRate = useCallback(() => {
+    if (dbPaymentMethods.length > 0) {
+      return dbCalculateWeightedAverageRate();
+    }
+    
+    // Fallback para cálculo local se não há dados do banco
     const activeMethods = params.paymentMethods.filter(method => method.isActive);
     const totalDistribution = activeMethods.reduce((sum, method) => sum + method.distributionPercentage, 0);
     
@@ -83,7 +82,7 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
     );
     
     return weightedSum / totalDistribution;
-  }, [params.paymentMethods]);
+  }, [params.paymentMethods, dbPaymentMethods, dbCalculateWeightedAverageRate]);
 
   const updateParams = (newParams: Partial<BusinessParams>) => {
     setParams(prev => {
@@ -102,11 +101,11 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
       weightedAverageRate: calculateWeightedAverageRate()
     }));
   }, [calculateWeightedAverageRate]);
-
   const value = {
     params,
     updateParams,
-    calculateWeightedAverageRate
+    calculateWeightedAverageRate,
+    isLoading
   };
 
   return (

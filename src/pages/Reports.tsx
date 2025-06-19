@@ -4,17 +4,19 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, LineChart, Line, ResponsiveContainer } from 'recharts';
-import { format } from 'date-fns';
+import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useTransactions } from '@/hooks/useTransactions';
+import { useBusinessParams } from '@/hooks/useBusinessParams';
 
 interface MonthlyReportData {
   faturamento: number;
-  custosDirectos: number;
-  despesasIndiretas: number;
-  comissoes: number;
-  impostos: number;
-  lucroLiquido: number;
+  despesas: number;
+  lucroOperacional: number;
   margemLucro: number;
+  totalTransacoes: number;
+  transacoesEntrada: number;
+  transacoesSaida: number;
 }
 
 const Reports = () => {
@@ -22,36 +24,8 @@ const Reports = () => {
   const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth());
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
-  // Mock data for demonstration
-  const mockData: Record<string, MonthlyReportData> = {
-    '2024-11': {
-      faturamento: 12500.00,
-      custosDirectos: 3750.00,
-      despesasIndiretas: 2800.00,
-      comissoes: 3750.00,
-      impostos: 750.00,
-      lucroLiquido: 1450.00,
-      margemLucro: 11.6
-    },
-    '2024-10': {
-      faturamento: 11200.00,
-      custosDirectos: 3360.00,
-      despesasIndiretas: 2800.00,
-      comissoes: 3360.00,
-      impostos: 672.00,
-      lucroLiquido: 1008.00,
-      margemLucro: 9.0
-    },
-    '2024-9': {
-      faturamento: 13800.00,
-      custosDirectos: 4140.00,
-      despesasIndiretas: 2800.00,
-      comissoes: 4140.00,
-      impostos: 828.00,
-      lucroLiquido: 1892.00,
-      margemLucro: 13.7
-    }
-  };
+  const { transactions, isLoading } = useTransactions();
+  const { params } = useBusinessParams();
 
   const months = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -60,8 +34,75 @@ const Reports = () => {
 
   const years = [2022, 2023, 2024, 2025];
 
+  // Calculate report data from real transactions
+  const reportData = useMemo((): MonthlyReportData => {
+    const targetDate = new Date(selectedYear, selectedMonth, 1);
+    const monthStart = startOfMonth(targetDate);
+    const monthEnd = endOfMonth(targetDate);
+
+    const monthTransactions = transactions.filter(transaction => {
+      const transactionDate = new Date(transaction.date);
+      return transactionDate >= monthStart && transactionDate <= monthEnd;
+    });
+
+    const faturamento = monthTransactions
+      .filter(t => t.tipo_transacao === 'ENTRADA')
+      .reduce((sum, t) => sum + Number(t.valor), 0);
+
+    const despesas = monthTransactions
+      .filter(t => t.tipo_transacao === 'SAIDA')
+      .reduce((sum, t) => sum + Number(t.valor), 0);
+
+    const lucroOperacional = faturamento - despesas;
+    const margemLucro = faturamento > 0 ? (lucroOperacional / faturamento) * 100 : 0;
+
+    const transacoesEntrada = monthTransactions.filter(t => t.tipo_transacao === 'ENTRADA').length;
+    const transacoesSaida = monthTransactions.filter(t => t.tipo_transacao === 'SAIDA').length;
+
+    return {
+      faturamento,
+      despesas,
+      lucroOperacional,
+      margemLucro,
+      totalTransacoes: monthTransactions.length,
+      transacoesEntrada,
+      transacoesSaida,
+    };
+  }, [transactions, selectedMonth, selectedYear]);
+
+  // Mock data for demonstration (kept as fallback)
+  const mockData: Record<string, MonthlyReportData> = {
+    '2024-11': {
+      faturamento: 12500.00,
+      despesas: 3750.00,
+      lucroOperacional: 8750.00,
+      margemLucro: 70.0,
+      totalTransacoes: 85,
+      transacoesEntrada: 60,
+      transacoesSaida: 25,
+    },
+    '2024-10': {
+      faturamento: 11200.00,
+      despesas: 3360.00,
+      lucroOperacional: 7840.00,
+      margemLucro: 70.0,
+      totalTransacoes: 78,
+      transacoesEntrada: 55,
+      transacoesSaida: 23,
+    },
+    '2024-9': {
+      faturamento: 13800.00,
+      despesas: 4140.00,
+      lucroOperacional: 9660.00,
+      margemLucro: 70.0,
+      totalTransacoes: 92,
+      transacoesEntrada: 65,
+      transacoesSaida: 27,
+    }
+  };
+
   const reportKey = `${selectedYear}-${selectedMonth}`;
-  const reportData = mockData[reportKey];
+  const currentReportData = reportData.faturamento > 0 ? reportData : mockData[reportKey];
 
   const chartConfig = {
     value: {

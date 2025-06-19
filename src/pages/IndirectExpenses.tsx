@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ExpenseCategory, MonthlyExpense, DEFAULT_EXPENSE_CATEGORIES } from '@/types';
 import { toast } from 'sonner';
 import ExpensesHeader from '@/components/expenses/ExpensesHeader';
 import ExpensesSummaryCards from '@/components/expenses/ExpensesSummaryCards';
 import IndirectExpensesTable from '@/components/expenses/IndirectExpensesTable';
 import DirectExpensesTable from '@/components/expenses/DirectExpensesTable';
+import { useIndirectExpenseCategories, useIndirectExpenseValues } from '@/hooks/useIndirectExpenses';
 
 interface DirectExpense {
   id: string;
@@ -41,9 +41,24 @@ const IndirectExpenses = () => {
     const currentMonth = new Date().getMonth();
     return MONTHS[currentMonth].key;
   });
-  const [categories, setCategories] = useState<ExpenseCategory[]>(DEFAULT_EXPENSE_CATEGORIES);
-  const [expenses, setExpenses] = useState<MonthlyExpense[]>([]);
-  const [fixedExpenses, setFixedExpenses] = useState<Record<string, boolean>>({});
+  
+  const { 
+    categories, 
+    isLoading: categoriesLoading,
+    addCategory,
+    updateCategory,
+    deleteCategory 
+  } = useIndirectExpenseCategories();
+  
+  const { 
+    expenses, 
+    isLoading: expensesLoading,
+    addExpenseValue,
+    updateExpenseValue,
+    deleteExpenseValue,
+    getTotalByMonth 
+  } = useIndirectExpenseValues();
+  
   const [newCategoryName, setNewCategoryName] = useState('');
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [directExpenses, setDirectExpenses] = useState<DirectExpense[]>([]);

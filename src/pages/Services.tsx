@@ -4,86 +4,44 @@ import { Button } from '@/components/ui/button';
 import ServiceTable from '@/components/services/ServiceTable';
 import AddServiceModal from '@/components/services/AddServiceModal';
 import ServiceAnalysisModal from '@/components/services/ServiceAnalysisModal';
-import { Service, Material } from '@/types';
+import { useServices } from '@/hooks/useServices';
+import { useMaterials } from '@/hooks/useMaterials';
+import type { Service } from '@/types';
 
 const Services = () => {
-  const [services, setServices] = useState<Service[]>([
-    {
-      id: '1',
-      name: 'Manicure Clássica',
-      salePrice: 35.00,
-      materialCosts: [
-        { materialId: '1', quantity: 2, cost: 7.66 },
-        { materialId: '2', quantity: 1, cost: 2.17 },
-        { materialId: '3', quantity: 1, cost: 1.93 }
-      ],
-      cardTaxRate: 3.99,
-      serviceTaxRate: 6.0,
-      commissionRate: 30.0,
-      totalCost: 23.26,
-      grossProfit: 11.74,
-      profitMargin: 33.5
-    }
-  ]);
-
-  const [materials] = useState<Material[]>([
-    {
-      id: '1',
-      name: 'Esmalte Premium Rosa',
-      batchQuantity: 12,
-      unit: 'ml',
-      batchPrice: 45.90,
-      unitCost: 3.83
-    },
-    {
-      id: '2',
-      name: 'Base Coat Profissional',
-      batchQuantity: 15,
-      unit: 'ml',
-      batchPrice: 32.50,
-      unitCost: 2.17
-    },
-    {
-      id: '3',
-      name: 'Top Coat Brilho',
-      batchQuantity: 15,
-      unit: 'ml',
-      batchPrice: 28.90,
-      unitCost: 1.93
-    }
-  ]);
-  
+  const { services, isLoading: servicesLoading, addService, updateService, deleteService } = useServices();
+  const { materials, isLoading: materialsLoading } = useMaterials();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [analyzingService, setAnalyzingService] = useState<Service | null>(null);
 
-  const handleAddService = (serviceData: Omit<Service, 'id'>) => {
-    const newService: Service = {
-      ...serviceData,
-      id: Date.now().toString()
-    };
-    
-    setServices(prev => [...prev, newService]);
-    setIsAddModalOpen(false);
+  const handleAddService = async (serviceData: Omit<Service, 'id'>) => {
+    try {
+      await addService.mutateAsync(serviceData);
+      setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Erro ao adicionar serviço:', error);
+    }
   };
 
-  const handleEditService = (serviceData: Omit<Service, 'id'>) => {
+  const handleEditService = async (serviceData: Omit<Service, 'id'>) => {
     if (!editingService) return;
     
-    const updatedService: Service = {
-      ...serviceData,
-      id: editingService.id
-    };
-    
-    setServices(prev => prev.map(service => 
-      service.id === editingService.id ? updatedService : service
-    ));
-    setEditingService(null);
+    try {
+      await updateService.mutateAsync({ id: editingService.id, serviceData });
+      setEditingService(null);
+    } catch (error) {
+      console.error('Erro ao atualizar serviço:', error);
+    }
   };
 
-  const handleDeleteService = (id: string) => {
-    setServices(prev => prev.filter(service => service.id !== id));
+  const handleDeleteService = async (id: string) => {
+    try {
+      await deleteService.mutateAsync(id);
+    } catch (error) {
+      console.error('Erro ao excluir serviço:', error);
+    }
   };
 
   const handleAnalyzeService = (service: Service) => {
@@ -106,6 +64,16 @@ const Services = () => {
   const closeEditModal = () => {
     setEditingService(null);
   };
+
+  if (servicesLoading || materialsLoading) {
+    return (
+      <div className="space-y-8 p-6 animate-minimal-fade">
+        <div className="text-center py-12">
+          <p className="brand-body text-symbol-gray-600">Carregando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 p-6 animate-minimal-fade">

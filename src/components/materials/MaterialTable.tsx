@@ -20,7 +20,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Material } from '@/types';
+import type { Material } from '@/types';
 
 interface MaterialTableProps {
   materials: Material[];
@@ -87,7 +87,7 @@ const MaterialTable = ({ materials, onEdit, onDelete }: MaterialTableProps) => {
                 R$ {material.batchPrice.toFixed(2)}
               </TableCell>
               <TableCell className="font-medium text-elite-rose-600">
-                {material.unit}
+                R$ {material.unitCost.toFixed(4)} / {material.unit}
               </TableCell>
               <TableCell className="text-center">
                 <div className="flex justify-center gap-2">

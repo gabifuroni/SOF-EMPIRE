@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Material } from '@/types';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -35,6 +34,7 @@ const formSchema = z.object({
 });
 
 type FormData = z.infer<typeof formSchema>;
+type MaterialFormData = FormData;
 
 const UNIT_OPTIONS = [
   { value: 'ml', label: 'ml (mililitros)' },
@@ -50,9 +50,9 @@ const UNIT_OPTIONS = [
 interface AddMaterialModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: Omit<Material, 'id' | 'unitCost'>) => void;
+  onSave: (data: MaterialFormData) => void;
   title: string;
-  initialData?: Material;
+  initialData?: MaterialFormData;
 }
 
 const AddMaterialModal = ({ 
@@ -104,15 +104,7 @@ const AddMaterialModal = ({
   }, [initialData, form]);
 
   const handleSubmit = (data: FormData) => {
-    // Ensure all required fields are present
-    const materialData: Omit<Material, 'id' | 'unitCost'> = {
-      name: data.name,
-      batchQuantity: data.batchQuantity,
-      unit: data.unit,
-      batchPrice: data.batchPrice,
-    };
-    
-    onSave(materialData);
+    onSave(data);
     form.reset();
     setUnitCost(0);
   };

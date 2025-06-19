@@ -21,7 +21,7 @@ import { useBusinessParams } from '@/hooks/useBusinessParams';
 interface PaymentMethod {
   id: string;
   name: string;
-  icon: React.ComponentType;
+  icon: React.ComponentType<{ size?: string | number; className?: string }>;
   isActive: boolean;
   distributionPercentage: number;
   taxRate: number;

@@ -3,69 +3,64 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import MaterialTable from '@/components/materials/MaterialTable';
 import AddMaterialModal from '@/components/materials/AddMaterialModal';
-import { Material } from '@/types';
+import { useMaterials } from '@/hooks/useMaterials';
+import type { Material } from '@/types';
+
+type MaterialFormData = {
+  name: string;
+  batchQuantity: number;
+  unit: string;
+  batchPrice: number;
+};
 
 const Materials = () => {
-  const [materials, setMaterials] = useState<Material[]>([
-    {
-      id: '1',
-      name: 'Esmalte Premium Rosa',
-      batchQuantity: 12,
-      unit: 'ml',
-      batchPrice: 45.90,
-      unitCost: 3.83
-    },
-    {
-      id: '2',
-      name: 'Base Coat Profissional',
-      batchQuantity: 15,
-      unit: 'ml',
-      batchPrice: 32.50,
-      unitCost: 2.17
-    },
-    {
-      id: '3',
-      name: 'Top Coat Brilho',
-      batchQuantity: 15,
-      unit: 'ml',
-      batchPrice: 28.90,
-      unitCost: 1.93
-    }
-  ]);
-  
+  const { materials, isLoading, addMaterial, updateMaterial, deleteMaterial } = useMaterials();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
 
-  const handleAddMaterial = (materialData: Omit<Material, 'id' | 'unitCost'>) => {
-    const unitCost = materialData.batchPrice / materialData.batchQuantity;
-    const newMaterial: Material = {
-      ...materialData,
-      id: Date.now().toString(),
-      unitCost
-    };
-    
-    setMaterials(prev => [...prev, newMaterial]);
-    setIsAddModalOpen(false);
+  const handleAddMaterial = async (materialData: MaterialFormData) => {
+    try {
+      const materialToAdd: Omit<Material, 'id'> = {
+        name: materialData.name,
+        batchQuantity: materialData.batchQuantity,
+        unit: materialData.unit,
+        batchPrice: materialData.batchPrice,
+        unitCost: materialData.batchPrice / materialData.batchQuantity,
+      };
+      await addMaterial.mutateAsync(materialToAdd);
+      setIsAddModalOpen(false);
+    } catch (error) {
+      console.error('Error adding material:', error);
+    }
   };
 
-  const handleEditMaterial = (materialData: Omit<Material, 'id' | 'unitCost'>) => {
+  const handleEditMaterial = async (materialData: MaterialFormData) => {
     if (!editingMaterial) return;
     
-    const unitCost = materialData.batchPrice / materialData.batchQuantity;
-    const updatedMaterial: Material = {
-      ...materialData,
-      id: editingMaterial.id,
-      unitCost
-    };
-    
-    setMaterials(prev => prev.map(material => 
-      material.id === editingMaterial.id ? updatedMaterial : material
-    ));
-    setEditingMaterial(null);
+    try {
+      const materialToUpdate: Omit<Material, 'id'> = {
+        name: materialData.name,
+        batchQuantity: materialData.batchQuantity,
+        unit: materialData.unit,
+        batchPrice: materialData.batchPrice,
+        unitCost: materialData.batchPrice / materialData.batchQuantity,
+      };
+      await updateMaterial.mutateAsync({
+        id: editingMaterial.id,
+        materialData: materialToUpdate,
+      });
+      setEditingMaterial(null);
+    } catch (error) {
+      console.error('Error updating material:', error);
+    }
   };
 
-  const handleDeleteMaterial = (id: string) => {
-    setMaterials(prev => prev.filter(material => material.id !== id));
+  const handleDeleteMaterial = async (id: string) => {
+    try {
+      await deleteMaterial.mutateAsync(id);
+    } catch (error) {
+      console.error('Error deleting material:', error);
+    }
   };
 
   const openEditModal = (material: Material) => {
@@ -75,6 +70,17 @@ const Materials = () => {
   const closeEditModal = () => {
     setEditingMaterial(null);
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-12 h-12 border-4 border-symbol-gold border-t-symbol-beige rounded-full animate-spin mx-auto"></div>
+          <p className="brand-body text-symbol-gray-600">Carregando matérias-primas...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 p-6 animate-minimal-fade">
@@ -128,7 +134,12 @@ const Materials = () => {
           onClose={closeEditModal}
           onSave={handleEditMaterial}
           title="Editar Matéria-Prima"
-          initialData={editingMaterial}
+          initialData={{
+            name: editingMaterial.name,
+            batchQuantity: editingMaterial.batchQuantity,
+            unit: editingMaterial.unit,
+            batchPrice: editingMaterial.batchPrice,
+          }}
         />
       )}
     </div>
