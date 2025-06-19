@@ -49,7 +49,8 @@ const ExpensesHeader = ({
       </div>
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-          <Calendar className="w-4 h-4 text-symbol-gray-600" />
+          <div className='flex flex-row-reverse items-center gap-2 mb-2 sm:mb-0'>
+          <Calendar className="w-7 h-7 text-symbol-gray-600" />
           <Select value={selectedMonth} onValueChange={onMonthChange}>
             <SelectTrigger className="w-full sm:w-40 bg-symbol-gray-50 border-symbol-gray-300">
               <SelectValue placeholder="Selecione o mês" />
@@ -63,6 +64,7 @@ const ExpensesHeader = ({
             </SelectContent>
           </Select>
         </div>
+              </div>
         
         <Select value={selectedYear} onValueChange={onYearChange}>
           <SelectTrigger className="w-full sm:w-32 bg-symbol-gray-50 border-symbol-gray-300">
