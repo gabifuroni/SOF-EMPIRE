@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,6 +19,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
+import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentMethod {
   id: string;
@@ -44,9 +45,8 @@ const PaymentSettings = () => {
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSaving, setIsSaving] = useState(false); // Add loading state for save operation
-
   // Function to remove duplicates and merge data
-  const removeDuplicatePaymentMethods = (methods: PaymentMethod[]): PaymentMethod[] => {
+  const removeDuplicatePaymentMethods = useCallback((methods: PaymentMethod[]): PaymentMethod[] => {
     const uniqueMethods = new Map<string, PaymentMethod>();
       // Define similarity groups
     const similarityGroups: { [key: string]: string[] } = {
@@ -54,7 +54,7 @@ const PaymentSettings = () => {
       'credito_parcelado': ['crédito parcelado', 'credito parcelado', 'cartão de crédito parcelado', 'credit installment'],
       'debito': ['débito', 'debito', 'cartão de débito', 'cartao de debito', 'debit'],
       'pix': ['pix'],
-      'dinheiro': ['dinheiro', 'cash', 'dinheiro/cheque', 'cheque'],
+      'dinheiro': ['dinheiro', 'cash', 'dinheiro/pix', 'dinheiro/cheque', 'cheque', 'pix'],
       'transferencia': ['transferência bancária', 'transferencia bancaria', 'transferencia', 'transferência']
     };
     
@@ -76,7 +76,7 @@ const PaymentSettings = () => {
           'credito_parcelado': 'Crédito Parcelado',
           'debito': 'Débito',
           'pix': 'PIX',
-          'dinheiro': 'Dinheiro/Cheque',
+          'dinheiro': 'Dinheiro/Pix',
           'transferencia': 'Transferência Bancária'
         };
         
@@ -98,8 +98,8 @@ const PaymentSettings = () => {
     });
     
     return Array.from(uniqueMethods.values());
-  };  // Default payment methods
-  const getDefaultPaymentMethods = (): PaymentMethod[] => [
+  }, []);  // Default payment methods
+  const getDefaultPaymentMethods = useCallback((): PaymentMethod[] => [
     {
       id: 'credit',
       name: 'Crédito',
@@ -123,8 +123,7 @@ const PaymentSettings = () => {
       isActive: true,
       distributionPercentage: 15.0,
       taxRate: 1.39
-    },
-    {
+    },    {
       id: 'cash',
       name: 'Dinheiro/Pix',
       icon: Banknote,
@@ -132,7 +131,7 @@ const PaymentSettings = () => {
       distributionPercentage: 30.0,
       taxRate: 0.00
     }
-  ];
+  ], []);
 
   // Depreciation state
   const [valorMobilizado, setValorMobilizado] = useState(160000);
@@ -171,8 +170,7 @@ const PaymentSettings = () => {
     console.log('PaymentSettings initialization:', {
       isInitialized,
       dbPaymentMethodsLength: dbPaymentMethods?.length || 0,
-      paymentMethodsLength: paymentMethods.length,
-      paramsExists: !!params
+      paymentMethodsLength: paymentMethods.length
     });
 
     if (!isInitialized) {
@@ -200,10 +198,12 @@ const PaymentSettings = () => {
         setIsInitialized(true);
       }
     }
+  }, [dbPaymentMethods, isInitialized, paymentMethods.length, getDefaultPaymentMethods, removeDuplicatePaymentMethods]);
 
-    // Initialize other parameters from context
-    if (params && isInitialized) {
-      console.log('Initializing parameters from context:', params);
+  // Separate useEffect for business parameters initialization
+  useEffect(() => {
+    if (params) {
+      console.log('Initializing business parameters from context:', params);
       setLucroDesejado(params.lucroDesejado || 21.0);
       setDespesasIndiretasDepreciacao(params.despesasIndiretasDepreciacao || 35.0);
       setImpostosRate(params.impostosRate || 8.0);
@@ -212,7 +212,7 @@ const PaymentSettings = () => {
       setDepreciacaoMensal(params.depreciacaoMensal || 1450);
       setNumProfessionals(params.equipeNumeroProfissionais || 2);
     }
-  }, [params, dbPaymentMethods, isInitialized, paymentMethods.length]);
+  }, [params]); // Only depend on params
   const updatePaymentMethod = (id: string, field: keyof PaymentMethod, value: string | number | boolean) => {
     setPaymentMethods(prev => 
       prev.map(method => 
@@ -262,13 +262,12 @@ const PaymentSettings = () => {
           m.id === method.id || 
           m.nome_metodo.toLowerCase().includes(method.name.toLowerCase().split(' ')[0])
         );
-        
-        if (dbMethod && updateDbPaymentMethod) {
+          if (dbMethod && updateDbPaymentMethod) {
           await updateDbPaymentMethod.mutateAsync({
             id: dbMethod.id,
             nome_metodo: method.name,
             is_ativo: method.isActive,
-            prazo_recebimento_dias: method.distributionPercentage,
+            prazo_recebimento_dias: Math.round(method.distributionPercentage), // Convert to integer
             taxa_percentual: method.taxRate,
           });
         }
@@ -356,35 +355,32 @@ const PaymentSettings = () => {
 
   const removeHoliday = (id: string) => {
     setHolidays(holidays.filter(holiday => holiday.id !== id));
-  };  const handleSaveSettings = async () => {
-    setIsSaving(true); // Start loading
+  };
+
+  // Separate save functions for different sections
+  const handleSaveMargins = async () => {
+    setIsSaving(true);
     
-    const totalDistribution = getTotalDistribution();
     const totalMargins = lucroDesejado + despesasIndiretasDepreciacao + despesasDiretas;
     
-    // Validação mais flexível para distribuição - apenas avisa se não for 100%
-    // mas não impede o salvamento, pois o campo pode estar sendo usado para outros fins
-    if (Math.abs(totalDistribution - 100) > 0.01) {
-      const shouldContinue = window.confirm(
-        `A soma dos percentuais de distribuição é ${totalDistribution.toFixed(2)}%, não 100%. Deseja continuar mesmo assim?`
-      );
-      if (!shouldContinue) {
-        setIsSaving(false); // Stop loading
-        return;
-      }
-    }
-
     if (Math.abs(totalMargins - 100) > 0.01) {
       toast({
         title: "Erro de Validação",
         description: "A soma das margens deve ser igual a 100%",
         variant: "destructive"
       });
-      setIsSaving(false); // Stop loading
+      setIsSaving(false);
       return;
-    }try {
-      setIsSaving(true); // Start loading
-      // Save business settings to database
+    }
+
+    try {
+      console.log('Saving margins with values:', {
+        lucroDesejado,
+        despesasIndiretasDepreciacao,
+        despesasDiretas,
+        impostosRate
+      });
+
       await saveSettings.mutateAsync({
         lucroDesejado,
         taxaImpostos: impostosRate,
@@ -396,73 +392,62 @@ const PaymentSettings = () => {
         equipeNumeroProfissionais: numProfessionals,
       });
 
-      // Save payment methods to database - improved error handling
-      const paymentUpdatePromises = paymentMethods.map(async (method) => {
-        try {
-          const dbMethod = dbPaymentMethods.find(m => 
-            m.nome_metodo.toLowerCase() === method.name.toLowerCase() ||
-            m.id === method.id
-          );
-          
-          if (dbMethod && updateDbPaymentMethod) {
-            await updateDbPaymentMethod.mutateAsync({
-              id: dbMethod.id,
-              nome_metodo: method.name,
-              is_ativo: method.isActive,
-              prazo_recebimento_dias: method.distributionPercentage,
-              taxa_percentual: method.taxRate,
-            });
-          }
-        } catch (methodError) {
-          console.error(`Error updating payment method ${method.name}:`, methodError);
-          // Don't throw here to allow other methods to be updated
-        }
-      });
-
-      await Promise.allSettled(paymentUpdatePromises);
-
-      // Update context after successful save
+      // Update context with new margin values
       updateParams({
-        paymentMethods: paymentMethods.map(pm => ({
-          id: pm.id,
-          name: pm.name,
-          isActive: pm.isActive,
-          distributionPercentage: pm.distributionPercentage,
-          taxRate: pm.taxRate
-        })),
         lucroDesejado,
         despesasIndiretasDepreciacao,
         despesasDiretas,
         impostosRate,
-        workingDaysPerYear: calculateWorkingDaysPerYear(),
         depreciacaoValorMobilizado: valorMobilizado,
         depreciacaoTotalMesDepreciado: totalDepreciado,
         depreciacaoMensal,
         equipeNumeroProfissionais: numProfessionals,
+        workingDaysPerYear: calculateWorkingDaysPerYear(),
       });
 
-      toast({        title: "Sucesso!",
-        description: "Parâmetros do negócio salvos com sucesso!",
+      toast({
+        title: "Sucesso!",
+        description: "Configurações de margens salvas com sucesso!",
         variant: "default"
       });    } catch (error) {
-      console.error('Error saving settings:', error);
+      console.error('Error saving margins:', error);
       
-      // Provide more specific error information
-      let errorMessage = "Erro ao salvar parâmetros do negócio. Tente novamente.";
+      let errorMessage = "Erro ao salvar configurações de margens. Tente novamente.";
       
       if (error instanceof Error) {
-        console.error('Error details:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name
-        });
-        
-        if (error.message.includes('duplicate') || error.message.includes('unique')) {
-          errorMessage = "Erro: Dados duplicados detectados. Verifique se não há métodos de pagamento repetidos.";
-        } else if (error.message.includes('permission') || error.message.includes('auth')) {
-          errorMessage = "Erro de permissão. Faça login novamente e tente novamente.";
-        } else if (error.message.includes('network') || error.message.includes('fetch')) {
-          errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
+        if (error.message.includes('23505') || error.message.includes('duplicate')) {
+          errorMessage = "Erro: Dados duplicados detectados. Tentando atualizar os dados existentes...";
+          
+          // Try to update instead of insert
+          try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              const { error: updateError } = await supabase
+                .from('parametros_negocio')
+                .update({
+                  lucro_desejado: lucroDesejado,
+                  taxa_impostos: impostosRate,
+                  taxa_media_ponderada: calculateWeightedAverageRate(),
+                  depreciacao_valor_mobilizado: valorMobilizado,
+                  depreciacao_total_mes_depreciado: totalDepreciado,
+                  depreciacao_mensal: depreciacaoMensal,
+                  dias_trabalhados_ano: calculateWorkingDaysPerYear(),
+                  equipe_numero_profissionais: numProfessionals,
+                })
+                .eq('user_id', user.id);
+                
+              if (!updateError) {
+                toast({
+                  title: "Sucesso!",
+                  description: "Configurações de margens atualizadas com sucesso!",
+                  variant: "default"
+                });
+                return;
+              }
+            }
+          } catch (updateError) {
+            console.error('Error updating margins:', updateError);
+          }
         }
       }
       
@@ -472,10 +457,80 @@ const PaymentSettings = () => {
         variant: "destructive"
       });
     } finally {
-      setIsSaving(false); // End loading
+      setIsSaving(false);
     }
   };
 
+  const handleSavePaymentMethods = async () => {
+    setIsSaving(true);
+    
+    const totalDistribution = getTotalDistribution();
+    
+    // Validação mais flexível para distribuição
+    if (Math.abs(totalDistribution - 100) > 0.01) {
+      const shouldContinue = window.confirm(
+        `A soma dos percentuais de distribuição é ${totalDistribution.toFixed(2)}%, não 100%. Deseja continuar mesmo assim?`
+      );
+      if (!shouldContinue) {
+        setIsSaving(false);
+        return;
+      }
+    }
+
+    try {
+      console.log('Saving payment methods:', paymentMethods);
+
+      // Save payment methods to database
+      const paymentUpdatePromises = paymentMethods.map(async (method) => {
+        try {
+          const dbMethod = dbPaymentMethods.find(m => 
+            m.nome_metodo.toLowerCase() === method.name.toLowerCase() ||
+            m.id === method.id
+          );
+            if (dbMethod && updateDbPaymentMethod) {
+            await updateDbPaymentMethod.mutateAsync({
+              id: dbMethod.id,
+              nome_metodo: method.name,
+              is_ativo: method.isActive,
+              prazo_recebimento_dias: Math.round(method.distributionPercentage), // Convert to integer
+              taxa_percentual: method.taxRate,
+            });
+          }
+        } catch (methodError) {
+          console.error(`Error updating payment method ${method.name}:`, methodError);
+        }
+      });
+
+      await Promise.allSettled(paymentUpdatePromises);
+
+      // Update context with new payment methods
+      updateParams({
+        paymentMethods: paymentMethods.map(pm => ({
+          id: pm.id,
+          name: pm.name,
+          isActive: pm.isActive,
+          distributionPercentage: pm.distributionPercentage,
+          taxRate: pm.taxRate
+        })),
+        weightedAverageRate: calculateWeightedAverageRate(),
+      });
+
+      toast({
+        title: "Sucesso!",
+        description: "Métodos de pagamento salvos com sucesso!",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Error saving payment methods:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar métodos de pagamento. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
   const weightedAverageRate = calculateWeightedAverageRate();
   const totalDistribution = getTotalDistribution();
   const workingDaysPerYear = calculateWorkingDaysPerYear();
@@ -580,10 +635,21 @@ const PaymentSettings = () => {
               className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black pr-8"
             />
             <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-symbol-gray-600 text-sm">%</span>
-          </div>
-          <p className="text-xs text-symbol-gray-500 mt-1">
+          </div>          <p className="text-xs text-symbol-gray-500 mt-1">
             Taxa fixa de impostos aplicada aos serviços
           </p>
+        </div>
+        
+        {/* Save Margins Button */}
+        <div className="mt-6 flex justify-center">
+          <Button 
+            onClick={handleSaveMargins}
+            disabled={isSaving}
+            className="bg-symbol-gold hover:bg-symbol-gold/80 text-symbol-black font-medium py-3 px-6 transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-sm disabled:opacity-50"
+          >
+            <Save size={18} />
+            {isSaving ? 'Salvando...' : 'Salvar Configurações de Margens'}
+          </Button>
         </div>
       </div>
 
@@ -967,8 +1033,16 @@ const PaymentSettings = () => {
             >
               <Users className="w-4 h-4 mr-2" />
               Limpar Duplicatas
-            </Button>
-          )}
+            </Button>          )}
+          
+          <Button
+            onClick={handleSavePaymentMethods}
+            disabled={isSaving}
+            className="bg-symbol-gold hover:bg-symbol-gold/80 text-symbol-black font-medium py-2 px-4 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <Save size={16} />
+            {isSaving ? 'Salvando...' : 'Salvar Métodos de Pagamento'}
+          </Button>
           
           <Button
             onClick={resetToDefaults}
@@ -1049,17 +1123,23 @@ const PaymentSettings = () => {
             </p>
           </div>
         )}
-      </div>
-
-      {/* Save Button */}
-      <div className="flex justify-center pt-8">        <Button 
-          onClick={handleSaveSettings}
-          disabled={isSaving}
-          className="w-full sm:w-auto bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-4 px-8 transition-all duration-300 flex items-center justify-center gap-3 uppercase tracking-wider text-sm disabled:opacity-50"
-        >
-          <Save size={20} />
-          {isSaving ? 'Salvando...' : 'Salvar Parâmetros do Negócio'}
-        </Button>
+      </div>      {/* Save All Button */}
+      <div className="flex justify-center pt-8">
+        <div className="text-center">
+          <p className="text-sm text-symbol-gray-600 mb-4">
+            Ou salve todas as configurações de uma vez:
+          </p>          <Button 
+            onClick={async () => {
+              await handleSaveMargins();
+              await handleSavePaymentMethods();
+            }}
+            disabled={isSaving}
+            className="w-full sm:w-auto bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-4 px-8 transition-all duration-300 flex items-center justify-center gap-3 uppercase tracking-wider text-sm disabled:opacity-50"
+          >
+            <Save size={20} />
+            {isSaving ? 'Salvando...' : 'Salvar Todas as Configurações'}
+          </Button>
+        </div>
       </div>
     </div>
   );

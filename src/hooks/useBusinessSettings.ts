@@ -49,9 +49,7 @@ export const useBusinessSettings = () => {
   const saveSettings = useMutation({
     mutationFn: async (newSettings: Omit<BusinessSettings, 'id'>) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
-
-      const { data, error } = await supabase
+      if (!user) throw new Error('User not authenticated');      const { data, error } = await supabase
         .from('parametros_negocio')
         .upsert({
           user_id: user.id,
@@ -63,6 +61,8 @@ export const useBusinessSettings = () => {
           depreciacao_mensal: newSettings.depreciacaoMensal,
           dias_trabalhados_ano: newSettings.diasTrabalhadosAno,
           equipe_numero_profissionais: newSettings.equipeNumeroProfissionais,
+        }, {
+          onConflict: 'user_id'
         })
         .select()
         .single();
