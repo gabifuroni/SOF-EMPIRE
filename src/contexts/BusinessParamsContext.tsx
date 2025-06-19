@@ -27,6 +27,16 @@ interface BusinessParams {
   depreciacaoTotalMesDepreciado: number;
   depreciacaoMensal: number;
   equipeNumeroProfissionais: number;
+  // Campos para dias da semana trabalhados
+  trabalhaSegunda: boolean;
+  trabalhaTerca: boolean;
+  trabalhaQuarta: boolean;
+  trabalhaQuinta: boolean;
+  trabalhaSexta: boolean;
+  trabalhaSabado: boolean;
+  trabalhaDomingo: boolean;
+  // Campo para feriados
+  feriados: Array<{id: string, date: string, name: string}>;
 }
 
 interface BusinessParamsContextType {
@@ -49,8 +59,7 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
 
   // Usar ref para manter referência estável da função
   const calculateWeightedAverageRateRef = useRef(dbCalculateWeightedAverageRate);
-  calculateWeightedAverageRateRef.current = dbCalculateWeightedAverageRate;
-  const [params, setParams] = useState<BusinessParams>({
+  calculateWeightedAverageRateRef.current = dbCalculateWeightedAverageRate;  const [params, setParams] = useState<BusinessParams>({
     lucroDesejado: 21.0,
     despesasIndiretasDepreciacao: 35.0,
     despesasDiretas: 44.0,
@@ -65,6 +74,20 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
     depreciacaoTotalMesDepreciado: 87000,
     depreciacaoMensal: 1450,
     equipeNumeroProfissionais: 2,
+    // Valores padrão para dias da semana
+    trabalhaSegunda: true,
+    trabalhaTerca: true,
+    trabalhaQuarta: true,
+    trabalhaQuinta: true,
+    trabalhaSexta: true,
+    trabalhaSabado: false,
+    trabalhaDomingo: false,
+    // Feriados padrão
+    feriados: [
+      { id: '1', date: '2024-01-01', name: 'Confraternização Universal' },
+      { id: '2', date: '2024-04-21', name: 'Tiradentes' },
+      { id: '3', date: '2024-09-07', name: 'Independência do Brasil' }
+    ],
   });
   // Memoizar paymentMethods para evitar mudanças desnecessárias
   const memoizedPaymentMethods = useMemo(() => {
@@ -90,7 +113,6 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
     }
     return [];
   }, [dbPaymentMethods, paymentMethodsLoading]);
-
   // Memoizar configurações do negócio
   const memoizedBusinessSettings = useMemo(() => {
     if (!settingsLoading && businessSettings) {
@@ -103,6 +125,15 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
         depreciacaoTotalMesDepreciado: businessSettings.depreciacaoTotalMesDepreciado,
         depreciacaoMensal: businessSettings.depreciacaoMensal,
         equipeNumeroProfissionais: businessSettings.equipeNumeroProfissionais,
+        // Novos campos
+        trabalhaSegunda: businessSettings.trabalhaSegunda,
+        trabalhaTerca: businessSettings.trabalhaTerca,
+        trabalhaQuarta: businessSettings.trabalhaQuarta,
+        trabalhaQuinta: businessSettings.trabalhaQuinta,
+        trabalhaSexta: businessSettings.trabalhaSexta,
+        trabalhaSabado: businessSettings.trabalhaSabado,
+        trabalhaDomingo: businessSettings.trabalhaDomingo,
+        feriados: businessSettings.feriados,
       };
     }
     return null;

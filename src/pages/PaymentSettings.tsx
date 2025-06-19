@@ -461,57 +461,154 @@ const PaymentSettings = () => {
     }
   };
 
+  const handleSaveDepreciation = async () => {
+    setIsSaving(true);
+    
+    try {
+      console.log('Salvando dados de depreciação:', {
+        valorMobilizado,
+        totalDepreciado,
+        depreciacaoMensal
+      });
+
+      await saveSettings.mutateAsync({
+        lucroDesejado,
+        taxaImpostos: impostosRate,
+        taxaMediaPonderada: calculateWeightedAverageRate(),
+        depreciacaoValorMobilizado: valorMobilizado,
+        depreciacaoTotalMesDepreciado: totalDepreciado,
+        depreciacaoMensal,
+        diasTrabalhadosAno: calculateWorkingDaysPerYear(),
+        equipeNumeroProfissionais: numProfessionals,
+      });
+
+      // Update context with depreciation values
+      updateParams({
+        depreciacaoValorMobilizado: valorMobilizado,
+        depreciacaoTotalMesDepreciado: totalDepreciado,
+        depreciacaoMensal,
+      });
+
+      toast({
+        title: "Sucesso!",
+        description: "Dados de depreciação salvos com sucesso!",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Error saving depreciation:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar dados de depreciação. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Função para salvar apenas dados de dias trabalhados
+  const handleSaveWorkingDays = async () => {
+    setIsSaving(true);
+    
+    try {
+      console.log('Salvando dados de dias trabalhados:', {
+        workingDays,
+        holidays,
+        diasCalculados: calculateWorkingDaysPerYear()
+      });
+
+      await saveSettings.mutateAsync({
+        lucroDesejado,
+        taxaImpostos: impostosRate,
+        taxaMediaPonderada: calculateWeightedAverageRate(),
+        depreciacaoValorMobilizado: valorMobilizado,
+        depreciacaoTotalMesDepreciado: totalDepreciado,
+        depreciacaoMensal,
+        diasTrabalhadosAno: calculateWorkingDaysPerYear(),
+        equipeNumeroProfissionais: numProfessionals,
+        // Adicionar campos de dias da semana
+        trabalhaSegunda: workingDays.segunda,
+        trabalhaTerca: workingDays.terca,
+        trabalhaQuarta: workingDays.quarta,
+        trabalhaQuinta: workingDays.quinta,
+        trabalhaSexta: workingDays.sexta,
+        trabalhaSabado: workingDays.sabado,
+        trabalhaDomingo: workingDays.domingo,
+        feriados: holidays,
+      });
+
+      // Update context with working days values
+      updateParams({
+        workingDaysPerYear: calculateWorkingDaysPerYear(),
+        trabalhaSegunda: workingDays.segunda,
+        trabalhaTerca: workingDays.terca,
+        trabalhaQuarta: workingDays.quarta,
+        trabalhaQuinta: workingDays.quinta,
+        trabalhaSexta: workingDays.sexta,
+        trabalhaSabado: workingDays.sabado,
+        trabalhaDomingo: workingDays.domingo,
+        feriados: holidays,
+      });
+
+      toast({
+        title: "Sucesso!",
+        description: "Configurações de dias trabalhados salvas com sucesso!",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Error saving working days:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar configurações de dias trabalhados. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Função para salvar apenas métodos de pagamento
   const handleSavePaymentMethods = async () => {
     setIsSaving(true);
     
-    const totalDistribution = getTotalDistribution();
-    
-    // Validação mais flexível para distribuição
-    if (Math.abs(totalDistribution - 100) > 0.01) {
-      const shouldContinue = window.confirm(
-        `A soma dos percentuais de distribuição é ${totalDistribution.toFixed(2)}%, não 100%. Deseja continuar mesmo assim?`
-      );
-      if (!shouldContinue) {
+    try {
+      console.log('Salvando métodos de pagamento:', paymentMethods);
+
+      // Validate total distribution
+      const totalDistribution = getTotalDistribution();
+      if (Math.abs(totalDistribution - 100) > 0.01) {
+        toast({
+          title: "Erro de Validação",
+          description: "A soma das distribuições deve ser igual a 100%",
+          variant: "destructive"
+        });
         setIsSaving(false);
         return;
       }
-    }
-
-    try {
-      console.log('Saving payment methods:', paymentMethods);
 
       // Save payment methods to database
-      const paymentUpdatePromises = paymentMethods.map(async (method) => {
-        try {
-          const dbMethod = dbPaymentMethods.find(m => 
-            m.nome_metodo.toLowerCase() === method.name.toLowerCase() ||
-            m.id === method.id
-          );
-            if (dbMethod && updateDbPaymentMethod) {
-            await updateDbPaymentMethod.mutateAsync({
-              id: dbMethod.id,
-              nome_metodo: method.name,
-              is_ativo: method.isActive,
-              prazo_recebimento_dias: Math.round(method.distributionPercentage), // Convert to integer
-              taxa_percentual: method.taxRate,
-            });
-          }
-        } catch (methodError) {
-          console.error(`Error updating payment method ${method.name}:`, methodError);
+      const savePromises = paymentMethods.map(async (method) => {
+        const dbMethod = dbPaymentMethods.find(m => 
+          m.id === method.id || 
+          m.nome_metodo.toLowerCase().includes(method.name.toLowerCase().split(' ')[0])
+        );
+        
+        if (dbMethod && updateDbPaymentMethod) {
+          await updateDbPaymentMethod.mutateAsync({
+            id: dbMethod.id,
+            nome_metodo: method.name,
+            is_ativo: method.isActive,
+            prazo_recebimento_dias: Math.round(method.distributionPercentage),
+            taxa_percentual: method.taxRate,
+          });
         }
       });
 
-      await Promise.allSettled(paymentUpdatePromises);
+      await Promise.allSettled(savePromises);
 
-      // Update context with new payment methods
+      // Update context with payment methods
       updateParams({
-        paymentMethods: paymentMethods.map(pm => ({
-          id: pm.id,
-          name: pm.name,
-          isActive: pm.isActive,
-          distributionPercentage: pm.distributionPercentage,
-          taxRate: pm.taxRate
-        })),
+        paymentMethods: paymentMethods,
         weightedAverageRate: calculateWeightedAverageRate(),
       });
 
@@ -531,6 +628,7 @@ const PaymentSettings = () => {
       setIsSaving(false);
     }
   };
+
   const weightedAverageRate = calculateWeightedAverageRate();
   const totalDistribution = getTotalDistribution();
   const workingDaysPerYear = calculateWorkingDaysPerYear();
@@ -714,6 +812,18 @@ const PaymentSettings = () => {
             </div>
           </div>
         </div>
+        
+        {/* Save Depreciation Button */}
+        <div className="mt-6 flex justify-center">
+          <Button 
+            onClick={handleSaveDepreciation}
+            disabled={isSaving}
+            className="bg-symbol-gold hover:bg-symbol-gold/80 text-symbol-black font-medium py-3 px-6 transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-sm disabled:opacity-50"
+          >
+            <Save size={18} />
+            {isSaving ? 'Salvando...' : 'Salvar Dados de Depreciação'}
+          </Button>
+        </div>
       </div>
 
       {/* Working Days Section */}
@@ -821,6 +931,18 @@ const PaymentSettings = () => {
               </span>
             </div>
           </div>
+        </div>
+        
+        {/* Save Working Days Button */}
+        <div className="mt-6 flex justify-center">
+          <Button 
+            onClick={handleSaveWorkingDays}
+            disabled={isSaving}
+            className="bg-symbol-gold hover:bg-symbol-gold/80 text-symbol-black font-medium py-3 px-6 transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-sm disabled:opacity-50"
+          >
+            <Save size={18} />
+            {isSaving ? 'Salvando...' : 'Salvar Configurações de Dias Trabalhados'}
+          </Button>
         </div>
       </div>
 
