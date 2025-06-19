@@ -194,7 +194,7 @@ const AddExpenseModal = ({ show, onClose, onSave, entry, defaultDate }: AddExpen
             />
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <Button 
               type="submit" 
               className="flex-1 bg-red-600 hover:bg-red-700 text-white font-light transition-all duration-300"

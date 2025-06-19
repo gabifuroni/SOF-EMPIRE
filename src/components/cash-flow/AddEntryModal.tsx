@@ -274,7 +274,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
             />
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col sm:flex-row gap-3 pt-4">
             <Button 
               type="submit" 
               className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"

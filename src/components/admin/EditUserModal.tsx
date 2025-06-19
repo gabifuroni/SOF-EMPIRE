@@ -220,7 +220,7 @@ const EditUserModal = ({ show, onClose, onUpdateUser, user }: EditUserModalProps
             </div>
           </div>
           
-          <div className="flex gap-2 pt-4">
+          <div className="flex flex-col sm:flex-row gap-2 pt-4">
             <Button
               type="button"
               variant="outline"

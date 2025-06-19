@@ -23,7 +23,7 @@ const DailyCashFlowHeader = ({ today, onAddEntry, onAddExpense }: DailyCashFlowH
         </p>
       </div>
       
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <Button 
           onClick={onAddEntry}
           className="bg-emerald-600 hover:bg-emerald-700 text-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"

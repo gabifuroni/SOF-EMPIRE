@@ -145,7 +145,7 @@ const AddServiceModal = ({ show, service, materials, onClose, onSave }: AddServi
             commissionCost={commissionCost}
           />
 
-          <div className="flex justify-end gap-3">
+          <div className="flex flex-col sm:flex-row justify-end gap-3">
             <Button 
               type="button" 
               variant="outline" 

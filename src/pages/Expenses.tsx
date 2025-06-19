@@ -277,7 +277,7 @@ const Expenses = () => {
             </div>
           </div>
 
-          <div className="flex gap-3 mt-6">
+          <div className="flex flex-col sm:flex-row gap-3 mt-6">
             <Button
               onClick={handleAddExpense}
               className="bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-2 px-4 transition-all duration-300 uppercase tracking-wide text-sm"

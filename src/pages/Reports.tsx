@@ -212,7 +212,7 @@ const Reports = () => {
         </div>
 
         {/* Date Filters */}
-        <div className="flex gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
             <SelectTrigger className="w-48 bg-symbol-gray-50 border-symbol-gray-300">
               <SelectValue placeholder="Selecione o mês" />
@@ -277,7 +277,7 @@ const Reports = () => {
       </div>
 
       {/* Date Filters */}
-      <div className="flex gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
           <SelectTrigger className="w-48 bg-symbol-gray-50 border-symbol-gray-300">
             <SelectValue placeholder="Selecione o mês" />
