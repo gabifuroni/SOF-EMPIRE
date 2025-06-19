@@ -199,7 +199,6 @@ const PaymentSettings = () => {
       }
     }
   }, [dbPaymentMethods, isInitialized, paymentMethods.length, getDefaultPaymentMethods, removeDuplicatePaymentMethods]);
-
   // Separate useEffect for business parameters initialization
   useEffect(() => {
     if (params) {
@@ -211,6 +210,24 @@ const PaymentSettings = () => {
       setTotalDepreciado(params.depreciacaoTotalMesDepreciado || 87000);
       setDepreciacaoMensal(params.depreciacaoMensal || 1450);
       setNumProfessionals(params.equipeNumeroProfissionais || 2);
+      
+      // Inicializar dados de dias trabalhados se existirem no contexto
+      if (params.trabalhaSegunda !== undefined) {
+        setWorkingDays({
+          segunda: params.trabalhaSegunda,
+          terca: params.trabalhaTerca,
+          quarta: params.trabalhaQuarta,
+          quinta: params.trabalhaQuinta,
+          sexta: params.trabalhaSexta,
+          sabado: params.trabalhaSabado,
+          domingo: params.trabalhaDomingo,
+        });
+      }
+      
+      // Inicializar feriados se existirem no contexto
+      if (params.feriados && params.feriados.length > 0) {
+        setHolidays(params.feriados);
+      }
     }
   }, [params]); // Only depend on params
   const updatePaymentMethod = (id: string, field: keyof PaymentMethod, value: string | number | boolean) => {
@@ -629,6 +646,57 @@ const PaymentSettings = () => {
     }
   };
 
+  // Função para salvar apenas dados da equipe
+  const handleSaveTeam = async () => {
+    setIsSaving(true);
+    
+    try {
+      console.log('Salvando dados de equipe:', {
+        numProfessionals
+      });
+
+      await saveSettings.mutateAsync({
+        lucroDesejado,
+        taxaImpostos: impostosRate,
+        taxaMediaPonderada: calculateWeightedAverageRate(),
+        depreciacaoValorMobilizado: valorMobilizado,
+        depreciacaoTotalMesDepreciado: totalDepreciado,
+        depreciacaoMensal,
+        diasTrabalhadosAno: calculateWorkingDaysPerYear(),
+        equipeNumeroProfissionais: numProfessionals,
+        // Valores padrão para os campos obrigatórios
+        trabalhaSegunda: workingDays.segunda,
+        trabalhaTerca: workingDays.terca,
+        trabalhaQuarta: workingDays.quarta,
+        trabalhaQuinta: workingDays.quinta,
+        trabalhaSexta: workingDays.sexta,
+        trabalhaSabado: workingDays.sabado,
+        trabalhaDomingo: workingDays.domingo,
+        feriados: holidays,
+      });
+
+      // Update context with team values
+      updateParams({
+        equipeNumeroProfissionais: numProfessionals,
+      });
+
+      toast({
+        title: "Sucesso!",
+        description: "Dados da equipe salvos com sucesso!",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Error saving team:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar dados da equipe. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const weightedAverageRate = calculateWeightedAverageRate();
   const totalDistribution = getTotalDistribution();
   const workingDaysPerYear = calculateWorkingDaysPerYear();
@@ -944,9 +1012,7 @@ const PaymentSettings = () => {
             {isSaving ? 'Salvando...' : 'Salvar Configurações de Dias Trabalhados'}
           </Button>
         </div>
-      </div>
-
-      {/* Number of Professionals */}
+      </div>      {/* Number of Professionals */}
       <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
@@ -969,6 +1035,18 @@ const PaymentSettings = () => {
             onChange={(e) => setNumProfessionals(parseInt(e.target.value) || 1)}
             className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black"
           />
+        </div>
+        
+        {/* Save Team Button */}
+        <div className="mt-6 flex justify-center">
+          <Button 
+            onClick={handleSaveTeam}
+            disabled={isSaving}
+            className="bg-symbol-gold hover:bg-symbol-gold/80 text-symbol-black font-medium py-3 px-6 transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-sm disabled:opacity-50"
+          >
+            <Save size={18} />
+            {isSaving ? 'Salvando...' : 'Salvar Dados da Equipe'}
+          </Button>
         </div>
       </div>
 
