@@ -105,11 +105,10 @@ BEGIN
   -- Insert default payment methods
   INSERT INTO public.config_formas_pagamento (user_id, nome_metodo, taxa_percentual, prazo_recebimento_dias)
   VALUES 
-    (new.id, 'Dinheiro', 0, 0),
-    (new.id, 'Pix', 0, 0),
-    (new.id, 'Cartão de Débito', 2.5, 1),
-    (new.id, 'Cartão de Crédito', 3.5, 30),
-    (new.id, 'Transferência Bancária', 0, 1);
+    (new.id, 'Crédito', 3.20, 50.0),
+    (new.id, 'Crédito Parcelado', 6.34, 5.0),
+    (new.id, 'Débito', 1.39, 15.0),
+    (new.id, 'Dinheiro/Cheque', 0.00, 30.0);
 
   -- Insert default indirect expense categories
   INSERT INTO public.despesas_indiretas_categorias (user_id, nome_categoria_despesa, is_predefinida)

@@ -15,6 +15,7 @@ interface AddEntryModalProps {
   onClose: () => void;
   onSave: (entry: Omit<CashFlowEntry, 'id'>) => void;
   entry?: CashFlowEntry;
+  defaultDate?: Date;
 }
 
 interface Service {
@@ -23,9 +24,9 @@ interface Service {
   sale_price: number;
 }
 
-const AddEntryModal = ({ show, onClose, onSave, entry }: AddEntryModalProps) => {
+const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryModalProps) => {
   const [formData, setFormData] = useState({
-    date: format(new Date(), 'yyyy-MM-dd'),
+    date: format(defaultDate || new Date(), 'yyyy-MM-dd'),
     description: '',
     amount: '',
     paymentMethod: '',
@@ -68,7 +69,6 @@ const AddEntryModal = ({ show, onClose, onSave, entry }: AddEntryModalProps) => 
 
     loadServices();
   }, [show]);
-
   useEffect(() => {
     if (entry) {
       setFormData({
@@ -80,7 +80,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry }: AddEntryModalProps) => 
       });
     } else {
       setFormData({
-        date: format(new Date(), 'yyyy-MM-dd'),
+        date: format(defaultDate || new Date(), 'yyyy-MM-dd'),
         description: '',
         amount: '',
         paymentMethod: '',
@@ -89,7 +89,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry }: AddEntryModalProps) => 
       setSelectedServices([]);
     }
     setErrors({});
-  }, [entry, show]);
+  }, [entry, show, defaultDate]);
 
   const handleServiceToggle = (serviceId: string, serviceName: string, servicePrice: number) => {
     setSelectedServices(prev => {
@@ -151,12 +151,12 @@ const AddEntryModal = ({ show, onClose, onSave, entry }: AddEntryModalProps) => 
     onSave(entryData);
     onClose();
   };
-
   const paymentMethods = [
     'Dinheiro',
     'Pix',
     'Cartão de Débito',
     'Cartão de Crédito',
+    'Crédito Parcelado',
     'Transferência Bancária'
   ];
 
@@ -169,8 +169,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry }: AddEntryModalProps) => 
           </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
+        <form onSubmit={handleSubmit} className="space-y-4">          <div>
             <Label htmlFor="date" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Data</Label>
             <Input
               id="date"
@@ -178,7 +177,14 @@ const AddEntryModal = ({ show, onClose, onSave, entry }: AddEntryModalProps) => 
               value={formData.date}
               onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
               className="mt-1 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
+              readOnly={!!defaultDate}
+              title={defaultDate ? "Data fixada para o dia atual" : "Selecione a data"}
             />
+            {defaultDate && (
+              <p className="text-xs text-symbol-gray-600 mt-1">
+                Data fixada para hoje - {format(defaultDate, 'dd/MM/yyyy')}
+              </p>
+            )}
           </div>
 
           {/* Services Selection */}

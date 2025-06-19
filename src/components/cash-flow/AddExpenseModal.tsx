@@ -12,11 +12,12 @@ interface AddExpenseModalProps {
   onClose: () => void;
   onSave: (expense: Omit<CashFlowEntry, 'id'>) => void;
   entry?: CashFlowEntry;
+  defaultDate?: Date;
 }
 
-const AddExpenseModal = ({ show, onClose, onSave, entry }: AddExpenseModalProps) => {
+const AddExpenseModal = ({ show, onClose, onSave, entry, defaultDate }: AddExpenseModalProps) => {
   const [formData, setFormData] = useState({
-    date: format(new Date(), 'yyyy-MM-dd'),
+    date: format(defaultDate || new Date(), 'yyyy-MM-dd'),
     description: '',
     amount: '',
     category: '',
@@ -36,7 +37,7 @@ const AddExpenseModal = ({ show, onClose, onSave, entry }: AddExpenseModalProps)
       });
     } else {
       setFormData({
-        date: format(new Date(), 'yyyy-MM-dd'),
+        date: format(defaultDate || new Date(), 'yyyy-MM-dd'),
         description: '',
         amount: '',
         category: '',
@@ -44,7 +45,7 @@ const AddExpenseModal = ({ show, onClose, onSave, entry }: AddExpenseModalProps)
       });
     }
     setErrors({});
-  }, [entry, show]);
+  }, [entry, show, defaultDate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -114,7 +115,14 @@ const AddExpenseModal = ({ show, onClose, onSave, entry }: AddExpenseModalProps)
               value={formData.date}
               onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
               className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige text-symbol-black"
+              readOnly={!!defaultDate}
+              title={defaultDate ? "Data fixada para o dia atual" : "Selecione a data"}
             />
+            {defaultDate && (
+              <p className="text-xs text-symbol-gray-600 mt-1">
+                Data fixada para hoje - {format(defaultDate, 'dd/MM/yyyy')}
+              </p>
+            )}
           </div>
 
           <div>

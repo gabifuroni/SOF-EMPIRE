@@ -32,20 +32,20 @@ const DailyCashFlowTable = ({ todayEntries, today, onDeleteEntry }: DailyCashFlo
 
   return (
     <div className="overflow-x-auto">
-      <Table>
-        <TableHeader>
+      <Table>        <TableHeader>
           <TableRow>
             <TableHead className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Descrição</TableHead>
             <TableHead className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Tipo</TableHead>
+            <TableHead className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Método/Categoria</TableHead>
             <TableHead className="text-right brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Valor (R$)</TableHead>
+            <TableHead className="text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Horário</TableHead>
             <TableHead className="text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {todayEntries
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .map((entry, index) => (
-            <TableRow key={entry.id} className={index % 2 === 0 ? 'bg-symbol-gray-50/30' : ''}>
+            .map((entry, index) => (            <TableRow key={entry.id} className={index % 2 === 0 ? 'bg-symbol-gray-50/30' : ''}>
               <TableCell className="font-medium brand-body text-symbol-black">{entry.description}</TableCell>
               <TableCell>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -56,12 +56,18 @@ const DailyCashFlowTable = ({ todayEntries, today, onDeleteEntry }: DailyCashFlo
                   {entry.tipo_transacao === 'ENTRADA' ? 'Entrada' : 'Saída'}
                 </span>
               </TableCell>
+              <TableCell className="text-sm text-symbol-gray-600">
+                {entry.payment_method || entry.category || '-'}
+              </TableCell>
               <TableCell className="text-right">
                 <span className={`font-semibold ${
                   entry.tipo_transacao === 'ENTRADA' ? 'text-emerald-600' : 'text-red-600'
                 }`}>
                   R$ {Number(entry.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
+              </TableCell>
+              <TableCell className="text-center text-sm text-symbol-gray-600">
+                {format(new Date(entry.created_at), 'HH:mm', { locale: ptBR })}
               </TableCell>
               <TableCell className="text-center">
                 <Button

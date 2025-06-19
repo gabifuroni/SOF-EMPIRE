@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
+import { useBusinessSettings } from '@/hooks/useBusinessSettings';
+import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 
 interface PaymentMethod {
   id: string;
@@ -36,8 +38,68 @@ interface Holiday {
 const PaymentSettings = () => {
   const { toast } = useToast();
   const { params, updateParams } = useBusinessParams();
-  
-  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([
+  const { saveSettings } = useBusinessSettings();
+  const { paymentMethods: dbPaymentMethods, updatePaymentMethod: updateDbPaymentMethod } = usePaymentMethods();
+  // Initialize with empty array - will be populated from database or defaults
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // Add loading state for save operation
+
+  // Function to remove duplicates and merge data
+  const removeDuplicatePaymentMethods = (methods: PaymentMethod[]): PaymentMethod[] => {
+    const uniqueMethods = new Map<string, PaymentMethod>();
+      // Define similarity groups
+    const similarityGroups: { [key: string]: string[] } = {
+      'credito': ['crédito', 'credito', 'cartão de crédito', 'cartao de credito', 'credit'],
+      'credito_parcelado': ['crédito parcelado', 'credito parcelado', 'cartão de crédito parcelado', 'credit installment'],
+      'debito': ['débito', 'debito', 'cartão de débito', 'cartao de debito', 'debit'],
+      'pix': ['pix'],
+      'dinheiro': ['dinheiro', 'cash', 'dinheiro/cheque', 'cheque'],
+      'transferencia': ['transferência bancária', 'transferencia bancaria', 'transferencia', 'transferência']
+    };
+    
+    methods.forEach(method => {
+      const name = method.name.toLowerCase().trim();
+      
+      // Find which group this method belongs to
+      let groupKey = name;
+      for (const [group, variations] of Object.entries(similarityGroups)) {
+        if (variations.some(variation => name.includes(variation) || variation.includes(name))) {
+          groupKey = group;
+          break;
+        }
+      }
+      
+      if (!uniqueMethods.has(groupKey)) {        // Use a standardized name
+        const standardNames: { [key: string]: string } = {
+          'credito': 'Crédito',
+          'credito_parcelado': 'Crédito Parcelado',
+          'debito': 'Débito',
+          'pix': 'PIX',
+          'dinheiro': 'Dinheiro/Cheque',
+          'transferencia': 'Transferência Bancária'
+        };
+        
+        uniqueMethods.set(groupKey, {
+          ...method,
+          name: standardNames[groupKey] || method.name,
+          id: groupKey
+        });
+      } else {
+        // If duplicate, merge the data (sum distribution percentages or keep higher values)
+        const existing = uniqueMethods.get(groupKey)!;
+        uniqueMethods.set(groupKey, {
+          ...existing,
+          distributionPercentage: Math.max(existing.distributionPercentage, method.distributionPercentage),
+          taxRate: method.taxRate > 0 ? method.taxRate : existing.taxRate,
+          isActive: existing.isActive || method.isActive
+        });
+      }
+    });
+    
+    return Array.from(uniqueMethods.values());
+  };  // Default payment methods
+  const getDefaultPaymentMethods = (): PaymentMethod[] => [
     {
       id: 'credit',
       name: 'Crédito',
@@ -64,13 +126,13 @@ const PaymentSettings = () => {
     },
     {
       id: 'cash',
-      name: 'Dinheiro/Cheque',
+      name: 'Dinheiro/Pix',
       icon: Banknote,
       isActive: true,
       distributionPercentage: 30.0,
       taxRate: 0.00
     }
-  ]);
+  ];
 
   // Depreciation state
   const [valorMobilizado, setValorMobilizado] = useState(160000);
@@ -99,15 +161,58 @@ const PaymentSettings = () => {
   const [newHolidayName, setNewHolidayName] = useState('');
 
   // Number of professionals
-  const [numProfessionals, setNumProfessionals] = useState(2);
-  // Margins state - Fixed calculation to auto-adjust
-  const [lucroDesejado, setLucroDesejado] = useState(15.0);
+  const [numProfessionals, setNumProfessionals] = useState(2);  // Margins state - Fixed calculation to auto-adjust (matching the image: 21% + 35% + 44% = 100%)
+  const [lucroDesejado, setLucroDesejado] = useState(21.0);
   const [despesasIndiretasDepreciacao, setDespesasIndiretasDepreciacao] = useState(35.0);
   const [impostosRate, setImpostosRate] = useState(8.0);
-  
-  // Auto-calculate despesas diretas to make total = 100%
-  const despesasDiretas = 100 - lucroDesejado - despesasIndiretasDepreciacao;
+    // Auto-calculate despesas diretas to make total = 100%
+  const despesasDiretas = 100 - lucroDesejado - despesasIndiretasDepreciacao;// Initialize form data with context values or database values
+  useEffect(() => {
+    console.log('PaymentSettings initialization:', {
+      isInitialized,
+      dbPaymentMethodsLength: dbPaymentMethods?.length || 0,
+      paymentMethodsLength: paymentMethods.length,
+      paramsExists: !!params
+    });
 
+    if (!isInitialized) {
+      // Initialize from database payment methods first
+      if (dbPaymentMethods && dbPaymentMethods.length > 0) {
+        console.log('Initializing from database:', dbPaymentMethods);
+        const mappedMethods = dbPaymentMethods.map(pm => ({
+          id: pm.id,
+          name: pm.nome_metodo,
+          icon: pm.nome_metodo.toLowerCase().includes('crédito') || pm.nome_metodo.toLowerCase().includes('credit') ? CreditCard : 
+               pm.nome_metodo.toLowerCase().includes('débito') || pm.nome_metodo.toLowerCase().includes('debit') ? CreditCard :
+               pm.nome_metodo.toLowerCase().includes('pix') ? Smartphone : Banknote,
+          isActive: pm.is_ativo,
+          distributionPercentage: Math.max(0, Math.min(100, pm.prazo_recebimento_dias || 0)), // Clamp between 0-100
+          taxRate: pm.taxa_percentual || 0
+        }));        console.log('Mapped methods:', mappedMethods);
+        const uniqueMethods = removeDuplicatePaymentMethods(mappedMethods);
+        console.log('Unique methods after deduplication:', uniqueMethods);
+        setPaymentMethods(uniqueMethods);
+        setIsInitialized(true);
+      } else if (paymentMethods.length === 0) {
+        // Use default values if no database data
+        console.log('Using default payment methods');
+        setPaymentMethods(getDefaultPaymentMethods());
+        setIsInitialized(true);
+      }
+    }
+
+    // Initialize other parameters from context
+    if (params && isInitialized) {
+      console.log('Initializing parameters from context:', params);
+      setLucroDesejado(params.lucroDesejado || 21.0);
+      setDespesasIndiretasDepreciacao(params.despesasIndiretasDepreciacao || 35.0);
+      setImpostosRate(params.impostosRate || 8.0);
+      setValorMobilizado(params.depreciacaoValorMobilizado || 160000);
+      setTotalDepreciado(params.depreciacaoTotalMesDepreciado || 87000);
+      setDepreciacaoMensal(params.depreciacaoMensal || 1450);
+      setNumProfessionals(params.equipeNumeroProfissionais || 2);
+    }
+  }, [params, dbPaymentMethods, isInitialized, paymentMethods.length]);
   const updatePaymentMethod = (id: string, field: keyof PaymentMethod, value: string | number | boolean) => {
     setPaymentMethods(prev => 
       prev.map(method => 
@@ -116,6 +221,99 @@ const PaymentSettings = () => {
           : method
       )
     );
+  };
+
+  const normalizeDistributionPercentages = () => {
+    const activeMethods = paymentMethods.filter(method => method.isActive);
+    const currentTotal = activeMethods.reduce((sum, method) => sum + method.distributionPercentage, 0);
+    
+    if (currentTotal === 0) {
+      // Se todos estão em 0, distribuir igualmente
+      const equalPercentage = 100 / activeMethods.length;
+      setPaymentMethods(prev => 
+        prev.map(method => 
+          method.isActive 
+            ? { ...method, distributionPercentage: equalPercentage }
+            : method
+        )
+      );    } else {
+      // Normalizar proporcionalmente
+      const scaleFactor = 100 / currentTotal;
+      setPaymentMethods(prev => 
+        prev.map(method => 
+          method.isActive 
+            ? { ...method, distributionPercentage: method.distributionPercentage * scaleFactor }
+            : method
+        )
+      );
+    }
+  };
+
+  const cleanDuplicatesFromDatabase = async () => {
+    try {
+      const uniqueMethods = removeDuplicatePaymentMethods(paymentMethods);
+      
+      // Update the local state first
+      setPaymentMethods(uniqueMethods);
+      
+      // Save cleaned data to database
+      const savePromises = uniqueMethods.map(async (method) => {
+        const dbMethod = dbPaymentMethods.find(m => 
+          m.id === method.id || 
+          m.nome_metodo.toLowerCase().includes(method.name.toLowerCase().split(' ')[0])
+        );
+        
+        if (dbMethod && updateDbPaymentMethod) {
+          await updateDbPaymentMethod.mutateAsync({
+            id: dbMethod.id,
+            nome_metodo: method.name,
+            is_ativo: method.isActive,
+            prazo_recebimento_dias: method.distributionPercentage,
+            taxa_percentual: method.taxRate,
+          });
+        }
+      });
+
+      await Promise.allSettled(savePromises);
+      
+      toast({
+        title: "Sucesso!",
+        description: "Duplicatas removidas e dados limpos com sucesso!",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Error cleaning duplicates:', error);
+      toast({        title: "Erro",
+        description: "Erro ao limpar duplicatas. Tente novamente.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const resetToDefaults = async () => {
+    const confirmed = window.confirm(
+      "Isso irá resetar todos os métodos de pagamento para os valores padrão. Continuar?"
+    );
+    
+    if (confirmed) {
+      try {
+        const defaultMethods = getDefaultPaymentMethods();
+        setPaymentMethods(defaultMethods);
+        
+        toast({
+          title: "Sucesso!",
+          description: "Métodos de pagamento resetados para valores padrão!",
+          variant: "default"
+        });
+      } catch (error) {
+        console.error('Error resetting to defaults:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao resetar valores. Tente novamente.",
+          variant: "destructive"
+        });
+      }
+    }
   };
 
   const calculateWeightedAverageRate = () => {
@@ -158,19 +356,22 @@ const PaymentSettings = () => {
 
   const removeHoliday = (id: string) => {
     setHolidays(holidays.filter(holiday => holiday.id !== id));
-  };
-
-  const handleSaveSettings = () => {
+  };  const handleSaveSettings = async () => {
+    setIsSaving(true); // Start loading
+    
     const totalDistribution = getTotalDistribution();
     const totalMargins = lucroDesejado + despesasIndiretasDepreciacao + despesasDiretas;
     
+    // Validação mais flexível para distribuição - apenas avisa se não for 100%
+    // mas não impede o salvamento, pois o campo pode estar sendo usado para outros fins
     if (Math.abs(totalDistribution - 100) > 0.01) {
-      toast({
-        title: "Erro de Validação",
-        description: "A soma dos percentuais de distribuição deve ser igual a 100%",
-        variant: "destructive"
-      });
-      return;
+      const shouldContinue = window.confirm(
+        `A soma dos percentuais de distribuição é ${totalDistribution.toFixed(2)}%, não 100%. Deseja continuar mesmo assim?`
+      );
+      if (!shouldContinue) {
+        setIsSaving(false); // Stop loading
+        return;
+      }
     }
 
     if (Math.abs(totalMargins - 100) > 0.01) {
@@ -179,22 +380,100 @@ const PaymentSettings = () => {
         description: "A soma das margens deve ser igual a 100%",
         variant: "destructive"
       });
+      setIsSaving(false); // Stop loading
       return;
-    }    // Save to context
-    updateParams({
-      paymentMethods,
-      lucroDesejado,
-      despesasIndiretasDepreciacao,
-      despesasDiretas,
-      impostosRate,
-      workingDaysPerYear: calculateWorkingDaysPerYear()
-    });
+    }try {
+      setIsSaving(true); // Start loading
+      // Save business settings to database
+      await saveSettings.mutateAsync({
+        lucroDesejado,
+        taxaImpostos: impostosRate,
+        taxaMediaPonderada: calculateWeightedAverageRate(),
+        depreciacaoValorMobilizado: valorMobilizado,
+        depreciacaoTotalMesDepreciado: totalDepreciado,
+        depreciacaoMensal,
+        diasTrabalhadosAno: calculateWorkingDaysPerYear(),
+        equipeNumeroProfissionais: numProfessionals,
+      });
 
-    toast({
-      title: "Sucesso!",
-      description: "Parâmetros do negócio salvos com sucesso!",
-      variant: "default"
-    });
+      // Save payment methods to database - improved error handling
+      const paymentUpdatePromises = paymentMethods.map(async (method) => {
+        try {
+          const dbMethod = dbPaymentMethods.find(m => 
+            m.nome_metodo.toLowerCase() === method.name.toLowerCase() ||
+            m.id === method.id
+          );
+          
+          if (dbMethod && updateDbPaymentMethod) {
+            await updateDbPaymentMethod.mutateAsync({
+              id: dbMethod.id,
+              nome_metodo: method.name,
+              is_ativo: method.isActive,
+              prazo_recebimento_dias: method.distributionPercentage,
+              taxa_percentual: method.taxRate,
+            });
+          }
+        } catch (methodError) {
+          console.error(`Error updating payment method ${method.name}:`, methodError);
+          // Don't throw here to allow other methods to be updated
+        }
+      });
+
+      await Promise.allSettled(paymentUpdatePromises);
+
+      // Update context after successful save
+      updateParams({
+        paymentMethods: paymentMethods.map(pm => ({
+          id: pm.id,
+          name: pm.name,
+          isActive: pm.isActive,
+          distributionPercentage: pm.distributionPercentage,
+          taxRate: pm.taxRate
+        })),
+        lucroDesejado,
+        despesasIndiretasDepreciacao,
+        despesasDiretas,
+        impostosRate,
+        workingDaysPerYear: calculateWorkingDaysPerYear(),
+        depreciacaoValorMobilizado: valorMobilizado,
+        depreciacaoTotalMesDepreciado: totalDepreciado,
+        depreciacaoMensal,
+        equipeNumeroProfissionais: numProfessionals,
+      });
+
+      toast({        title: "Sucesso!",
+        description: "Parâmetros do negócio salvos com sucesso!",
+        variant: "default"
+      });    } catch (error) {
+      console.error('Error saving settings:', error);
+      
+      // Provide more specific error information
+      let errorMessage = "Erro ao salvar parâmetros do negócio. Tente novamente.";
+      
+      if (error instanceof Error) {
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+        
+        if (error.message.includes('duplicate') || error.message.includes('unique')) {
+          errorMessage = "Erro: Dados duplicados detectados. Verifique se não há métodos de pagamento repetidos.";
+        } else if (error.message.includes('permission') || error.message.includes('auth')) {
+          errorMessage = "Erro de permissão. Faça login novamente e tente novamente.";
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
+        }
+      }
+      
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false); // End loading
+    }
   };
 
   const weightedAverageRate = calculateWeightedAverageRate();
@@ -231,8 +510,7 @@ const PaymentSettings = () => {
             <Label className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
               Lucro Desejado (%)
             </Label>
-            <div className="relative">
-              <Input
+            <div className="relative">              <Input
                 type="number"
                 step="0.1"
                 min="0"
@@ -665,9 +943,40 @@ const PaymentSettings = () => {
                     {weightedAverageRate.toFixed(2)}%
                   </span>
                 </td>
-              </tr>
-            </tbody>
+              </tr>            </tbody>
           </table>
+        </div>        
+        {/* Action buttons */}
+        <div className="mt-4 flex justify-center gap-3">
+          {Math.abs(totalDistribution - 100) > 0.01 && (
+            <Button
+              onClick={normalizeDistributionPercentages}
+              variant="outline"
+              className="border-symbol-gold text-symbol-gold hover:bg-symbol-gold hover:text-white"
+            >
+              <Calculator className="w-4 h-4 mr-2" />
+              Ajustar para 100%
+            </Button>
+          )}
+            {/* Show clean duplicates button if there are potential duplicates */}
+          {paymentMethods.length > 5 && (
+            <Button
+              onClick={cleanDuplicatesFromDatabase}
+              variant="outline"
+              className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white"
+            >
+              <Users className="w-4 h-4 mr-2" />
+              Limpar Duplicatas
+            </Button>
+          )}
+          
+          <Button
+            onClick={resetToDefaults}
+            variant="outline"
+            className="border-gray-500 text-gray-600 hover:bg-gray-500 hover:text-white"
+          >
+            Reset Padrão
+          </Button>
         </div>
       </div>
 
@@ -730,27 +1039,26 @@ const PaymentSettings = () => {
             </div>
           </div>
         </div>
-        
-        {(Math.abs(totalDistribution - 100) > 0.01 || Math.abs(totalMargins - 100) > 0.01) && (
-          <div className="mt-6 p-4 bg-red-50 border border-red-200">
-            <p className="text-red-700 brand-body text-sm">
-              ⚠️ {Math.abs(totalDistribution - 100) > 0.01 && "A soma dos percentuais de distribuição deve ser igual a 100%."}
+          {(Math.abs(totalDistribution - 100) > 0.01 || Math.abs(totalMargins - 100) > 0.01) && (
+          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200">
+            <p className="text-yellow-700 brand-body text-sm">
+              ⚠️ {Math.abs(totalDistribution - 100) > 0.01 && `A soma dos percentuais de distribuição é ${totalDistribution.toFixed(2)}% (recomendado: 100%).`}
               {Math.abs(totalDistribution - 100) > 0.01 && Math.abs(totalMargins - 100) > 0.01 && " "}
               {Math.abs(totalMargins - 100) > 0.01 && "A soma das margens deve ser igual a 100%."}
-              {" "}Ajuste os valores antes de salvar.
+              {Math.abs(totalMargins - 100) > 0.01 ? " Ajuste as margens antes de salvar." : " Você pode continuar se os valores estão corretos."}
             </p>
           </div>
         )}
       </div>
 
       {/* Save Button */}
-      <div className="flex justify-center pt-8">
-        <Button 
+      <div className="flex justify-center pt-8">        <Button 
           onClick={handleSaveSettings}
-          className="w-full sm:w-auto bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-4 px-8 transition-all duration-300 flex items-center justify-center gap-3 uppercase tracking-wider text-sm"
+          disabled={isSaving}
+          className="w-full sm:w-auto bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-4 px-8 transition-all duration-300 flex items-center justify-center gap-3 uppercase tracking-wider text-sm disabled:opacity-50"
         >
           <Save size={20} />
-          Salvar Parâmetros do Negócio
+          {isSaving ? 'Salvando...' : 'Salvar Parâmetros do Negócio'}
         </Button>
       </div>
     </div>

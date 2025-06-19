@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef, ReactNode } from 'react';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { useUserGoals } from '@/hooks/useUserGoals';
@@ -47,10 +47,13 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
   
   const isLoading = paymentMethodsLoading || settingsLoading || goalsLoading;
 
+  // Usar ref para manter referência estável da função
+  const calculateWeightedAverageRateRef = useRef(dbCalculateWeightedAverageRate);
+  calculateWeightedAverageRateRef.current = dbCalculateWeightedAverageRate;
   const [params, setParams] = useState<BusinessParams>({
-    lucroDesejado: 15.0,
+    lucroDesejado: 21.0,
     despesasIndiretasDepreciacao: 35.0,
-    despesasDiretas: 50.0,
+    despesasDiretas: 44.0,
     impostosRate: 8.0,
     weightedAverageRate: 0,
     workingDaysPerYear: 240,
@@ -58,34 +61,40 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
     monthlyGoal: 10000,
     goalType: 'financial',
     paymentMethods: [],
-    depreciacaoValorMobilizado: 100000,
-    depreciacaoTotalMesDepreciado: 8700,
+    depreciacaoValorMobilizado: 160000,
+    depreciacaoTotalMesDepreciado: 87000,
     depreciacaoMensal: 1450,
-    equipeNumeroProfissionais: 1,
-  });  // Sincronizar com dados do banco quando carregados
-  useEffect(() => {
+    equipeNumeroProfissionais: 2,
+  });
+  // Memoizar paymentMethods para evitar mudanças desnecessárias
+  const memoizedPaymentMethods = useMemo(() => {
     if (!paymentMethodsLoading && dbPaymentMethods.length > 0) {
-      const mappedPaymentMethods: PaymentMethod[] = dbPaymentMethods.map(pm => ({
+      const mappedMethods = dbPaymentMethods.map(pm => ({
         id: pm.id,
         name: pm.nome_metodo,
         isActive: pm.is_ativo,
-        distributionPercentage: pm.prazo_recebimento_dias, // Usando como proxy para distribuição
+        distributionPercentage: pm.prazo_recebimento_dias,
         taxRate: pm.taxa_percentual
       }));
-
-      setParams(prev => ({
-        ...prev,
-        paymentMethods: mappedPaymentMethods,
-        weightedAverageRate: dbCalculateWeightedAverageRate()
-      }));
+      
+      // Remove duplicates by name (case insensitive)
+      const uniqueMethods = new Map<string, typeof mappedMethods[0]>();
+      mappedMethods.forEach(method => {
+        const key = method.name.toLowerCase().trim();
+        if (!uniqueMethods.has(key) || (uniqueMethods.get(key)?.distributionPercentage || 0) < method.distributionPercentage) {
+          uniqueMethods.set(key, method);
+        }
+      });
+      
+      return Array.from(uniqueMethods.values());
     }
-  }, [dbPaymentMethods, paymentMethodsLoading, dbCalculateWeightedAverageRate]);
+    return [];
+  }, [dbPaymentMethods, paymentMethodsLoading]);
 
-  // Sincronizar com configurações do negócio
-  useEffect(() => {
+  // Memoizar configurações do negócio
+  const memoizedBusinessSettings = useMemo(() => {
     if (!settingsLoading && businessSettings) {
-      setParams(prev => ({
-        ...prev,
+      return {
         lucroDesejado: businessSettings.lucroDesejado,
         impostosRate: businessSettings.taxaImpostos,
         weightedAverageRate: businessSettings.taxaMediaPonderada,
@@ -94,41 +103,69 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
         depreciacaoTotalMesDepreciado: businessSettings.depreciacaoTotalMesDepreciado,
         depreciacaoMensal: businessSettings.depreciacaoMensal,
         equipeNumeroProfissionais: businessSettings.equipeNumeroProfissionais,
-      }));
+      };
     }
+    return null;
   }, [businessSettings, settingsLoading]);
 
-  // Sincronizar com metas do usuário
-  useEffect(() => {
+  // Memoizar metas do usuário
+  const memoizedUserGoals = useMemo(() => {
     if (!goalsLoading && userGoals) {
-      setParams(prev => ({
-        ...prev,
-        goalType: userGoals.tipoMeta === 'financeira' ? 'financial' : 'attendance',
+      return {
+        goalType: userGoals.tipoMeta === 'financeira' ? 'financial' as const : 'attendance' as const,
         monthlyGoal: userGoals.valorMetaMensal,
         attendanceGoal: userGoals.metaAtendimentosMensal || 50,
+      };
+    }
+    return null;
+  }, [userGoals, goalsLoading]);  // Atualizar params quando payment methods mudarem
+  useEffect(() => {
+    if (memoizedPaymentMethods.length > 0) {
+      setParams(prev => ({
+        ...prev,
+        paymentMethods: memoizedPaymentMethods,
+        weightedAverageRate: calculateWeightedAverageRateRef.current()
       }));
     }
-  }, [userGoals, goalsLoading]);
+  }, [memoizedPaymentMethods]);
 
-  const calculateWeightedAverageRate = useCallback(() => {
+  // Atualizar params quando business settings mudarem
+  useEffect(() => {
+    if (memoizedBusinessSettings) {
+      setParams(prev => ({
+        ...prev,
+        ...memoizedBusinessSettings
+      }));
+    }
+  }, [memoizedBusinessSettings]);
+
+  // Atualizar params quando user goals mudarem
+  useEffect(() => {
+    if (memoizedUserGoals) {
+      setParams(prev => ({
+        ...prev,
+        ...memoizedUserGoals
+      }));
+    }
+  }, [memoizedUserGoals]);  const calculateWeightedAverageRate = useCallback(() => {
     if (dbPaymentMethods.length > 0) {
-      return dbCalculateWeightedAverageRate();
+      return calculateWeightedAverageRateRef.current();
     }
     
     // Fallback para cálculo local se não há dados do banco
-    const activeMethods = params.paymentMethods.filter(method => method.isActive);
-    const totalDistribution = activeMethods.reduce((sum, method) => sum + method.distributionPercentage, 0);
+    // Usa os dados mais recentes diretamente do hook
+    const activeMethods = dbPaymentMethods.filter(method => method.is_ativo);
+    const totalDistribution = activeMethods.reduce((sum, method) => sum + method.prazo_recebimento_dias, 0);
     
     if (totalDistribution === 0) return 0;
     
     const weightedSum = activeMethods.reduce((sum, method) => 
-      sum + (method.taxRate * method.distributionPercentage), 0
+      sum + (method.taxa_percentual * method.prazo_recebimento_dias), 0
     );
     
     return weightedSum / totalDistribution;
-  }, [params.paymentMethods, dbPaymentMethods, dbCalculateWeightedAverageRate]);
-
-  const updateParams = (newParams: Partial<BusinessParams>) => {
+  }, [dbPaymentMethods]);
+  const updateParams = useCallback((newParams: Partial<BusinessParams>) => {
     setParams(prev => {
       const updated = { ...prev, ...newParams };
       // Recalculate weighted average rate if payment methods changed
@@ -137,15 +174,14 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
       }
       return updated;
     });
-  };
-
-  // Remove the useEffect that was causing infinite loop - the calculation is already handled above
-  const value = {
+  }, [calculateWeightedAverageRate]);
+  // Memoizar o valor do contexto para evitar recriações desnecessárias
+  const value = useMemo(() => ({
     params,
     updateParams,
     calculateWeightedAverageRate,
     isLoading
-  };
+  }), [params, updateParams, calculateWeightedAverageRate, isLoading]);
 
   return (
     <BusinessParamsContext.Provider value={value}>
