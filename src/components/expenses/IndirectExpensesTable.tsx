@@ -1,10 +1,11 @@
 
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ExpenseCategory, MonthlyExpense } from '@/types';
+import { useState, useEffect } from 'react';
 
 interface IndirectExpensesTableProps {
   categories: ExpenseCategory[];
@@ -14,13 +15,16 @@ interface IndirectExpensesTableProps {
   selectedYear: string;
   newCategoryName: string;
   showAddCategory: boolean;
+  hasUnsavedChanges: boolean;
   onUpdateExpense: (categoryId: string, value: number) => void;
+  onSaveExpenseValues: () => void;
   onToggleFixedExpense: (categoryId: string, isFixed: boolean) => void;
   onRemoveCategory: (categoryId: string) => void;
   onAddNewCategory: () => void;
   onSetNewCategoryName: (name: string) => void;
   onSetShowAddCategory: (show: boolean) => void;
   getExpenseForCategory: (categoryId: string) => MonthlyExpense;
+  getTempExpenseValue: (categoryId: string) => number;
   calculateYearlyTotal: (categoryId: string) => number;
   calculateMonthTotal: () => number;
 }
@@ -40,6 +44,67 @@ const MONTHS = [
   { key: 'december', label: 'Dezembro' },
 ];
 
+// Component for individual expense input
+const ExpenseInput = ({ 
+  categoryId, 
+  initialValue, 
+  isDisabled, 
+  onValueChange, 
+  hasChanges 
+}: {
+  categoryId: string;
+  initialValue: number;
+  isDisabled: boolean;
+  onValueChange: (value: number) => void;
+  hasChanges: boolean;
+}) => {
+  const [inputValue, setInputValue] = useState(initialValue.toString());
+
+  useEffect(() => {
+    setInputValue(initialValue.toString());
+  }, [initialValue]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    
+    // Only update if the value is different
+    const numericValue = parseFloat(value) || 0;
+    if (numericValue !== initialValue) {
+      onValueChange(numericValue);
+    }
+  };
+
+  const handleBlur = () => {
+    // Ensure we have the latest value when user finishes editing
+    const numericValue = parseFloat(inputValue) || 0;
+    onValueChange(numericValue);
+  };
+
+  return (
+    <div className="relative">
+      <Input
+        type="number"
+        min="0"
+        step="0.01"
+        value={inputValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        className={`text-right max-w-32 ml-auto focus:border-symbol-gold ${
+          hasChanges
+            ? 'bg-yellow-50 border-yellow-300' 
+            : 'bg-symbol-gray-50 border-symbol-gray-300'
+        }`}
+        placeholder="0,00"
+        disabled={isDisabled}
+      />
+      {hasChanges && (
+        <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+      )}
+    </div>
+  );
+};
+
 const IndirectExpensesTable = ({
   categories,
   expenses,
@@ -48,42 +113,55 @@ const IndirectExpensesTable = ({
   selectedYear,
   newCategoryName,
   showAddCategory,
+  hasUnsavedChanges,
   onUpdateExpense,
+  onSaveExpenseValues,
   onToggleFixedExpense,
   onRemoveCategory,
   onAddNewCategory,
   onSetNewCategoryName,
   onSetShowAddCategory,
   getExpenseForCategory,
+  getTempExpenseValue,
   calculateYearlyTotal,
   calculateMonthTotal,
 }: IndirectExpensesTableProps) => {
   const selectedMonthLabel = MONTHS.find(m => m.key === selectedMonth)?.label || '';
-
   return (
     <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
-      <div className="mb-6">
-        <h2 className="brand-heading text-xl text-symbol-black mb-2">
-          Despesas Indiretas - {selectedMonthLabel} - {selectedYear}
-        </h2>
-        <div className="w-8 h-px bg-symbol-beige"></div>
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h2 className="brand-heading text-xl text-symbol-black mb-2">
+            Despesas Indiretas - {selectedMonthLabel} - {selectedYear}
+          </h2>
+          <div className="w-8 h-px bg-symbol-beige"></div>
+        </div>
+        {hasUnsavedChanges && (
+          <Button 
+            onClick={onSaveExpenseValues}
+            className="bg-symbol-gold hover:bg-symbol-gold/80 text-symbol-black font-semibold flex items-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            Salvar Alterações
+          </Button>
+        )}
       </div>
       
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-1/2 brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Categoria</TableHead>
+            <TableRow>              <TableHead className="w-1/2 brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Categoria</TableHead>
               <TableHead className="text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Valor Fixo</TableHead>
               <TableHead className="text-right brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Valor do Mês (R$)</TableHead>
               <TableHead className="text-right brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Total Anual (R$)</TableHead>
               <TableHead className="w-20 text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Ações</TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>
-            {categories.map((category, index) => {
+          <TableBody>            {categories.map((category, index) => {
               const expense = getExpenseForCategory(category.id);
-              const monthValue = (expense as any)[selectedMonth] || 0;
+              const savedValue = expense[selectedMonth as keyof MonthlyExpense] as number || 0;
+              const currentValue = getTempExpenseValue(category.id);
+              const hasChanges = currentValue !== savedValue;
               const yearlyTotal = calculateYearlyTotal(category.id);
               const isFixed = fixedExpenses[category.id] || false;
               
@@ -105,17 +183,13 @@ const IndirectExpensesTable = ({
                         </span>
                       </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={monthValue || ''}
-                      onChange={(e) => onUpdateExpense(category.id, parseFloat(e.target.value) || 0)}
-                      className="text-right max-w-32 ml-auto bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold"
-                      placeholder="0,00"
-                      disabled={isFixed && selectedMonth !== 'january'}
+                  </TableCell>                  <TableCell className="text-right">
+                    <ExpenseInput
+                      categoryId={category.id}
+                      initialValue={currentValue}
+                      isDisabled={isFixed && selectedMonth !== 'january'}
+                      onValueChange={(value) => onUpdateExpense(category.id, value)}
+                      hasChanges={hasChanges}
                     />
                     {isFixed && selectedMonth !== 'january' && (
                       <p className="text-xs text-symbol-gray-500 mt-1">Valor fixo definido</p>
@@ -191,9 +265,8 @@ const IndirectExpensesTable = ({
                   </Button>
                 </TableCell>
               </TableRow>
-            )}
-            
-            {/* Total Row */}
+            )}            
+            {/* Total Monthly Row */}
             <TableRow className="bg-symbol-gold/10 border-t-2 border-symbol-gold/30 font-semibold">
               <TableCell className="font-bold brand-subheading text-symbol-black">
                 Total do Mês
@@ -202,10 +275,22 @@ const IndirectExpensesTable = ({
               <TableCell className="text-right font-bold text-symbol-gold">
                 R$ {calculateMonthTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </TableCell>
+              <TableCell></TableCell>
+              <TableCell></TableCell>
+            </TableRow>
+            
+            {/* Total Annual Row */}
+            <TableRow className="bg-symbol-beige/20 font-semibold">
+              <TableCell className="font-bold brand-subheading text-symbol-black">
+                Total Anual
+              </TableCell>
+              <TableCell></TableCell>
+              <TableCell></TableCell>
               <TableCell className="text-right font-bold brand-body text-symbol-black">
                 R$ {expenses.reduce((total, expense) => {
                   return total + MONTHS.reduce((categoryTotal, month) => {
-                    return categoryTotal + ((expense as any)[month.key] || 0);
+                    const monthKey = month.key as keyof MonthlyExpense;
+                    return categoryTotal + (expense[monthKey] as number || 0);
                   }, 0);
                 }, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
               </TableCell>

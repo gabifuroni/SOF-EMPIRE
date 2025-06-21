@@ -59,11 +59,12 @@ const IndirectExpenses = () => {
     updateExpenseValue,
     deleteExpenseValue,
     getTotalByMonth 
-  } = useIndirectExpenseValues();
-  const [newCategoryName, setNewCategoryName] = useState('');
+  } = useIndirectExpenseValues();  const [newCategoryName, setNewCategoryName] = useState('');
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [directExpenses, setDirectExpenses] = useState<DirectExpense[]>([]);
   const [fixedExpenses, setFixedExpenses] = useState<Record<string, boolean>>({});
+  const [tempExpenseValues, setTempExpenseValues] = useState<Record<string, number>>({});
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
   // Convert database categories to expected format
   const convertedCategories: ExpenseCategory[] = categories.map(convertExpenseCategoryFromDb);
@@ -73,7 +74,14 @@ const IndirectExpenses = () => {
     // Find expense values for this category from the current year
     const categoryExpenses = expenses.filter(exp => exp.categoria_id === category.id);
     return convertMonthlyExpenseFromDb(categoryExpenses, category.id, parseInt(selectedYear));
-  });
+  });  useEffect(() => {
+    // Clear temp values when month or year changes
+    if (hasUnsavedChanges) {
+      setTempExpenseValues({});
+      setHasUnsavedChanges(false);
+    }
+  }, [selectedMonth, selectedYear, hasUnsavedChanges]);
+
   useEffect(() => {
     // Simplified since we use converted data directly
     // Initialize direct expenses with some sample data
@@ -109,10 +117,80 @@ const IndirectExpenses = () => {
       december: 0,
     };
   };
-
   const updateExpense = (categoryId: string, value: number) => {
-    // Simplified: just show toast for now - full DB integration would go here
-    toast.success(`Despesa atualizada: ${value}`);
+    // Store the value temporarily
+    setTempExpenseValues(prev => ({
+      ...prev,
+      [categoryId]: value
+    }));
+    setHasUnsavedChanges(true);
+  };
+  const saveExpenseValues = async () => {
+    try {
+      // Convert month key to Portuguese month name for database
+      const monthMap: Record<string, string> = {
+        'january': 'janeiro',
+        'february': 'fevereiro',
+        'march': 'março',
+        'april': 'abril',
+        'may': 'maio',
+        'june': 'junho',
+        'july': 'julho',
+        'august': 'agosto',
+        'september': 'setembro',
+        'october': 'outubro',
+        'november': 'novembro',
+        'december': 'dezembro',
+      };
+
+      const monthInPortuguese = monthMap[selectedMonth];
+      if (!monthInPortuguese) {
+        toast.error('Mês inválido selecionado');
+        return;
+      }
+
+      // Process each expense value that needs to be saved
+      const savePromises = Object.entries(tempExpenseValues).map(async ([categoryId, value]) => {
+        // Check if an expense already exists for this category and month
+        const existingExpense = expenses.find(
+          exp => exp.categoria_id === categoryId && exp.mes_referencia === monthInPortuguese
+        );
+
+        if (existingExpense) {
+          // Update existing expense
+          return updateExpenseValue.mutateAsync({
+            id: existingExpense.id,
+            valor_mensal: value
+          });
+        } else {
+          // Create new expense
+          return addExpenseValue.mutateAsync({
+            categoria_id: categoryId,
+            mes_referencia: monthInPortuguese,
+            valor_mensal: value
+          });
+        }
+      });
+
+      // Wait for all save operations to complete
+      await Promise.all(savePromises);
+      
+      // Clear temporary values and unsaved changes flag
+      setTempExpenseValues({});
+      setHasUnsavedChanges(false);
+      toast.success('Todas as despesas foram salvas com sucesso!');
+    } catch (error) {
+      console.error('Error saving expense values:', error);
+      toast.error('Erro ao salvar despesas. Tente novamente.');
+    }
+  };  const getTempExpenseValue = (categoryId: string): number => {
+    // Return temp value if it exists, otherwise return the saved value
+    if (tempExpenseValues[categoryId] !== undefined) {
+      return tempExpenseValues[categoryId];
+    }
+    const expense = getExpenseForCategory(categoryId);
+    const monthKey = selectedMonth as keyof MonthlyExpense;
+    return expense[monthKey] as number || 0;
   };
   const toggleFixedExpense = (categoryId: string, isFixed: boolean) => {
     setFixedExpenses(prev => ({
@@ -156,9 +234,15 @@ const IndirectExpenses = () => {
       }
     });
   };
-
   const calculateMonthTotal = () => {
-    return convertedExpenses.reduce((total, expense) => {
+    return convertedCategories.reduce((total, category) => {
+      // Use temp value if available, otherwise use saved value
+      const tempValue = tempExpenseValues[category.id];
+      if (tempValue !== undefined) {
+        return total + tempValue;
+      }
+      
+      const expense = getExpenseForCategory(category.id);
       const monthKey = selectedMonth as keyof MonthlyExpense;
       return total + (expense[monthKey] as number || 0);
     }, 0);
@@ -225,12 +309,18 @@ const IndirectExpenses = () => {
   const saveExpenses = () => {
     toast.success('Despesas salvas com sucesso!');
   };
-
-  // Calculate summary metrics  const totalCategories = convertedCategories.length;
+  // Calculate summary metrics
+  const totalCategories = convertedCategories.length;
   const monthTotal = calculateMonthTotal();
   const fixedExpensesTotal = convertedCategories
     .filter(cat => ['Aluguel', 'Energia Elétrica', 'Internet/Telefone', 'Água'].includes(cat.name))
     .reduce((sum, cat) => {
+      // Use temp value if available, otherwise use saved value
+      const tempValue = tempExpenseValues[cat.id];
+      if (tempValue !== undefined) {
+        return sum + tempValue;
+      }
+      
       const expense = getExpenseForCategory(cat.id);
       const monthKey = selectedMonth as keyof MonthlyExpense;
       return sum + (expense[monthKey] as number || 0);
@@ -283,13 +373,16 @@ const IndirectExpenses = () => {
               selectedYear={selectedYear}
               newCategoryName={newCategoryName}
               showAddCategory={showAddCategory}
+              hasUnsavedChanges={hasUnsavedChanges}
               onUpdateExpense={updateExpense}
+              onSaveExpenseValues={saveExpenseValues}
               onToggleFixedExpense={toggleFixedExpense}
               onRemoveCategory={removeCategory}
               onAddNewCategory={addNewCategory}
               onSetNewCategoryName={setNewCategoryName}
               onSetShowAddCategory={setShowAddCategory}
               getExpenseForCategory={getExpenseForCategory}
+              getTempExpenseValue={getTempExpenseValue}
               calculateYearlyTotal={calculateYearlyTotal}
               calculateMonthTotal={calculateMonthTotal}
             />
