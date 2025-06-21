@@ -169,7 +169,8 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
           </DialogTitle>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit} className="space-y-4">          <div>
+        <form onSubmit={handleSubmit} className="space-y-4">          
+          <div>
             <Label htmlFor="date" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Data</Label>
             <Input
               id="date"

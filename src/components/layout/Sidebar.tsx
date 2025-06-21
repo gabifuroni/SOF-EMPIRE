@@ -41,8 +41,8 @@ const Sidebar = ({ userRole, isMobileMenuOpen = false, onCloseMobileMenu }: Side
     {
       section: 'Gestão',
       items: [
-        { icon: Scissors, label: 'Serviços & Preços', href: '/services' },
         { icon: Package, label: 'Matéria-Prima', href: '/materials' },
+        { icon: Scissors, label: 'Serviços & Preços', href: '/services' },
         { icon: TrendingUp, label: 'Fluxo de Caixa', href: '/cash-flow' },
         { icon: Receipt, label: 'Despesas', href: '/expenses' },
         { icon: BarChart3, label: 'Relatório Mensal', href: '/reports' }

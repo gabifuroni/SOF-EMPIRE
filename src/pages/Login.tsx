@@ -78,16 +78,16 @@ const Login = () => {
     <div className="min-h-screen symbol-gradient flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Brand Header */}
-        <div className="text-center mb-12 animate-minimal-fade">
+        <div className="text-center mb-6 animate-minimal-fade">
           <div className="mb-8">
             {/* Geometric Symbol */}
             <div className="mb-2 flex justify-center">
               <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="Geometric Symbol" className="w-20 transition-all duration-300" />
             </div>
-            <h1 className="brand-heading text-2xl text-symbol-black mb-2 font-bold tracking-wider">
+            <h1 className="brand-heading text-5xl text-symbol-black mb-3 font-bold tracking-wider">
               SOF IMPIRE
             </h1>
-            <p className="brand-subheading text-symbol-gray-600 text-sm uppercase tracking-wider">
+            <p className="brand-subheading text-symbol-gray-600 text-xs uppercase tracking-wider">
               Sistema de Organização Financeira
             </p>
           </div>
