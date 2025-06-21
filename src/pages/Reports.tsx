@@ -896,8 +896,9 @@ const Reports = () => {
             {((reportData.comissoes / reportData.faturamento) * 100).toFixed(1)}% do faturamento
           </div>
         </div>
+      </div>
 
-              {/* Secondary Metrics */}
+      {/* Secondary Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
         <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-purple-50/50 to-purple-100/30 border-purple-200/50">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
@@ -925,7 +926,6 @@ const Reports = () => {
             {reportData.margemLucro >= 15 ? 'Excelente' : reportData.margemLucro >= 10 ? 'Boa' : 'Precisa melhorar'}
           </div>
         </div>
-      </div>
 
         <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-emerald-50/50 to-emerald-100/30 border-emerald-200/50">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
@@ -953,10 +953,6 @@ const Reports = () => {
             {reportData.margemLucro.toFixed(1)}% margem
           </div>
         </div>
-      </div>
-
-      {/* Secondary Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
 
         <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-cyan-50/50 to-cyan-100/30 border-cyan-200/50">
           <div className="flex items-center justify-between mb-3 lg:mb-4">

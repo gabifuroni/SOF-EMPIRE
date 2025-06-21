@@ -101,7 +101,7 @@ const IndirectExpensesTable = ({
                           className="data-[state=checked]:bg-symbol-gold data-[state=checked]:border-symbol-gold h-6 w-6 border-2 border-symbol-gray-400 rounded-md shadow-sm hover:shadow-md transition-all duration-300"
                         />
                         <span className="text-sm font-semibold text-symbol-gray-800 min-w-[60px]">
-                          {isFixed ? 'FIXO' : 'VARIÁVEL'}
+                          FIXO
                         </span>
                       </div>
                     </div>
