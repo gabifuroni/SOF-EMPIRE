@@ -971,31 +971,35 @@ const Reports = () => {
             </p>
             <div className="w-8 h-px bg-symbol-beige"></div>
           </div>
-          <ChartContainer config={chartConfig} className="h-56 sm:h-64 lg:h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="25%"
-                  outerRadius="75%"
-                  paddingAngle={2}
-                  dataKey="value"
-                >
-                  {pieData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <ChartTooltip
-                  content={<ChartTooltipContent 
-                    formatter={(value, name) => [formatCurrency(Number(value)), name]}
-                    labelFormatter={() => ''}
-                  />}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartContainer>
+          <div className="flex justify-center items-center">
+            <ChartContainer config={chartConfig} className="h-56 sm:h-64 lg:h-72 w-full max-w-md mx-auto">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="30%"
+                    outerRadius="70%"
+                    paddingAngle={3}
+                    dataKey="value"
+                    startAngle={90}
+                    endAngle={450}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} stroke="#ffffff" strokeWidth={2} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip
+                    content={<ChartTooltipContent 
+                      formatter={(value, name) => [formatCurrency(Number(value)), name]}
+                      labelFormatter={() => ''}
+                    />}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </div>
           <div className="mt-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs sm:text-sm">
               {pieData.map((item, index) => (
