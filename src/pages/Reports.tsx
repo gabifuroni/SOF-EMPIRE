@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Download, TrendingUp, TrendingDown, DollarSign, Target, BarChart3, PieChart as PieChartIcon, Activity, Info, X } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, DollarSign, Target, BarChart3, PieChart as PieChartIcon, Activity, Info, X, CheckCircle, XCircle, Zap, Award, Calculator, Wrench } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -526,12 +526,12 @@ const Reports = () => {
           
           <div className="flex gap-4">
             <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
-              <SelectTrigger className="w-40 bg-symbol-gray-50 border-symbol-gray-300">
+              <SelectTrigger className="w-40 bg-symbol-beige/30 border-symbol-gold/40 hover:border-symbol-gold focus:border-symbol-gold focus:ring-symbol-gold/20">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border-symbol-gold/40">
                 {months.map((month, index) => (
-                  <SelectItem key={index} value={index.toString()}>
+                  <SelectItem key={index} value={index.toString()} className="hover:bg-symbol-gold/10 focus:bg-symbol-gold/10">
                     {month}
                   </SelectItem>
                 ))}
@@ -539,12 +539,12 @@ const Reports = () => {
             </Select>
             
             <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-              <SelectTrigger className="w-24 bg-symbol-gray-50 border-symbol-gray-300">
+              <SelectTrigger className="w-24 bg-symbol-beige/30 border-symbol-gold/40 hover:border-symbol-gold focus:border-symbol-gold focus:ring-symbol-gold/20">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-white border-symbol-gold/40">
                 {years.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
+                  <SelectItem key={year} value={year.toString()} className="hover:bg-symbol-gold/10 focus:bg-symbol-gold/10">
                     {year}
                   </SelectItem>
                 ))}
@@ -553,10 +553,10 @@ const Reports = () => {
           </div>
         </div>
 
-        <Card className="symbol-card p-8 text-center">
+        <Card className="symbol-card p-8 text-center shadow-lg bg-gradient-to-br from-symbol-gold/10 to-symbol-beige/20 border-symbol-gold/30">
           <CardContent>
             <div className="text-symbol-gray-500">
-              <BarChart3 className="h-16 w-16 mx-auto mb-4 text-symbol-gray-300" />
+              <BarChart3 className="h-16 w-16 mx-auto mb-4 text-symbol-gold/60" />
               <h3 className="brand-heading text-xl text-symbol-black mb-2">Sem dados para este período</h3>
               <p className="brand-body">Não há transações registradas para {months[selectedMonth]} de {selectedYear}.</p>
               <p className="mt-2 text-sm brand-body text-symbol-gray-600">Registre algumas transações para visualizar o relatório mensal.</p>
@@ -585,12 +585,12 @@ const Reports = () => {
         {/* Date Filters */}
         <div className="flex flex-col sm:flex-row gap-3 lg:gap-4 mb-6">
           <Select value={selectedMonth.toString()} onValueChange={(value) => setSelectedMonth(parseInt(value))}>
-            <SelectTrigger className="w-full sm:w-48 bg-symbol-gray-50 border-symbol-gray-300">
+            <SelectTrigger className="w-full sm:w-48 bg-symbol-beige/30 border-symbol-gold/40 hover:border-symbol-gold focus:border-symbol-gold focus:ring-symbol-gold/20">
               <SelectValue placeholder="Selecione o mês" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border-symbol-gold/40">
               {months.map((month, index) => (
-                <SelectItem key={index} value={index.toString()}>
+                <SelectItem key={index} value={index.toString()} className="hover:bg-symbol-gold/10 focus:bg-symbol-gold/10">
                   {month}
                 </SelectItem>
               ))}
@@ -598,12 +598,12 @@ const Reports = () => {
           </Select>
 
           <Select value={selectedYear.toString()} onValueChange={(value) => setSelectedYear(parseInt(value))}>
-            <SelectTrigger className="w-full sm:w-32 bg-symbol-gray-50 border-symbol-gray-300">
+            <SelectTrigger className="w-full sm:w-32 bg-symbol-beige/30 border-symbol-gold/40 hover:border-symbol-gold focus:border-symbol-gold focus:ring-symbol-gold/20">
               <SelectValue placeholder="Ano" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="bg-white border-symbol-gold/40">
               {years.map((year) => (
-                <SelectItem key={year} value={year.toString()}>
+                <SelectItem key={year} value={year.toString()} className="hover:bg-symbol-gold/10 focus:bg-symbol-gold/10">
                   {year}
                 </SelectItem>
               ))}
@@ -621,8 +621,11 @@ const Reports = () => {
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
             <div className="text-center">
-              <div className="text-2xl lg:text-3xl mb-2">
-                {reportData.lucroLiquido >= 0 ? '📈' : '📉'}
+              <div className="flex justify-center mb-2">
+                {reportData.lucroLiquido >= 0 ? 
+                  <CheckCircle className="w-8 h-8 lg:w-10 lg:h-10 text-green-600" /> : 
+                  <XCircle className="w-8 h-8 lg:w-10 lg:h-10 text-red-600" />
+                }
               </div>
               <p className="text-xs lg:text-sm text-symbol-gray-600 mb-1">Status Financeiro</p>
               <p className={`font-semibold text-sm lg:text-base ${reportData.lucroLiquido >= 0 ? 'text-green-600' : 'text-red-600'}`}>
@@ -630,21 +633,27 @@ const Reports = () => {
               </p>
             </div>
             <div className="text-center">
-              <div className="text-2xl lg:text-3xl mb-2">🎯</div>
+              <div className="flex justify-center mb-2">
+                <Target className="w-8 h-8 lg:w-10 lg:h-10 text-blue-600" />
+              </div>
               <p className="text-xs lg:text-sm text-symbol-gray-600 mb-1">Ticket Médio</p>
               <p className="font-semibold text-symbol-black text-sm lg:text-base">
                 {formatCurrency(reportData.ticketMedio)}
               </p>
             </div>
             <div className="text-center">
-              <div className="text-2xl lg:text-3xl mb-2">📊</div>
+              <div className="flex justify-center mb-2">
+                <Award className={`w-8 h-8 lg:w-10 lg:h-10 ${reportData.margemLucro >= 15 ? 'text-green-600' : reportData.margemLucro >= 10 ? 'text-yellow-600' : 'text-red-600'}`} />
+              </div>
               <p className="text-xs lg:text-sm text-symbol-gray-600 mb-1">Eficiência</p>
               <p className={`font-semibold text-sm lg:text-base ${reportData.margemLucro >= 15 ? 'text-green-600' : reportData.margemLucro >= 10 ? 'text-yellow-600' : 'text-red-600'}`}>
                 {reportData.margemLucro >= 15 ? 'Excelente' : reportData.margemLucro >= 10 ? 'Boa' : 'Baixa'}
               </p>
             </div>
             <div className="text-center">
-              <div className="text-2xl lg:text-3xl mb-2">⚡</div>
+              <div className="flex justify-center mb-2">
+                <Zap className="w-8 h-8 lg:w-10 lg:h-10 text-purple-600" />
+              </div>
               <p className="text-xs lg:text-sm text-symbol-gray-600 mb-1">Serviços Realizados</p>
               <p className="font-semibold text-symbol-black text-sm lg:text-base">
                 {reportData.servicosRealizados}
@@ -667,7 +676,7 @@ const Reports = () => {
         </div>
 
       {/* Main Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
         <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-blue-50/50 to-blue-100/30 border-blue-200/50">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
             <DollarSign className="text-blue-600" size={20} />
@@ -722,91 +731,7 @@ const Reports = () => {
           </div>
         </div>
 
-        <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-yellow-50/50 to-yellow-100/30 border-yellow-200/50">
-          <div className="flex items-center justify-between mb-3 lg:mb-4">
-            <Activity className="text-yellow-600" size={20} />
-            <InfoModal 
-              title="Custo Operacional" 
-              trigger={
-                <button className="p-2 hover:bg-yellow-100 rounded-full transition-colors touch-manipulation">
-                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-yellow-600 cursor-pointer" />
-                </button>
-              }
-            >
-              <CustoOperacionalModal />
-            </InfoModal>
-          </div>
-          <div className="mb-2">
-            <h3 className="brand-subheading text-symbol-gray-700 text-xs lg:text-sm uppercase tracking-wider">
-              Custo Operacional
-            </h3>
-          </div>
-          <div className="brand-heading text-lg lg:text-2xl text-symbol-black">
-            {formatCurrency(reportData.custoOperacional)}
-          </div>
-          <div className="text-xs text-yellow-600 font-medium mt-1">
-            {reportData.percentualCustoOperacional.toFixed(1)}% do faturamento
-          </div>
-        </div>
-
-        <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-emerald-50/50 to-emerald-100/30 border-emerald-200/50">
-          <div className="flex items-center justify-between mb-3 lg:mb-4">
-            <TrendingUp className={`${reportData.lucroLiquido >= 0 ? 'text-emerald-600' : 'text-red-600'}`} size={20} />
-            <InfoModal 
-              title="Resultado Líquido" 
-              trigger={
-                <button className="p-2 hover:bg-emerald-100 rounded-full transition-colors touch-manipulation">
-                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-emerald-600 cursor-pointer" />
-                </button>
-              }
-            >
-              <ResultadoLiquidoModal />
-            </InfoModal>
-          </div>
-          <div className="mb-2">
-            <h3 className="brand-subheading text-symbol-gray-700 text-xs lg:text-sm uppercase tracking-wider">
-              Resultado Líquido
-            </h3>
-          </div>
-          <div className={`brand-heading text-lg lg:text-2xl ${reportData.lucroLiquido >= 0 ? 'text-symbol-black' : 'text-red-600'}`}>
-            {formatCurrency(reportData.lucroLiquido)}
-          </div>
-          <div className={`text-xs font-medium mt-1 ${reportData.lucroLiquido >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-            {reportData.margemLucro.toFixed(1)}% margem
-          </div>
-        </div>
-
-        <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-purple-50/50 to-purple-100/30 border-purple-200/50">
-          <div className="flex items-center justify-between mb-3 lg:mb-4">
-            <Target className="text-purple-600" size={20} />
-            <InfoModal 
-              title="Margem de Lucro" 
-              trigger={
-                <button className="p-2 hover:bg-purple-100 rounded-full transition-colors touch-manipulation">
-                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-purple-600 cursor-pointer" />
-                </button>
-              }
-            >
-              <MargemLucroModal />
-            </InfoModal>
-          </div>
-          <div className="mb-2">
-            <h3 className="brand-subheading text-symbol-gray-700 text-xs lg:text-sm uppercase tracking-wider">
-              Margem de Lucro
-            </h3>
-          </div>
-          <div className="brand-heading text-lg lg:text-2xl text-symbol-black">
-            {reportData.margemLucro.toFixed(1)}%
-          </div>
-          <div className={`text-xs font-medium mt-1 ${reportData.margemLucro >= 15 ? 'text-green-600' : reportData.margemLucro >= 10 ? 'text-yellow-600' : 'text-red-600'}`}>
-            {reportData.margemLucro >= 15 ? 'Excelente' : reportData.margemLucro >= 10 ? 'Boa' : 'Precisa melhorar'}
-          </div>
-        </div>
-      </div>
-
-      {/* Secondary Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-        <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-amber-50/50 to-amber-100/30 border-amber-200/50">
+                <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-amber-50/50 to-amber-100/30 border-amber-200/50">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
             <BarChart3 className="text-amber-600" size={20} />
             <InfoModal 
@@ -842,17 +767,90 @@ const Reports = () => {
           </div>
           <div className="mb-2">
             <h3 className="brand-subheading text-symbol-gray-700 text-xs lg:text-sm uppercase tracking-wider">
-              Despesas Indiretas
+              Custos Indiretos
             </h3>
           </div>
           <div className="brand-heading text-lg lg:text-2xl text-symbol-black">
             {formatCurrency(reportData.despesasIndiretas)}
           </div>
           <div className="text-xs text-amber-600 font-medium mt-1">
-            Custos fixos mensais
+            Custos mensais
           </div>
         </div>
 
+        <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-yellow-50/50 to-yellow-100/30 border-yellow-200/50">
+          <div className="flex items-center justify-between mb-3 lg:mb-4">
+            <Activity className="text-yellow-600" size={20} />
+            <InfoModal 
+              title="Custo Operacional" 
+              trigger={
+                <button className="p-2 hover:bg-yellow-100 rounded-full transition-colors touch-manipulation">
+                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-yellow-600 cursor-pointer" />
+                </button>
+              }
+            >
+              <CustoOperacionalModal />
+            </InfoModal>
+          </div>
+          <div className="mb-2">
+            <h3 className="brand-subheading text-symbol-gray-700 text-xs lg:text-sm uppercase tracking-wider">
+              Custo Operacional
+            </h3>
+          </div>
+          <div className="brand-heading text-lg lg:text-2xl text-symbol-black">
+            {formatCurrency(reportData.custoOperacional)}
+          </div>
+          <div className="text-xs text-yellow-600 font-medium mt-1">
+            {reportData.percentualCustoOperacional.toFixed(1)}% do faturamento
+          </div>
+        </div>
+
+        {/* 4. Impostos Gerais */}
+        <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-rose-50/50 to-rose-100/30 border-rose-200/50">
+          <div className="flex items-center justify-between mb-3 lg:mb-4">
+            <TrendingDown className="text-rose-600" size={20} />
+            <InfoModal 
+              title="Impostos Gerais" 
+              trigger={
+                <button className="p-2 hover:bg-rose-100 rounded-full transition-colors touch-manipulation">
+                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-rose-600 cursor-pointer" />
+                </button>
+              }
+            >
+              <div className="space-y-4">
+                <p className="text-sm text-symbol-gray-700 leading-relaxed">
+                  <strong>O que são:</strong> Impostos e taxas sobre o faturamento, variando conforme o regime tributário da empresa.
+                </p>
+                <div className="bg-rose-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-rose-800 mb-2">Principais tipos:</h4>
+                  <ul className="text-sm text-rose-700 space-y-1">
+                    <li>• ISS: Imposto sobre serviços</li>
+                    <li>• Taxas de cartão e PIX</li>
+                  </ul>
+                </div>
+                <div className="bg-yellow-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-yellow-800 mb-2">Dica:</h4>
+                  <p className="text-sm text-yellow-700">
+                    Consulte um contador para otimizar seu regime tributário e reduzir este percentual.
+                  </p>
+                </div>
+              </div>
+            </InfoModal>
+          </div>
+          <div className="mb-2">
+            <h3 className="brand-subheading text-symbol-gray-700 text-xs lg:text-sm uppercase tracking-wider">
+              Impostos Gerais
+            </h3>
+          </div>
+          <div className="brand-heading text-lg lg:text-2xl text-symbol-black">
+            {formatCurrency(reportData.impostos)}
+          </div>
+          <div className="text-xs text-rose-600 font-medium mt-1">
+            {((reportData.impostos / reportData.faturamento) * 100).toFixed(1)}% do faturamento
+          </div>
+        </div>
+
+        
         <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-indigo-50/50 to-indigo-100/30 border-indigo-200/50">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
             <DollarSign className="text-indigo-600" size={20} />
@@ -895,38 +893,96 @@ const Reports = () => {
             {formatCurrency(reportData.comissoes)}
           </div>
           <div className="text-xs text-indigo-600 font-medium mt-1">
-            10% do faturamento
+            {((reportData.comissoes / reportData.faturamento) * 100).toFixed(1)}% do faturamento
           </div>
         </div>
 
-        <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-rose-50/50 to-rose-100/30 border-rose-200/50">
+              {/* Secondary Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
+        <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-purple-50/50 to-purple-100/30 border-purple-200/50">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
-            <TrendingDown className="text-rose-600" size={20} />
+            <Target className="text-purple-600" size={20} />
             <InfoModal 
-              title="Impostos Gerais" 
+              title="Margem de Lucro" 
               trigger={
-                <button className="p-2 hover:bg-rose-100 rounded-full transition-colors touch-manipulation">
-                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-rose-600 cursor-pointer" />
+                <button className="p-2 hover:bg-purple-100 rounded-full transition-colors touch-manipulation">
+                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-purple-600 cursor-pointer" />
+                </button>
+              }
+            >
+              <MargemLucroModal />
+            </InfoModal>
+          </div>
+          <div className="mb-2">
+            <h3 className="brand-subheading text-symbol-gray-700 text-xs lg:text-sm uppercase tracking-wider">
+              Margem de Lucro
+            </h3>
+          </div>
+          <div className="brand-heading text-lg lg:text-2xl text-symbol-black">
+            {reportData.margemLucro.toFixed(1)}%
+          </div>
+          <div className={`text-xs font-medium mt-1 ${reportData.margemLucro >= 15 ? 'text-green-600' : reportData.margemLucro >= 10 ? 'text-yellow-600' : 'text-red-600'}`}>
+            {reportData.margemLucro >= 15 ? 'Excelente' : reportData.margemLucro >= 10 ? 'Boa' : 'Precisa melhorar'}
+          </div>
+        </div>
+      </div>
+
+        <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-emerald-50/50 to-emerald-100/30 border-emerald-200/50">
+          <div className="flex items-center justify-between mb-3 lg:mb-4">
+            <TrendingUp className={`${reportData.lucroLiquido >= 0 ? 'text-emerald-600' : 'text-red-600'}`} size={20} />
+            <InfoModal 
+              title="Resultado Líquido" 
+              trigger={
+                <button className="p-2 hover:bg-emerald-100 rounded-full transition-colors touch-manipulation">
+                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-emerald-600 cursor-pointer" />
+                </button>
+              }
+            >
+              <ResultadoLiquidoModal />
+            </InfoModal>
+          </div>
+          <div className="mb-2">
+            <h3 className="brand-subheading text-symbol-gray-700 text-xs lg:text-sm uppercase tracking-wider">
+              Resultado Líquido
+            </h3>
+          </div>
+          <div className={`brand-heading text-lg lg:text-2xl ${reportData.lucroLiquido >= 0 ? 'text-symbol-black' : 'text-red-600'}`}>
+            {formatCurrency(reportData.lucroLiquido)}
+          </div>
+          <div className={`text-xs font-medium mt-1 ${reportData.lucroLiquido >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+            {reportData.margemLucro.toFixed(1)}% margem
+          </div>
+        </div>
+      </div>
+
+      {/* Secondary Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
+
+        <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-cyan-50/50 to-cyan-100/30 border-cyan-200/50">
+          <div className="flex items-center justify-between mb-3 lg:mb-4">
+            <Calculator className="text-cyan-600" size={20} />
+            <InfoModal 
+              title="Ticket Médio" 
+              trigger={
+                <button className="p-2 hover:bg-cyan-100 rounded-full transition-colors touch-manipulation">
+                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-cyan-600 cursor-pointer" />
                 </button>
               }
             >
               <div className="space-y-4">
                 <p className="text-sm text-symbol-gray-700 leading-relaxed">
-                  <strong>O que são:</strong> Impostos e taxas sobre o faturamento, variando conforme o regime tributário da empresa.
+                  <strong>O que é:</strong> Valor médio de cada transação de venda realizada no período. Indica o valor típico que cada cliente gasta.
                 </p>
-                <div className="bg-rose-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-rose-800 mb-2">Principais tipos:</h4>
-                  <ul className="text-sm text-rose-700 space-y-1">
-                    <li>• MEI: Taxa fixa mensal</li>
-                    <li>• Simples Nacional: % sobre faturamento</li>
-                    <li>• ISS: Imposto sobre serviços</li>
-                    <li>• Taxas de cartão e PIX</li>
-                  </ul>
+                <div className="bg-cyan-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-cyan-800 mb-2">Como calcular:</h4>
+                  <p className="text-sm text-cyan-700">
+                    Ticket Médio = Faturamento Total ÷ Número de Transações
+                  </p>
                 </div>
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-yellow-800 mb-2">Dica:</h4>
-                  <p className="text-sm text-yellow-700">
-                    Consulte um contador para otimizar seu regime tributário e reduzir este percentual.
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-green-800 mb-2">Importância:</h4>
+                  <p className="text-sm text-green-700">
+                    Aumentar o ticket médio é uma forma eficiente de crescer o faturamento sem precisar buscar novos clientes.
                   </p>
                 </div>
               </div>
@@ -934,14 +990,59 @@ const Reports = () => {
           </div>
           <div className="mb-2">
             <h3 className="brand-subheading text-symbol-gray-700 text-xs lg:text-sm uppercase tracking-wider">
-              Impostos Gerais
+              Ticket Médio
             </h3>
           </div>
           <div className="brand-heading text-lg lg:text-2xl text-symbol-black">
-            {formatCurrency(reportData.impostos)}
+            {formatCurrency(reportData.ticketMedio)}
           </div>
-          <div className="text-xs text-rose-600 font-medium mt-1">
-            {((reportData.impostos / reportData.faturamento) * 100).toFixed(1)}% do faturamento
+          <div className="text-xs text-cyan-600 font-medium mt-1">
+            Por transação
+          </div>
+        </div>
+
+        <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-teal-50/50 to-teal-100/30 border-teal-200/50">
+          <div className="flex items-center justify-between mb-3 lg:mb-4">
+            <Wrench className="text-teal-600" size={20} />
+            <InfoModal 
+              title="Serviços Realizados" 
+              trigger={
+                <button className="p-2 hover:bg-teal-100 rounded-full transition-colors touch-manipulation">
+                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-teal-600 cursor-pointer" />
+                </button>
+              }
+            >
+              <div className="space-y-4">
+                <p className="text-sm text-symbol-gray-700 leading-relaxed">
+                  <strong>O que é:</strong> Quantidade total de serviços executados no período, mostrando o volume operacional do negócio.
+                </p>
+                <div className="bg-teal-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-teal-800 mb-2">Indica:</h4>
+                  <ul className="text-sm text-teal-700 space-y-1">
+                    <li>• Capacidade produtiva utilizada</li>
+                    <li>• Demanda pelos serviços</li>
+                    <li>• Eficiência operacional</li>
+                  </ul>
+                </div>
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-semibold text-blue-800 mb-2">Análise:</h4>
+                  <p className="text-sm text-blue-700">
+                    Compare com meses anteriores para identificar tendências de crescimento ou sazonalidade.
+                  </p>
+                </div>
+              </div>
+            </InfoModal>
+          </div>
+          <div className="mb-2">
+            <h3 className="brand-subheading text-symbol-gray-700 text-xs lg:text-sm uppercase tracking-wider">
+              Serviços Realizados
+            </h3>
+          </div>
+          <div className="brand-heading text-lg lg:text-2xl text-symbol-black">
+            {reportData.servicosRealizados}
+          </div>
+          <div className="text-xs text-teal-600 font-medium mt-1">
+            No período
           </div>
         </div>
       </div>
