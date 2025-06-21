@@ -45,6 +45,7 @@ const UNIT_OPTIONS = [
   { value: 'pares', label: 'pares' },
   { value: 'metros', label: 'metros' },
   { value: 'cm', label: 'cm (centímetros)' },
+  { value: 'clientes', label: 'clientes' },
 ];
 
 interface AddMaterialModalProps {
@@ -103,10 +104,16 @@ const AddMaterialModal = ({
     }
   }, [initialData, form]);
 
-  const handleSubmit = (data: FormData) => {
-    onSave(data);
-    form.reset();
-    setUnitCost(0);
+  const handleSubmit = async (data: FormData) => {
+    try {
+      await onSave(data);
+      // Resetar o form apenas após sucesso
+      form.reset();
+      setUnitCost(0);
+    } catch (error) {
+      console.error('Error saving material:', error);
+      // Não resetar em caso de erro para manter os dados preenchidos
+    }
   };
 
   const handleClose = () => {

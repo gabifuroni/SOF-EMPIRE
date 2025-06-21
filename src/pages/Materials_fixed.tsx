@@ -99,10 +99,7 @@ const Materials = () => {
         </div>
         
         <Button 
-          onClick={() => {
-            console.log('Materials: Opening add modal');
-            setIsAddModalOpen(true);
-          }}
+          onClick={() => setIsAddModalOpen(true)}
           className="bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -177,10 +174,7 @@ const Materials = () => {
 
       <AddMaterialModal
         isOpen={isAddModalOpen}
-        onClose={() => {
-          console.log('Materials: Closing add modal');
-          setIsAddModalOpen(false);
-        }}
+        onClose={() => setIsAddModalOpen(false)}
         onSave={handleAddMaterial}
         title="Adicionar Nova Matéria-Prima"
       />

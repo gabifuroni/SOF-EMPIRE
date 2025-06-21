@@ -59,13 +59,13 @@ export const convertMaterialFromDb = (dbMaterial: Tables<'materias_primas'>): Ma
 };
 
 // Converte material da aplicação para formato do banco
-export const convertMaterialToDb = (material: Omit<Material, 'id'>): Omit<Tables<'materias_primas'>, 'id' | 'user_id' | 'created_at' | 'updated_at'> => {
+export const convertMaterialToDb = (material: Omit<Material, 'id'>): Omit<Tables<'materias_primas'>, 'id' | 'user_id' | 'created_at' | 'updated_at' | 'unit_cost'> => {
   return {
     name: material.name,
     batch_quantity: material.batchQuantity,
     batch_price: material.batchPrice,
     unit: material.unit,
-    unit_cost: material.unitCost,
+    // Não incluir unit_cost pois é uma coluna gerada pelo banco
   };
 };
 

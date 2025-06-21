@@ -9,13 +9,14 @@ type MaterialInsert = TablesInsert<'materias_primas'>;
 type MaterialUpdate = TablesUpdate<'materias_primas'>;
 
 export const useMaterials = () => {
-  const queryClient = useQueryClient();
-
-  const { data: materials = [], isLoading } = useQuery({
+  const queryClient = useQueryClient();  const { data: materials = [], isLoading } = useQuery({
     queryKey: ['materials'],
     queryFn: async (): Promise<Material[]> => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
 
       const { data, error } = await supabase
         .from('materias_primas')
@@ -23,17 +24,19 @@ export const useMaterials = () => {
         .eq('user_id', user.id)
         .order('name', { ascending: true });
       
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
+      
       return data.map(convertMaterialFromDb);
     },
-  });
-
-  const addMaterial = useMutation({
+  });  const addMaterial = useMutation({
     mutationFn: async (material: Omit<Material, 'id'>) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       const materialData = convertMaterialToDb(material);
+      
       const { data, error } = await supabase
         .from('materias_primas')
         .insert({
