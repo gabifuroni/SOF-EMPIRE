@@ -77,9 +77,8 @@ export const SummaryCard = ({
         </div>
       </div>
       
-      {(Math.abs(totalDistribution - 100) > 0.01 || Math.abs(totalMargins - 100) > 0.01) && (
-        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200">
-          <p className="text-yellow-700 brand-body text-sm">
+      {(Math.abs(totalDistribution - 100) > 0.01 || Math.abs(totalMargins - 100) > 0.01) && (        <div className="mt-6 p-4 bg-red-50 border border-red-200">
+          <p className="text-red-700 brand-body text-sm">
             ⚠️ {Math.abs(totalDistribution - 100) > 0.01 && `A soma dos percentuais de distribuição é ${totalDistribution.toFixed(2)}% (recomendado: 100%).`}
             {Math.abs(totalDistribution - 100) > 0.01 && Math.abs(totalMargins - 100) > 0.01 && " "}
             {Math.abs(totalMargins - 100) > 0.01 && "A soma das margens deve ser igual a 100%."}

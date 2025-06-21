@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ExpenseCategory, MonthlyExpense } from '@/types';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 interface IndirectExpensesTableProps {
   categories: ExpenseCategory[];
@@ -57,49 +57,65 @@ const ExpenseInput = ({
   isDisabled: boolean;
   onValueChange: (value: number) => void;
   hasChanges: boolean;
-}) => {
-  const [inputValue, setInputValue] = useState(initialValue.toString());
+}) => {  const [localValue, setLocalValue] = useState(initialValue === 0 ? '' : initialValue.toString());
+  const [isFocused, setIsFocused] = useState(false);
 
+  // Only update when not focused and when the external value is different from what we have
   useEffect(() => {
-    setInputValue(initialValue.toString());
-  }, [initialValue]);
+    if (!isFocused) {
+      const currentNumber = parseFloat(localValue) || 0;
+      if (currentNumber !== initialValue) {
+        setLocalValue(initialValue === 0 ? '' : initialValue.toString());
+      }
+    }
+  }, [initialValue, isFocused, localValue]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setInputValue(value);
+    setLocalValue(value);
     
-    // Only update if the value is different
+    // Immediately notify parent of changes
     const numericValue = parseFloat(value) || 0;
-    if (numericValue !== initialValue) {
-      onValueChange(numericValue);
+    onValueChange(numericValue);
+  };
+
+  const handleFocus = () => {
+    setIsFocused(true);
+    // Clear if it's showing 0
+    if (localValue === '0' || (parseFloat(localValue) || 0) === 0) {
+      setLocalValue('');
     }
   };
 
   const handleBlur = () => {
-    // Ensure we have the latest value when user finishes editing
-    const numericValue = parseFloat(inputValue) || 0;
+    setIsFocused(false);
+    const numericValue = parseFloat(localValue) || 0;
+    
+    // Update the display value
+    setLocalValue(numericValue === 0 ? '' : numericValue.toString());
+    
+    // Final notification to parent
     onValueChange(numericValue);
   };
 
   return (
-    <div className="relative">
-      <Input
+    <div className="relative">      <Input
         type="number"
         min="0"
         step="0.01"
-        value={inputValue}
+        value={localValue}
         onChange={handleChange}
-        onBlur={handleBlur}
-        className={`text-right max-w-32 ml-auto focus:border-symbol-gold ${
+        onFocus={handleFocus}
+        onBlur={handleBlur}        className={`text-right max-w-32 ml-auto focus:border-symbol-gold ${
           hasChanges
-            ? 'bg-yellow-50 border-yellow-300' 
+            ? 'bg-symbol-beige/30 border-symbol-gold/50' 
             : 'bg-symbol-gray-50 border-symbol-gray-300'
         }`}
         placeholder="0,00"
         disabled={isDisabled}
       />
       {hasChanges && (
-        <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+        <div className="absolute -top-1 -right-1 w-2 h-2 bg-symbol-gold rounded-full animate-pulse"></div>
       )}
     </div>
   );
@@ -216,7 +232,7 @@ const IndirectExpensesTable = ({
             
             {/* Add Category Row */}
             {showAddCategory ? (
-              <TableRow className="bg-amber-50/50 border-2 border-dashed border-amber-200">
+              <TableRow className="bg-symbol-beige/20 border-2 border-dashed border-symbol-gold/40">
                 <TableCell>
                   <Input
                     value={newCategoryName}
@@ -258,7 +274,7 @@ const IndirectExpensesTable = ({
                   <Button
                     variant="outline"
                     onClick={() => onSetShowAddCategory(true)}
-                    className="border-dashed border-amber-300 text-symbol-gray-600 hover:bg-amber-50/50 font-light"
+                    className="border-dashed border-symbol-gold/40 text-symbol-gray-600 hover:bg-symbol-beige/20 font-light"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Adicionar Nova Categoria

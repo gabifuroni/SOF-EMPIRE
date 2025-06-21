@@ -90,9 +90,9 @@ const CustosDirectosModal = () => (
         <li>• Insumos consumidos na prestação do serviço</li>
       </ul>
     </div>
-    <div className="bg-yellow-50 p-4 rounded-lg">
-      <h4 className="font-semibold text-yellow-800 mb-2">Meta ideal:</h4>
-      <p className="text-sm text-yellow-700">
+    <div className="bg-symbol-beige/20 p-4 rounded-lg">
+      <h4 className="font-semibold text-symbol-black mb-2">Meta ideal:</h4>
+      <p className="text-sm text-symbol-gray-700">
         Manter abaixo de 30% do faturamento para garantir boa margem de lucro.
       </p>
     </div>
@@ -104,9 +104,9 @@ const CustoOperacionalModal = () => (
     <p className="text-sm text-symbol-gray-700 leading-relaxed">
       <strong>O que é:</strong> Custos fixos e administrativos necessários para manter o negócio funcionando, independentemente do volume de vendas.
     </p>
-    <div className="bg-yellow-50 p-4 rounded-lg">
-      <h4 className="font-semibold text-yellow-800 mb-2">Inclui:</h4>
-      <ul className="text-sm text-yellow-700 space-y-1">
+    <div className="bg-symbol-beige/20 p-4 rounded-lg">
+      <h4 className="font-semibold text-symbol-black mb-2">Inclui:</h4>
+      <ul className="text-sm text-symbol-gray-700 space-y-1">
         <li>• Aluguel e condomínio</li>
         <li>• Energia elétrica e água</li>
         <li>• Internet e telefone</li>
@@ -161,7 +161,7 @@ const MargemLucroModal = () => (
       <h4 className="font-semibold text-gray-800 mb-2">Classificação:</h4>
       <ul className="text-sm space-y-1">
         <li>• <span className="text-green-600 font-semibold">15%+:</span> Excelente performance</li>
-        <li>• <span className="text-yellow-600 font-semibold">10-15%:</span> Boa performance</li>
+        <li>• <span className="text-symbol-gold font-semibold">10-15%:</span> Boa performance</li>
         <li>• <span className="text-red-600 font-semibold">Abaixo de 10%:</span> Precisa melhorar</li>
       </ul>
     </div>
@@ -553,7 +553,7 @@ const Reports = () => {
           </div>
         </div>
 
-        <Card className="symbol-card p-8 text-center shadow-lg bg-gradient-to-br from-symbol-gold/10 to-symbol-beige/20 border-symbol-gold/30">
+        <Card className="symbol-card p-8 text-center shadow-lg bg-white border-symbol-gold/30">
           <CardContent>
             <div className="text-symbol-gray-500">
               <BarChart3 className="h-16 w-16 mx-auto mb-4 text-symbol-gold/60" />
@@ -643,10 +643,10 @@ const Reports = () => {
             </div>
             <div className="text-center">
               <div className="flex justify-center mb-2">
-                <Award className={`w-8 h-8 lg:w-10 lg:h-10 ${reportData.margemLucro >= 15 ? 'text-green-600' : reportData.margemLucro >= 10 ? 'text-yellow-600' : 'text-red-600'}`} />
+                <Award className={`w-8 h-8 lg:w-10 lg:h-10 ${reportData.margemLucro >= 15 ? 'text-green-600' : reportData.margemLucro >= 10 ? 'text-symbol-gold' : 'text-red-600'}`} />
               </div>
               <p className="text-xs lg:text-sm text-symbol-gray-600 mb-1">Eficiência</p>
-              <p className={`font-semibold text-sm lg:text-base ${reportData.margemLucro >= 15 ? 'text-green-600' : reportData.margemLucro >= 10 ? 'text-yellow-600' : 'text-red-600'}`}>
+              <p className={`font-semibold text-sm lg:text-base ${reportData.margemLucro >= 15 ? 'text-green-600' : reportData.margemLucro >= 10 ? 'text-symbol-gold' : 'text-red-600'}`}>
                 {reportData.margemLucro >= 15 ? 'Excelente' : reportData.margemLucro >= 10 ? 'Boa' : 'Baixa'}
               </p>
             </div>
@@ -731,14 +731,14 @@ const Reports = () => {
           </div>
         </div>
 
-                <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-amber-50/50 to-amber-100/30 border-amber-200/50">
+                <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-white border-symbol-gold/30">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
-            <BarChart3 className="text-amber-600" size={20} />
+            <BarChart3 className="text-symbol-gold" size={20} />
             <InfoModal 
               title="Despesas Indiretas" 
               trigger={
-                <button className="p-2 hover:bg-amber-100 rounded-full transition-colors touch-manipulation">
-                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-amber-600 cursor-pointer" />
+                <button className="p-2 hover:bg-symbol-gold/10 rounded-full transition-colors touch-manipulation">
+                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-symbol-gold cursor-pointer" />
                 </button>
               }
             >
@@ -746,9 +746,9 @@ const Reports = () => {
                 <p className="text-sm text-symbol-gray-700 leading-relaxed">
                   <strong>O que são:</strong> Gastos fixos mensais necessários para manter o negócio funcionando, independentemente do volume de vendas.
                 </p>
-                <div className="bg-amber-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-amber-800 mb-2">Exemplos:</h4>
-                  <ul className="text-sm text-amber-700 space-y-1">
+                <div className="bg-symbol-beige/20 p-4 rounded-lg">
+                  <h4 className="font-semibold text-symbol-black mb-2">Exemplos:</h4>
+                  <ul className="text-sm text-symbol-gray-700 space-y-1">
                     <li>• Aluguel e condomínio</li>
                     <li>• Energia elétrica e água</li>
                     <li>• Internet e telefone</li>
@@ -773,19 +773,19 @@ const Reports = () => {
           <div className="brand-heading text-lg lg:text-2xl text-symbol-black">
             {formatCurrency(reportData.despesasIndiretas)}
           </div>
-          <div className="text-xs text-amber-600 font-medium mt-1">
+          <div className="text-xs text-symbol-gold font-medium mt-1">
             Custos mensais
           </div>
         </div>
 
-        <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-yellow-50/50 to-yellow-100/30 border-yellow-200/50">
+        <div className="symbol-card p-4 lg:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-white border-symbol-gold/30">
           <div className="flex items-center justify-between mb-3 lg:mb-4">
-            <Activity className="text-yellow-600" size={20} />
+            <Activity className="text-symbol-gold" size={20} />
             <InfoModal 
               title="Custo Operacional" 
               trigger={
-                <button className="p-2 hover:bg-yellow-100 rounded-full transition-colors touch-manipulation">
-                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-yellow-600 cursor-pointer" />
+                <button className="p-2 hover:bg-symbol-gold/10 rounded-full transition-colors touch-manipulation">
+                  <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-symbol-gold cursor-pointer" />
                 </button>
               }
             >
@@ -800,7 +800,7 @@ const Reports = () => {
           <div className="brand-heading text-lg lg:text-2xl text-symbol-black">
             {formatCurrency(reportData.custoOperacional)}
           </div>
-          <div className="text-xs text-yellow-600 font-medium mt-1">
+          <div className="text-xs text-symbol-gold font-medium mt-1">
             {reportData.percentualCustoOperacional.toFixed(1)}% do faturamento
           </div>
         </div>
@@ -828,9 +828,9 @@ const Reports = () => {
                     <li>• Taxas de cartão e PIX</li>
                   </ul>
                 </div>
-                <div className="bg-yellow-50 p-4 rounded-lg">
-                  <h4 className="font-semibold text-yellow-800 mb-2">Dica:</h4>
-                  <p className="text-sm text-yellow-700">
+                <div className="bg-symbol-beige/20 p-4 rounded-lg">
+                  <h4 className="font-semibold text-symbol-black mb-2">Dica:</h4>
+                  <p className="text-sm text-symbol-gray-700">
                     Consulte um contador para otimizar seu regime tributário e reduzir este percentual.
                   </p>
                 </div>
@@ -922,7 +922,7 @@ const Reports = () => {
           <div className="brand-heading text-lg lg:text-2xl text-symbol-black">
             {reportData.margemLucro.toFixed(1)}%
           </div>
-          <div className={`text-xs font-medium mt-1 ${reportData.margemLucro >= 15 ? 'text-green-600' : reportData.margemLucro >= 10 ? 'text-yellow-600' : 'text-red-600'}`}>
+          <div className={`text-xs font-medium mt-1 ${reportData.margemLucro >= 15 ? 'text-green-600' : reportData.margemLucro >= 10 ? 'text-symbol-gold' : 'text-red-600'}`}>
             {reportData.margemLucro >= 15 ? 'Excelente' : reportData.margemLucro >= 10 ? 'Boa' : 'Precisa melhorar'}
           </div>
         </div>

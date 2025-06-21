@@ -120,36 +120,17 @@ const IndirectExpenses = () => {
       [categoryId]: value
     }));
     setHasUnsavedChanges(true);
-  };
-  const saveExpenseValues = async () => {
+  };  const saveExpenseValues = async () => {
     try {
-      // Convert month key to Portuguese month name for database
-      const monthMap: Record<string, string> = {
-        'january': 'janeiro',
-        'february': 'fevereiro',
-        'march': 'março',
-        'april': 'abril',
-        'may': 'maio',
-        'june': 'junho',
-        'july': 'julho',
-        'august': 'agosto',
-        'september': 'setembro',
-        'october': 'outubro',
-        'november': 'novembro',
-        'december': 'dezembro',
-      };
-
-      const monthInPortuguese = monthMap[selectedMonth];
-      if (!monthInPortuguese) {
-        toast.error('Mês inválido selecionado');
-        return;
-      }
-
+      // Convert month key to a proper date for the selected year/month
+      const monthNumber = MONTHS.findIndex(m => m.key === selectedMonth) + 1; // 1-12
+      const dateString = `${selectedYear}-${monthNumber.toString().padStart(2, '0')}-01`; // YYYY-MM-01
+      
       // Process each expense value that needs to be saved
       const savePromises = Object.entries(tempExpenseValues).map(async ([categoryId, value]) => {
         // Check if an expense already exists for this category and month
         const existingExpense = expenses.find(
-          exp => exp.categoria_id === categoryId && exp.mes_referencia === monthInPortuguese
+          exp => exp.categoria_id === categoryId && exp.mes_referencia === dateString
         );
 
         if (existingExpense) {
@@ -162,7 +143,7 @@ const IndirectExpenses = () => {
           // Create new expense
           return addExpenseValue.mutateAsync({
             categoria_id: categoryId,
-            mes_referencia: monthInPortuguese,
+            mes_referencia: dateString,
             valor_mensal: value
           });
         }

@@ -142,7 +142,7 @@ const Services = () => {
           </div>
         </div>
 
-        <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-amber-50/50 to-amber-100/30 border-amber-200/50">
+        <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-white border-symbol-gold/30">
           <div className="flex items-center justify-between mb-4">
             <BarChart3 className="text-amber-600" size={20} />
           </div>

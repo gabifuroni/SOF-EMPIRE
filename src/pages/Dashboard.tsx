@@ -218,10 +218,10 @@ const Dashboard = () => {
 
             {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">        <Link to="/daily-cash-flow" className="block">
-          <div className="symbol-card p-4 sm:p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-gradient-to-br from-amber-50/40 to-amber-100/20 border-amber-200/40 hover:border-amber-300/60">
+          <div className="symbol-card p-4 sm:p-6 hover:shadow-xl cursor-pointer transition-all duration-300 group shadow-lg bg-white border-symbol-gold/30 hover:border-symbol-gold/60">
             <div className="text-center space-y-4">
-              <div className="w-12 h-12 bg-amber-100/60 flex items-center justify-center mx-auto group-hover:bg-amber-200/80 transition-colors rounded-lg">
-                <Calendar className="text-amber-700 group-hover:text-amber-800 transition-colors" size={24} />
+              <div className="w-12 h-12 bg-symbol-gold/20 flex items-center justify-center mx-auto group-hover:bg-symbol-gold/30 transition-colors rounded-lg">
+                <Calendar className="text-symbol-gold group-hover:text-symbol-gold transition-colors" size={24} />
               </div>
               <div>
                 <h3 className="brand-subheading text-symbol-black text-sm uppercase tracking-wider mb-2">

@@ -434,7 +434,7 @@ const Profile = () => {
               />
             </div>
 
-            <div className="symbol-card p-6 bg-gradient-to-br from-amber-50/30 to-amber-100/20 border-amber-200/40">
+            <div className="symbol-card p-6 bg-white border-symbol-gold/30">
               <h4 className="brand-subheading text-symbol-black text-sm uppercase tracking-wide mb-3">
                 Requisitos da Senha
               </h4>

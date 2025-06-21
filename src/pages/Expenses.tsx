@@ -205,7 +205,7 @@ const Expenses = () => {
 
       {/* Add Expense Form */}
       {isAddModalOpen && (
-        <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-amber-50/30 to-amber-100/20 border-amber-200/40">
+        <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300 bg-white border-symbol-gold/30">
           <div className="mb-6">
             <h2 className="brand-heading text-xl text-symbol-black mb-2">
               Adicionar Nova Despesa
