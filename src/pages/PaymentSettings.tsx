@@ -49,14 +49,7 @@ const PaymentSettings = () => {
   const removeDuplicatePaymentMethods = useCallback((methods: PaymentMethod[]): PaymentMethod[] => {
     const uniqueMethods = new Map<string, PaymentMethod>();
       // Define similarity groups
-    const similarityGroups: { [key: string]: string[] } = {
-      'credito': ['crédito', 'credito', 'cartão de crédito', 'cartao de credito', 'credit'],
-      'credito_parcelado': ['crédito parcelado', 'credito parcelado', 'cartão de crédito parcelado', 'credit installment'],
-      'debito': ['débito', 'debito', 'cartão de débito', 'cartao de debito', 'debit'],
-      'pix': ['pix'],
-      'dinheiro': ['dinheiro', 'cash', 'dinheiro/pix', 'dinheiro/cheque', 'cheque', 'pix'],
-      'transferencia': ['transferência bancária', 'transferencia bancaria', 'transferencia', 'transferência']
-    };
+    const similarityGroups: { [key: string]: string[] } = {};
     
     methods.forEach(method => {
       const name = method.name.toLowerCase().trim();
@@ -132,11 +125,11 @@ const PaymentSettings = () => {
       taxRate: 0.00
     }
   ], []);
-
   // Depreciation state
-  const [valorMobilizado, setValorMobilizado] = useState(160000);
-  const [totalDepreciado, setTotalDepreciado] = useState(87000);
-  const [depreciacaoMensal, setDepreciacaoMensal] = useState(1450);
+  const [valorMobilizado, setValorMobilizado] = useState(0);
+  const [totalDepreciado, setTotalDepreciado] = useState(0);
+  // Depreciação mensal é calculada automaticamente: totalDepreciado / 60
+  const depreciacaoMensal = totalDepreciado / 60;
 
   // Working days state
   const [workingDays, setWorkingDays] = useState({
@@ -204,11 +197,9 @@ const PaymentSettings = () => {
     if (params) {
       console.log('Initializing business parameters from context:', params);
       setLucroDesejado(params.lucroDesejado || 21.0);
-      setDespesasIndiretasDepreciacao(params.despesasIndiretasDepreciacao || 35.0);
-      setImpostosRate(params.impostosRate || 8.0);
+      setDespesasIndiretasDepreciacao(params.despesasIndiretasDepreciacao || 35.0);      setImpostosRate(params.impostosRate || 8.0);
       setValorMobilizado(params.depreciacaoValorMobilizado || 160000);
       setTotalDepreciado(params.depreciacaoTotalMesDepreciado || 87000);
-      setDepreciacaoMensal(params.depreciacaoMensal || 1450);
       setNumProfessionals(params.equipeNumeroProfissionais || 2);
       
       // Inicializar dados de dias trabalhados se existirem no contexto
@@ -703,7 +694,7 @@ const PaymentSettings = () => {
   const totalMargins = lucroDesejado + despesasIndiretasDepreciacao + despesasDiretas;
 
   return (
-    <div className="space-y-8 p-6 animate-minimal-fade">
+    <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 animate-minimal-fade">
       <div className="mb-8">
         <h1 className="brand-heading text-3xl text-symbol-black mb-2">
           Parâmetros do Negócio
@@ -787,8 +778,7 @@ const PaymentSettings = () => {
         <div className="mt-6 p-4 bg-symbol-gold/10 rounded-lg">
           <Label className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide mb-3 block">
             Taxa de Impostos (%)
-          </Label>
-          <div className="relative max-w-xs">
+          </Label>          <div className="relative w-full max-w-xs">
             <Input
               type="number"
               step="0.1"
@@ -796,10 +786,10 @@ const PaymentSettings = () => {
               max="100"
               value={impostosRate}
               onChange={(e) => setImpostosRate(parseFloat(e.target.value) || 0)}
-              className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black pr-8"
+              className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black pr-8 w-full"
             />
             <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-symbol-gray-600 text-sm">%</span>
-          </div>          <p className="text-xs text-symbol-gray-500 mt-1">
+          </div><p className="text-xs text-symbol-gray-500 mt-1">
             Taxa fixa de impostos aplicada aos serviços
           </p>
         </div>
@@ -859,8 +849,7 @@ const PaymentSettings = () => {
               />
             </div>
           </div>
-          
-          <div className="space-y-2">
+            <div className="space-y-2">
             <Label className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
               Depreciação Mensal
             </Label>
@@ -869,11 +858,14 @@ const PaymentSettings = () => {
               <Input
                 type="number"
                 step="0.01"
-                value={depreciacaoMensal}
-                onChange={(e) => setDepreciacaoMensal(parseFloat(e.target.value) || 0)}
-                className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black"
+                value={depreciacaoMensal.toFixed(2)}
+                readOnly
+                className="bg-symbol-gray-100 border-symbol-gray-300 text-symbol-black cursor-not-allowed"
               />
             </div>
+            <p className="text-xs text-symbol-gray-500 mt-1">
+              Calculado automaticamente: Total a ser Depreciado ÷ 60
+            </p>
           </div>
         </div>
         
@@ -936,26 +928,28 @@ const PaymentSettings = () => {
           {/* Holidays */}
           <div>
             <h3 className="brand-subheading text-symbol-black text-lg mb-4">Feriados do Ano</h3>
-              {/* Add new holiday */}
-            <div className="mb-4 space-y-2">
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Input
-                  type="date"
-                  value={newHolidayDate}
-                  onChange={(e) => setNewHolidayDate(e.target.value)}
-                  className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black text-sm"
-                />
-                <Input
-                  type="text"
-                  placeholder="Nome do feriado"
-                  value={newHolidayName}
-                  onChange={(e) => setNewHolidayName(e.target.value)}
-                  className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black text-sm"
-                />
+              {/* Add new holiday */}            <div className="mb-4 space-y-3">
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <Input
+                    type="date"
+                    value={newHolidayDate}
+                    onChange={(e) => setNewHolidayDate(e.target.value)}
+                    className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black text-sm w-full"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Input
+                    type="text"
+                    placeholder="Nome do feriado"
+                    value={newHolidayName}
+                    onChange={(e) => setNewHolidayName(e.target.value)}
+                    className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black text-sm w-full"
+                  />                </div>
                 <Button
                   onClick={addHoliday}
                   size="sm"
-                  className="bg-symbol-gold hover:bg-symbol-beige text-symbol-black text-xs px-3"
+                  className="bg-symbol-gold hover:bg-symbol-gold/80 text-symbol-black px-4 py-2 whitespace-nowrap"
                 >
                   Adicionar
                 </Button>
@@ -1016,8 +1010,7 @@ const PaymentSettings = () => {
           </div>
           <div className="w-8 h-px bg-symbol-beige"></div>
         </div>
-        
-        <div className="max-w-md">
+          <div className="w-full max-w-md">
           <Label className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide mb-2 block">
             Número de Profissionais
           </Label>
@@ -1026,7 +1019,7 @@ const PaymentSettings = () => {
             min="1"
             value={numProfessionals}
             onChange={(e) => setNumProfessionals(parseInt(e.target.value) || 1)}
-            className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black"
+            className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black w-full"
           />
         </div>
         
@@ -1202,13 +1195,12 @@ const PaymentSettings = () => {
                 </td>
               </tr>            </tbody>
           </table>
-        </div>          {/* Action buttons */}
-        <div className="mt-4 flex flex-col sm:flex-row justify-center gap-3">
+        </div>          {/* Action buttons */}        <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-center">
           {Math.abs(totalDistribution - 100) > 0.01 && (
             <Button
               onClick={normalizeDistributionPercentages}
               variant="outline"
-              className="border-symbol-gold text-symbol-gold hover:bg-symbol-gold hover:text-white"
+              className="border-symbol-gold text-symbol-gold hover:bg-symbol-gold hover:text-white w-full sm:w-auto"
             >
               <Calculator className="w-4 h-4 mr-2" />
               Ajustar para 100%
@@ -1219,7 +1211,7 @@ const PaymentSettings = () => {
             <Button
               onClick={cleanDuplicatesFromDatabase}
               variant="outline"
-              className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white"
+              className="border-red-500 text-red-600 hover:bg-red-500 hover:text-white w-full sm:w-auto"
             >
               <Users className="w-4 h-4 mr-2" />
               Limpar Duplicatas
@@ -1228,7 +1220,7 @@ const PaymentSettings = () => {
           <Button
             onClick={handleSavePaymentMethods}
             disabled={isSaving}
-            className="bg-symbol-gold hover:bg-symbol-gold/80 text-symbol-black font-medium py-2 px-4 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50"
+            className="bg-symbol-gold hover:bg-symbol-gold/80 text-symbol-black font-medium py-2 px-4 transition-all duration-300 flex items-center justify-center gap-2 disabled:opacity-50 w-full sm:w-auto"
           >
             <Save size={16} />
             {isSaving ? 'Salvando...' : 'Salvar Métodos de Pagamento'}
@@ -1237,7 +1229,7 @@ const PaymentSettings = () => {
           <Button
             onClick={resetToDefaults}
             variant="outline"
-            className="border-gray-500 text-gray-600 hover:bg-gray-500 hover:text-white"
+            className="border-gray-500 text-gray-600 hover:bg-gray-500 hover:text-white w-full sm:w-auto"
           >
             Reset Padrão
           </Button>
@@ -1253,7 +1245,7 @@ const PaymentSettings = () => {
           <div className="w-8 h-px bg-symbol-beige"></div>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-8">
           <div className="text-center">
             <div className="brand-heading text-3xl text-symbol-black mb-2">
               {paymentMethods.filter(m => m.isActive).length}
@@ -1313,9 +1305,8 @@ const PaymentSettings = () => {
             </p>
           </div>
         )}
-      </div>      {/* Save All Button */}
-      <div className="flex justify-center pt-8">
-        <div className="text-center">
+      </div>      {/* Save All Button */}      <div className="flex justify-center pt-6 sm:pt-8">
+        <div className="text-center w-full max-w-md">
           <p className="text-sm text-symbol-gray-600 mb-4">
             Ou salve todas as configurações de uma vez:
           </p>          <Button 
@@ -1324,7 +1315,7 @@ const PaymentSettings = () => {
               await handleSavePaymentMethods();
             }}
             disabled={isSaving}
-            className="w-full sm:w-auto bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-4 px-8 transition-all duration-300 flex items-center justify-center gap-3 uppercase tracking-wider text-sm disabled:opacity-50"
+            className="w-full bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-4 px-6 sm:px-8 transition-all duration-300 flex items-center justify-center gap-3 uppercase tracking-wider text-sm disabled:opacity-50"
           >
             <Save size={20} />
             {isSaving ? 'Salvando...' : 'Salvar Todas as Configurações'}
