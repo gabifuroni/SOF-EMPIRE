@@ -9,17 +9,15 @@ import { useIndirectExpenseCategories, useIndirectExpenseValues } from '@/hooks/
 import { convertExpenseCategoryFromDb, convertMonthlyExpenseFromDb } from '@/utils/typeConverters';
 import type { ExpenseCategory, MonthlyExpense } from '@/types';
 
-interface DirectExpense {
+interface DirectExpenseCategory {
   id: string;
-  rateioPercent: number;
-  rateioValue: number;
-  productValue: number;
-  cardTaxPercent: number;
-  cardValue: number;
-  taxPercent: number;
-  taxValue: number;
-  total: number;
-  percentage: number;
+  name: string;
+  isCustom: boolean;
+}
+
+interface DirectExpenseValue {
+  categoryId: string;
+  value: number;
 }
 
 const MONTHS = [
@@ -61,10 +59,22 @@ const IndirectExpenses = () => {
     getTotalByMonth 
   } = useIndirectExpenseValues();  const [newCategoryName, setNewCategoryName] = useState('');
   const [showAddCategory, setShowAddCategory] = useState(false);
-  const [directExpenses, setDirectExpenses] = useState<DirectExpense[]>([]);
   const [fixedExpenses, setFixedExpenses] = useState<Record<string, boolean>>({});
   const [tempExpenseValues, setTempExpenseValues] = useState<Record<string, number>>({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  
+  // Direct expenses state
+  const [directCategories, setDirectCategories] = useState<DirectExpenseCategory[]>([
+    { id: '1', name: 'Material de Construção', isCustom: false },
+    { id: '2', name: 'Mão de Obra', isCustom: false },
+    { id: '3', name: 'Transporte', isCustom: false },
+    { id: '4', name: 'Equipamentos', isCustom: false },
+  ]);
+  const [directExpenseValues, setDirectExpenseValues] = useState<DirectExpenseValue[]>([]);
+  const [tempDirectExpenseValues, setTempDirectExpenseValues] = useState<Record<string, number>>({});
+  const [hasUnsavedDirectChanges, setHasUnsavedDirectChanges] = useState(false);
+  const [newDirectCategoryName, setNewDirectCategoryName] = useState('');
+  const [showAddDirectCategory, setShowAddDirectCategory] = useState(false);
   
   // Convert database categories to expected format
   const convertedCategories: ExpenseCategory[] = categories.map(convertExpenseCategoryFromDb);
@@ -80,25 +90,11 @@ const IndirectExpenses = () => {
       setTempExpenseValues({});
       setHasUnsavedChanges(false);
     }
-  }, [selectedMonth, selectedYear, hasUnsavedChanges]);
-
-  useEffect(() => {
-    // Simplified since we use converted data directly
-    // Initialize direct expenses with some sample data
-    const initialDirectExpenses: DirectExpense[] = Array.from({ length: 5 }, (_, index) => ({
-      id: (index + 1).toString(),
-      rateioPercent: 50,
-      rateioValue: 0,
-      productValue: 0,
-      cardTaxPercent: 2.13,
-      cardValue: 0,
-      taxPercent: 6,
-      taxValue: 0,
-      total: 0,
-      percentage: 0,
-    }));
-    setDirectExpenses(initialDirectExpenses);
-  }, [categories, selectedYear]);
+    if (hasUnsavedDirectChanges) {
+      setTempDirectExpenseValues({});
+      setHasUnsavedDirectChanges(false);
+    }
+  }, [selectedMonth, selectedYear, hasUnsavedChanges, hasUnsavedDirectChanges]);
   const getExpenseForCategory = (categoryId: string): MonthlyExpense => {
     return convertedExpenses.find(exp => exp.categoryId === categoryId) || {
       categoryId,
@@ -255,59 +251,89 @@ const IndirectExpenses = () => {
       return total + (expense[monthKey] as number || 0);
     }, 0);
   };
-
-  const updateDirectExpense = (id: string, field: keyof DirectExpense, value: number) => {
-    setDirectExpenses(prev => prev.map(expense => {
-      if (expense.id === id) {
-        const updated = { ...expense, [field]: value };
-        
-        // Auto-calculate dependent fields
-        if (field === 'rateioPercent' || field === 'total') {
-          updated.rateioValue = (updated.total * updated.rateioPercent) / 100;
-        }
-        
-        if (field === 'productValue' || field === 'cardTaxPercent') {
-          updated.cardValue = (updated.productValue * updated.cardTaxPercent) / 100;
-        }
-        
-        if (field === 'productValue' || field === 'taxPercent') {
-          updated.taxValue = (updated.productValue * updated.taxPercent) / 100;
-        }
-        
-        // Calculate total if product value changes
-        if (field === 'productValue') {
-          updated.total = updated.productValue + updated.cardValue + updated.taxValue;
-          updated.rateioValue = (updated.total * updated.rateioPercent) / 100;
-        }
-        
-        return updated;
-      }
-      return expense;
+  // Direct expenses functions
+  const updateDirectExpense = (categoryId: string, value: number) => {
+    // Store the value temporarily
+    setTempDirectExpenseValues(prev => ({
+      ...prev,
+      [categoryId]: value
     }));
+    setHasUnsavedDirectChanges(true);
   };
 
-  const addDirectExpense = () => {
-    const newExpense: DirectExpense = {
+  const saveDirectExpenseValues = async () => {
+    try {
+      // For now, just save to local state since we don't have a database table yet
+      const newValues = Object.entries(tempDirectExpenseValues).map(([categoryId, value]) => ({
+        categoryId,
+        value
+      }));
+      
+      setDirectExpenseValues(prev => {
+        // Remove old values for the same categories and add new ones
+        const filtered = prev.filter(ev => !tempDirectExpenseValues[ev.categoryId]);
+        return [...filtered, ...newValues];
+      });
+      
+      // Clear temporary values and unsaved changes flag
+      setTempDirectExpenseValues({});
+      setHasUnsavedDirectChanges(false);
+      toast.success('Despesas diretas salvas com sucesso!');
+    } catch (error) {
+      console.error('Error saving direct expense values:', error);
+      toast.error('Erro ao salvar despesas diretas. Tente novamente.');
+    }
+  };
+
+  const addNewDirectCategory = () => {
+    if (!newDirectCategoryName.trim()) return;
+    
+    const newCategory: DirectExpenseCategory = {
       id: Date.now().toString(),
-      rateioPercent: 50,
-      rateioValue: 0,
-      productValue: 0,
-      cardTaxPercent: 2.13,
-      cardValue: 0,
-      taxPercent: 6,
-      taxValue: 0,
-      total: 0,
-      percentage: 0,
+      name: newDirectCategoryName.trim(),
+      isCustom: true
     };
-    setDirectExpenses(prev => [...prev, newExpense]);
+    
+    setDirectCategories(prev => [...prev, newCategory]);
+    setNewDirectCategoryName('');
+    setShowAddDirectCategory(false);
+    toast.success('Nova categoria de despesa direta adicionada com sucesso!');
   };
 
-  const removeDirectExpense = (id: string) => {
-    setDirectExpenses(prev => prev.filter(expense => expense.id !== id));
+  const removeDirectCategory = (categoryId: string) => {
+    setDirectCategories(prev => prev.filter(cat => cat.id !== categoryId));
+    
+    // Also remove from expense values and temp values
+    setDirectExpenseValues(prev => prev.filter(ev => ev.categoryId !== categoryId));
+    setTempDirectExpenseValues(prev => {
+      const updated = { ...prev };
+      delete updated[categoryId];
+      return updated;
+    });
+    
+    toast.success('Categoria de despesa direta removida com sucesso!');
   };
 
-  const saveExpenses = () => {
-    toast.success('Despesas salvas com sucesso!');
+  const getTempDirectExpenseValue = (categoryId: string): number => {
+    // Return temp value if it exists, otherwise return the saved value
+    if (tempDirectExpenseValues[categoryId] !== undefined) {
+      return tempDirectExpenseValues[categoryId];
+    }
+    const expenseValue = directExpenseValues.find(ev => ev.categoryId === categoryId);
+    return expenseValue?.value || 0;
+  };
+
+  const calculateDirectMonthTotal = () => {
+    return directCategories.reduce((total, category) => {
+      // Use temp value if available, otherwise use saved value
+      const tempValue = tempDirectExpenseValues[category.id];
+      if (tempValue !== undefined) {
+        return total + tempValue;
+      }
+      
+      const expenseValue = directExpenseValues.find(ev => ev.categoryId === category.id);
+      return total + (expenseValue?.value || 0);
+    }, 0);
   };
   // Calculate summary metrics
   const totalCategories = convertedCategories.length;
@@ -329,13 +355,11 @@ const IndirectExpenses = () => {
 
   return (
     <div className="space-y-8 p-6 animate-minimal-fade">
-      {/* Header Section */}
-      <ExpensesHeader
+      {/* Header Section */}      <ExpensesHeader
         selectedYear={selectedYear}
         selectedMonth={selectedMonth}
         onYearChange={setSelectedYear}
         onMonthChange={setSelectedMonth}
-        onSave={saveExpenses}
       />
 
       {/* Summary Cards */}
@@ -386,17 +410,25 @@ const IndirectExpenses = () => {
               calculateYearlyTotal={calculateYearlyTotal}
               calculateMonthTotal={calculateMonthTotal}
             />
-          </TabsContent>
-
-          {/* Direct Expenses Tab */}
+          </TabsContent>          {/* Direct Expenses Tab */}
           <TabsContent value="direct" className="mt-6">
             <DirectExpensesTable
-              directExpenses={directExpenses}
               selectedMonth={selectedMonth}
               selectedYear={selectedYear}
-              onUpdateDirectExpense={updateDirectExpense}
-              onAddDirectExpense={addDirectExpense}
-              onRemoveDirectExpense={removeDirectExpense}
+              categories={directCategories}
+              expenseValues={directExpenseValues}
+              tempExpenseValues={tempDirectExpenseValues}
+              hasUnsavedChanges={hasUnsavedDirectChanges}
+              newCategoryName={newDirectCategoryName}
+              showAddCategory={showAddDirectCategory}
+              onUpdateExpense={updateDirectExpense}
+              onSaveExpenseValues={saveDirectExpenseValues}
+              onAddNewCategory={addNewDirectCategory}
+              onRemoveCategory={removeDirectCategory}
+              onSetNewCategoryName={setNewDirectCategoryName}
+              onSetShowAddCategory={setShowAddDirectCategory}
+              getTempExpenseValue={getTempDirectExpenseValue}
+              calculateMonthTotal={calculateDirectMonthTotal}
             />
           </TabsContent>
         </Tabs>

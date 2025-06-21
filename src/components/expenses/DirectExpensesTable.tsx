@@ -1,31 +1,38 @@
 
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-interface DirectExpense {
+interface DirectExpenseCategory {
   id: string;
-  rateioPercent: number;
-  rateioValue: number;
-  productValue: number;
-  cardTaxPercent: number;
-  cardValue: number;
-  taxPercent: number;
-  taxValue: number;
-  total: number;
-  percentage: number;
+  name: string;
+  isCustom: boolean;
+}
+
+interface DirectExpenseValue {
+  categoryId: string;
+  value: number;
 }
 
 interface DirectExpensesTableProps {
-  directExpenses: DirectExpense[];
   selectedMonth: string;
   selectedYear: string;
-  onUpdateDirectExpense: (id: string, field: keyof DirectExpense, value: number) => void;
-  onAddDirectExpense: () => void;
-  onRemoveDirectExpense: (id: string) => void;
+  categories: DirectExpenseCategory[];
+  expenseValues: DirectExpenseValue[];
+  tempExpenseValues: Record<string, number>;
+  hasUnsavedChanges: boolean;
+  newCategoryName: string;
+  showAddCategory: boolean;
+  onUpdateExpense: (categoryId: string, value: number) => void;
+  onSaveExpenseValues: () => void;
+  onAddNewCategory: () => void;
+  onRemoveCategory: (categoryId: string) => void;
+  onSetNewCategoryName: (name: string) => void;
+  onSetShowAddCategory: (show: boolean) => void;
+  getTempExpenseValue: (categoryId: string) => number;
+  calculateMonthTotal: () => number;
 }
 
 const MONTHS = [
@@ -43,110 +50,207 @@ const MONTHS = [
   { key: 'december', label: 'Dezembro' },
 ];
 
-const DirectExpensesTable = ({
-  directExpenses,
-  selectedMonth,
-  selectedYear,
-  onUpdateDirectExpense,
-  onAddDirectExpense,
-  onRemoveDirectExpense,
-}: DirectExpensesTableProps) => {
-  const [fixedExpenses, setFixedExpenses] = useState<Record<string, boolean>>({});
-  const selectedMonthLabel = MONTHS.find(m => m.key === selectedMonth)?.label || '';
+// Component for individual expense input
+const DirectExpenseInput = ({ 
+  categoryId, 
+  initialValue, 
+  onValueChange, 
+  hasChanges 
+}: {
+  categoryId: string;
+  initialValue: number;
+  onValueChange: (value: number) => void;
+  hasChanges: boolean;
+}) => {
+  const [inputValue, setInputValue] = useState(initialValue.toString());
 
-  const toggleFixedExpense = (id: string, isFixed: boolean) => {
-    setFixedExpenses(prev => ({
-      ...prev,
-      [id]: isFixed
-    }));
+  useEffect(() => {
+    setInputValue(initialValue.toString());
+  }, [initialValue]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    
+    const numericValue = parseFloat(value) || 0;
+    if (numericValue !== initialValue) {
+      onValueChange(numericValue);
+    }
+  };
+
+  const handleBlur = () => {
+    const numericValue = parseFloat(inputValue) || 0;
+    onValueChange(numericValue);
   };
 
   return (
-    <div className="bg-white p-8 shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg border border-symbol-gray-200">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="relative">
+      <Input
+        type="number"
+        min="0"
+        step="0.01"
+        value={inputValue}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        className={`text-right max-w-32 ml-auto focus:border-symbol-gold ${
+          hasChanges
+            ? 'bg-yellow-50 border-yellow-300' 
+            : 'bg-symbol-gray-50 border-symbol-gray-300'
+        }`}
+        placeholder="0,00"
+      />
+      {hasChanges && (
+        <div className="absolute -top-1 -right-1 w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+      )}
+    </div>
+  );
+};
+
+const DirectExpensesTable = ({
+  selectedMonth,
+  selectedYear,
+  categories,
+  expenseValues,
+  tempExpenseValues,
+  hasUnsavedChanges,
+  newCategoryName,
+  showAddCategory,
+  onUpdateExpense,
+  onSaveExpenseValues,
+  onAddNewCategory,
+  onRemoveCategory,
+  onSetNewCategoryName,
+  onSetShowAddCategory,
+  getTempExpenseValue,
+  calculateMonthTotal,
+}: DirectExpensesTableProps) => {
+  const selectedMonthLabel = MONTHS.find(m => m.key === selectedMonth)?.label || '';
+
+  return (
+    <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="mb-6 flex justify-between items-center">
         <div>
           <h2 className="brand-heading text-xl text-symbol-black mb-2">
             Despesas Diretas - {selectedMonthLabel} - {selectedYear}
           </h2>
           <div className="w-8 h-px bg-symbol-beige"></div>
         </div>
-        <Button
-          onClick={onAddDirectExpense}
-          className="bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-2 px-4 transition-all duration-300 uppercase tracking-wide text-sm"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Adicionar Linha
-        </Button>
+        {hasUnsavedChanges && (
+          <Button 
+            onClick={onSaveExpenseValues}
+            className="bg-symbol-gold hover:bg-symbol-gold/80 text-symbol-black font-semibold flex items-center gap-2"
+          >
+            <Save className="w-4 h-4" />
+            Salvar Alterações
+          </Button>
+        )}
       </div>
       
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-center brand-subheading text-symbol-gray-700 text-xs uppercase tracking-wide">Comissão/Rateio (%)</TableHead>
-              <TableHead className="text-center brand-subheading text-symbol-gray-700 text-xs uppercase tracking-wide">Taxa de cartão (%)</TableHead>
-              <TableHead className="text-center brand-subheading text-symbol-gray-700 text-xs uppercase tracking-wide">Imposto (%)</TableHead>
-              <TableHead className="text-center brand-subheading text-symbol-gray-700 text-xs uppercase tracking-wide">Valor Fixo</TableHead>
-              <TableHead className="w-16 text-center brand-subheading text-symbol-gray-700 text-xs uppercase tracking-wide">Ações</TableHead>
+              <TableHead className="w-1/2 brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Categoria de Despesa</TableHead>
+              <TableHead className="text-right brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Valor do Mês (R$)</TableHead>
+              <TableHead className="w-20 text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {directExpenses.map((expense, index) => (
-              <TableRow key={expense.id} className={index % 2 === 0 ? 'bg-symbol-gray-50/30' : ''}>
-                <TableCell className="text-center">
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={expense.rateioPercent || ''}
-                    onChange={(e) => onUpdateDirectExpense(expense.id, 'rateioPercent', parseFloat(e.target.value) || 0)}
-                    className="text-center w-24 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-sm"
-                  />
-                </TableCell>
-                <TableCell className="text-center">
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={expense.cardTaxPercent || ''}
-                    onChange={(e) => onUpdateDirectExpense(expense.id, 'cardTaxPercent', parseFloat(e.target.value) || 0)}
-                    className="text-center w-24 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-sm"
-                  />
-                </TableCell>
-                <TableCell className="text-center">
-                  <Input
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={expense.taxPercent || ''}
-                    onChange={(e) => onUpdateDirectExpense(expense.id, 'taxPercent', parseFloat(e.target.value) || 0)}
-                    className="text-center w-24 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-sm"
-                  />
-                </TableCell>
-                <TableCell className="text-center">
-                  <div className="flex justify-center">
-                    <Checkbox
-                      checked={fixedExpenses[expense.id] || false}
-                      onCheckedChange={(checked) => toggleFixedExpense(expense.id, checked as boolean)}
-                      className="data-[state=checked]:bg-symbol-gold data-[state=checked]:border-symbol-gold border-2 border-symbol-gray-400 w-5 h-5"
+            {categories.map((category, index) => {
+              const savedValue = expenseValues.find(ev => ev.categoryId === category.id)?.value || 0;
+              const currentValue = getTempExpenseValue(category.id);
+              const hasChanges = currentValue !== savedValue;
+              
+              return (
+                <TableRow key={category.id} className={index % 2 === 0 ? 'bg-symbol-gray-50/30' : ''}>
+                  <TableCell className="font-medium brand-body text-symbol-black">
+                    {category.name}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DirectExpenseInput
+                      categoryId={category.id}
+                      initialValue={currentValue}
+                      onValueChange={(value) => onUpdateExpense(category.id, value)}
+                      hasChanges={hasChanges}
                     />
+                  </TableCell>
+                  <TableCell className="text-center">
+                    {category.isCustom && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onRemoveCategory(category.id)}
+                        className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+            
+            {/* Add Category Row */}
+            {showAddCategory ? (
+              <TableRow className="bg-amber-50/50 border-2 border-dashed border-amber-200">
+                <TableCell>
+                  <Input
+                    value={newCategoryName}
+                    onChange={(e) => onSetNewCategoryName(e.target.value)}
+                    placeholder="Nome da nova categoria de despesa direta"
+                    className="border-none bg-transparent focus:border-symbol-gold"
+                    onKeyPress={(e) => e.key === 'Enter' && onAddNewCategory()}
+                  />
+                </TableCell>
+                <TableCell></TableCell>
+                <TableCell className="text-center">
+                  <div className="flex justify-center gap-2">
+                    <Button 
+                      size="sm" 
+                      onClick={onAddNewCategory} 
+                      className="h-8 bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => {
+                        onSetShowAddCategory(false);
+                        onSetNewCategoryName('');
+                      }}
+                      className="h-8 text-symbol-gray-600 hover:text-symbol-black"
+                    >
+                      ✕
+                    </Button>
                   </div>
                 </TableCell>
-                <TableCell className="text-center">
+              </TableRow>
+            ) : (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-4">
                   <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onRemoveDirectExpense(expense.id)}
-                    className="text-red-600 hover:text-red-700 h-6 w-6 p-0"
+                    variant="outline"
+                    onClick={() => onSetShowAddCategory(true)}
+                    className="border-dashed border-amber-300 text-symbol-gray-600 hover:bg-amber-50/50 font-light"
                   >
-                    <Trash2 className="w-3 h-3" />
+                    <Plus className="w-4 h-4 mr-2" />
+                    Adicionar Nova Categoria de Despesa Direta
                   </Button>
                 </TableCell>
               </TableRow>
-            ))}
+            )}
+            
+            {/* Total Monthly Row */}
+            <TableRow className="bg-symbol-gold/10 border-t-2 border-symbol-gold/30 font-semibold">
+              <TableCell className="font-bold brand-subheading text-symbol-black">
+                Total do Mês
+              </TableCell>
+              <TableCell className="text-right font-bold text-symbol-gold">
+                R$ {calculateMonthTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              </TableCell>
+              <TableCell></TableCell>
+            </TableRow>
           </TableBody>
         </Table>
       </div>

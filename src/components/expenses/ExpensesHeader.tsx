@@ -8,7 +8,7 @@ interface ExpensesHeaderProps {
   selectedMonth: string;
   onYearChange: (year: string) => void;
   onMonthChange: (month: string) => void;
-  onSave: () => void;
+  onSave?: () => void;
 }
 
 const MONTHS = [
@@ -77,15 +77,16 @@ const ExpensesHeader = ({
               </SelectItem>
             ))}
           </SelectContent>
-        </Select>
-        
-        <Button 
-          onClick={onSave}
-          className="w-full sm:w-auto bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
-        >
-          <Save className="w-4 h-4 mr-2" />
-          Salvar Alterações
-        </Button>
+        </Select>        
+        {onSave && (
+          <Button 
+            onClick={onSave}
+            className="w-full sm:w-auto bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Salvar Alterações
+          </Button>
+        )}
       </div>
     </div>
   );
