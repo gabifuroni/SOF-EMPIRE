@@ -10,6 +10,10 @@ import {
   useIndirectExpenseValues,
 } from "@/hooks/useIndirectExpenses";
 import {
+  useDirectExpenseCategories,
+  useDirectExpenseValues,
+} from "@/hooks/useDirectExpenses";
+import {
   convertExpenseCategoryFromDb,
   convertMonthlyExpenseFromDb,
 } from "@/utils/typeConverters";
@@ -49,7 +53,6 @@ const IndirectExpenses = () => {
     const currentMonth = new Date().getMonth();
     return MONTHS[currentMonth].key;
   });
-
   const {
     categories,
     isLoading: categoriesLoading,
@@ -66,34 +69,44 @@ const IndirectExpenses = () => {
     deleteExpenseValue,
     getTotalByMonth,
   } = useIndirectExpenseValues();
-  const [newCategoryName, setNewCategoryName] = useState("");
+  // Direct expenses hooks
+  const {
+    categories: directCategories,
+    isLoading: directCategoriesLoading,
+    addCategory: addDirectCategory,
+    updateCategory: updateDirectCategory,
+    deleteCategory: deleteDirectCategory,
+  } = useDirectExpenseCategories();
+
+  const {
+    expenses: directExpenses,
+    isLoading: directExpensesLoading,
+    addExpenseValue: addDirectExpenseValue,
+    updateExpenseValue: updateDirectExpenseValue,
+    deleteExpenseValue: deleteDirectExpenseValue,
+    getTotalByMonth: getDirectTotalByMonth,
+  } = useDirectExpenseValues();  const [newCategoryName, setNewCategoryName] = useState("");
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [fixedExpenses, setFixedExpenses] = useState<Record<string, boolean>>(
     {}
-  );
-  const [tempExpenseValues, setTempExpenseValues] = useState<
+  );  const [tempExpenseValues, setTempExpenseValues] = useState<
     Record<string, number>
   >({});
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Direct expenses state
-  const [directCategories, setDirectCategories] = useState<
-    DirectExpenseCategory[]
-  >([
-    { id: "1", name: "Material de Construção", isCustom: false },
-    { id: "2", name: "Mão de Obra", isCustom: false },
-    { id: "3", name: "Transporte", isCustom: false },
-    { id: "4", name: "Equipamentos", isCustom: false },
-  ]);
-  const [directExpenseValues, setDirectExpenseValues] = useState<
-    DirectExpenseValue[]
-  >([]);
   const [tempDirectExpenseValues, setTempDirectExpenseValues] = useState<
     Record<string, number>
   >({});
-  const [hasUnsavedDirectChanges, setHasUnsavedDirectChanges] = useState(false);
   const [newDirectCategoryName, setNewDirectCategoryName] = useState("");
   const [showAddDirectCategory, setShowAddDirectCategory] = useState(false);
+
+  // Debounced values to prevent flickering
+  const [debouncedTempExpenseValues, setDebouncedTempExpenseValues] = useState<
+    Record<string, number>
+  >({});
+  const [debouncedTempDirectExpenseValues, setDebouncedTempDirectExpenseValues] = useState<
+    Record<string, number>
+  >({});
 
   // Convert database categories to expected format
   const convertedCategories: ExpenseCategory[] = categories.map(
@@ -112,19 +125,31 @@ const IndirectExpenses = () => {
         category.id,
         parseInt(selectedYear)
       );
-    }
-  );
-  useEffect(() => {
+    }  );
+    useEffect(() => {
     // Clear temp values when month or year changes
-    if (hasUnsavedChanges) {
-      setTempExpenseValues({});
-      setHasUnsavedChanges(false);
-    }
-    if (hasUnsavedDirectChanges) {
-      setTempDirectExpenseValues({});
-      setHasUnsavedDirectChanges(false);
-    }
-  }, [selectedMonth, selectedYear, hasUnsavedChanges, hasUnsavedDirectChanges]);
+    setTempExpenseValues({});
+    setTempDirectExpenseValues({});
+    setDebouncedTempExpenseValues({});
+    setDebouncedTempDirectExpenseValues({});
+  }, [selectedMonth, selectedYear]);
+
+  // Debounce effect for expense values to prevent button flickering
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTempExpenseValues(tempExpenseValues);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [tempExpenseValues]);
+
+  // Debounce effect for direct expense values
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedTempDirectExpenseValues(tempDirectExpenseValues);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [tempDirectExpenseValues]);
+  
   const getExpenseForCategory = (categoryId: string): MonthlyExpense => {
     return (
       convertedExpenses.find((exp) => exp.categoryId === categoryId) || {
@@ -144,14 +169,13 @@ const IndirectExpenses = () => {
         december: 0,
       }
     );
-  };
-  const updateExpense = (categoryId: string, value: number) => {
+  };  const updateExpense = (categoryId: string, value: number) => {
     // Store the value temporarily
     setTempExpenseValues((prev) => ({
       ...prev,
       [categoryId]: value,
     }));
-    setHasUnsavedChanges(true);
+    // Don't set hasUnsavedChanges here - it will be calculated dynamically
   };
   const saveExpenseValues = async () => {
     try {
@@ -189,11 +213,9 @@ const IndirectExpenses = () => {
       );
 
       // Wait for all save operations to complete
-      await Promise.all(savePromises);
-
-      // Clear temporary values and unsaved changes flag
+      await Promise.all(savePromises);      // Clear temporary values and unsaved changes flag
       setTempExpenseValues({});
-      setHasUnsavedChanges(false);
+      // hasUnsavedChanges will be recalculated automatically
       toast.success("Todas as despesas foram salvas com sucesso!");
     } catch (error) {
       console.error("Error saving expense values:", error);
@@ -251,8 +273,41 @@ const IndirectExpenses = () => {
       onError: () => {
         toast.error("Erro ao remover categoria");
       },
+    });  };
+  
+  const editCategory = (categoryId: string, newName: string) => {
+    updateCategory.mutate({ id: categoryId, categoryName: newName }, {
+      onSuccess: () => {
+        toast.success("Categoria atualizada com sucesso!");
+      },
+      onError: () => {
+        toast.error("Erro ao atualizar categoria");
+      },
+    });
+  };  // Calculate if there are unsaved changes
+  const calculateHasUnsavedChanges = () => {
+    return Object.entries(debouncedTempExpenseValues).some(([categoryId, tempValue]) => {
+      const expense = getExpenseForCategory(categoryId);
+      const savedValue = (expense[selectedMonth as keyof MonthlyExpense] as number) || 0;
+      return tempValue !== savedValue;
     });
   };
+  const hasUnsavedChanges = calculateHasUnsavedChanges();  // Calculate if there are unsaved direct changes
+  const calculateHasUnsavedDirectChanges = () => {
+    return Object.entries(debouncedTempDirectExpenseValues).some(([categoryId, tempValue]) => {
+      const monthNumber = MONTHS.findIndex((m) => m.key === selectedMonth) + 1;
+      const dateString = `${selectedYear}-${monthNumber.toString().padStart(2, "0")}-01`;
+      
+      const expenseValue = directExpenses.find(
+        (exp) => exp.categoria_id === categoryId && exp.mes_referencia === dateString
+      );
+      const savedValue = expenseValue?.valor_mensal || 0;
+      return tempValue !== savedValue;
+    });
+  };
+
+  const hasUnsavedDirectChanges = calculateHasUnsavedDirectChanges();
+
   const calculateMonthTotal = () => {
     return convertedCategories.reduce((total, category) => {
       // Use temp value if available, otherwise use saved value
@@ -273,88 +328,123 @@ const IndirectExpenses = () => {
       const monthKey = month.key as keyof MonthlyExpense;
       return total + ((expense[monthKey] as number) || 0);
     }, 0);
-  };
-  // Direct expenses functions
+  };  // Direct expenses functions
   const updateDirectExpense = (categoryId: string, value: number) => {
     // Store the value temporarily
     setTempDirectExpenseValues((prev) => ({
       ...prev,
       [categoryId]: value,
     }));
-    setHasUnsavedDirectChanges(true);
+    // Don't set hasUnsavedDirectChanges here - it will be calculated dynamically
   };
-
   const saveDirectExpenseValues = async () => {
     try {
-      // For now, just save to local state since we don't have a database table yet
-      const newValues = Object.entries(tempDirectExpenseValues).map(
-        ([categoryId, value]) => ({
-          categoryId,
-          value,
-        })
+      // Convert month key to a proper date for the selected year/month
+      const monthNumber = MONTHS.findIndex((m) => m.key === selectedMonth) + 1; // 1-12
+      const dateString = `${selectedYear}-${monthNumber
+        .toString()
+        .padStart(2, "0")}-01`; // YYYY-MM-01
+
+      // Process each expense value that needs to be saved
+      const savePromises = Object.entries(tempDirectExpenseValues).map(
+        async ([categoryId, value]) => {
+          // Check if an expense already exists for this category and month
+          const existingExpense = directExpenses.find(
+            (exp) =>
+              exp.categoria_id === categoryId &&
+              exp.mes_referencia === dateString
+          );
+
+          if (existingExpense) {
+            // Update existing expense
+            return updateDirectExpenseValue.mutateAsync({
+              id: existingExpense.id,
+              valor_mensal: value,
+            });
+          } else {
+            // Create new expense
+            return addDirectExpenseValue.mutateAsync({
+              categoria_id: categoryId,
+              mes_referencia: dateString,
+              valor_mensal: value,
+            });
+          }
+        }
       );
 
-      setDirectExpenseValues((prev) => {
-        // Remove old values for the same categories and add new ones
-        const filtered = prev.filter(
-          (ev) => !tempDirectExpenseValues[ev.categoryId]
-        );
-        return [...filtered, ...newValues];
-      });
-
-      // Clear temporary values and unsaved changes flag
+      // Wait for all save operations to complete
+      await Promise.all(savePromises);      // Clear temporary values and unsaved changes flag
       setTempDirectExpenseValues({});
-      setHasUnsavedDirectChanges(false);
+      // hasUnsavedDirectChanges will be recalculated automatically
       toast.success("Despesas diretas salvas com sucesso!");
     } catch (error) {
       console.error("Error saving direct expense values:", error);
       toast.error("Erro ao salvar despesas diretas. Tente novamente.");
     }
   };
-
   const addNewDirectCategory = () => {
     if (!newDirectCategoryName.trim()) return;
 
-    const newCategory: DirectExpenseCategory = {
-      id: Date.now().toString(),
-      name: newDirectCategoryName.trim(),
-      isCustom: true,
-    };
-
-    setDirectCategories((prev) => [...prev, newCategory]);
-    setNewDirectCategoryName("");
-    setShowAddDirectCategory(false);
-    toast.success("Nova categoria de despesa direta adicionada com sucesso!");
-  };
-
-  const removeDirectCategory = (categoryId: string) => {
-    setDirectCategories((prev) => prev.filter((cat) => cat.id !== categoryId));
-
-    // Also remove from expense values and temp values
-    setDirectExpenseValues((prev) =>
-      prev.filter((ev) => ev.categoryId !== categoryId)
-    );
-    setTempDirectExpenseValues((prev) => {
-      const updated = { ...prev };
-      delete updated[categoryId];
-      return updated;
+    // Use the mutation from the hook
+    addDirectCategory.mutate(newDirectCategoryName.trim(), {
+      onSuccess: () => {
+        setNewDirectCategoryName("");
+        setShowAddDirectCategory(false);
+        toast.success("Nova categoria de despesa direta adicionada com sucesso!");
+      },
+      onError: () => {
+        toast.error("Erro ao adicionar categoria de despesa direta");
+      },
     });
-
-    toast.success("Categoria de despesa direta removida com sucesso!");
+  };
+  const removeDirectCategory = (categoryId: string) => {
+    // Use the mutation from the hook
+    deleteDirectCategory.mutate(categoryId, {
+      onSuccess: () => {
+        // Also remove from temp values
+        setTempDirectExpenseValues((prev) => {
+          const updated = { ...prev };
+          delete updated[categoryId];
+          return updated;
+        });
+        toast.success("Categoria de despesa direta removida com sucesso!");
+      },
+      onError: () => {
+        toast.error("Erro ao remover categoria de despesa direta");
+      },    });
   };
 
-  const getTempDirectExpenseValue = (categoryId: string): number => {
+  const editDirectCategory = (categoryId: string, newName: string) => {
+    updateDirectCategory.mutate({ id: categoryId, categoryName: newName }, {
+      onSuccess: () => {
+        toast.success("Categoria de despesa direta atualizada com sucesso!");
+      },
+      onError: () => {
+        toast.error("Erro ao atualizar categoria de despesa direta");
+      },
+    });
+  };  const getTempDirectExpenseValue = (categoryId: string): number => {
     // Return temp value if it exists, otherwise return the saved value
     if (tempDirectExpenseValues[categoryId] !== undefined) {
       return tempDirectExpenseValues[categoryId];
     }
-    const expenseValue = directExpenseValues.find(
-      (ev) => ev.categoryId === categoryId
+    
+    // Find the expense for this category and current month
+    const monthNumber = MONTHS.findIndex((m) => m.key === selectedMonth) + 1;
+    const dateString = `${selectedYear}-${monthNumber
+      .toString()
+      .padStart(2, "0")}-01`;
+    
+    const expenseValue = directExpenses.find(
+      (exp) => exp.categoria_id === categoryId && exp.mes_referencia === dateString
     );
-    return expenseValue?.value || 0;
-  };
-
-  const calculateDirectMonthTotal = () => {
+    return expenseValue?.valor_mensal || 0;
+  };  const calculateDirectMonthTotal = () => {
+    const monthNumber = MONTHS.findIndex((m) => m.key === selectedMonth) + 1;
+    const dateString = `${selectedYear}-${monthNumber
+      .toString()
+      .padStart(2, "0")}-01`;
+    
     return directCategories.reduce((total, category) => {
       // Use temp value if available, otherwise use saved value
       const tempValue = tempDirectExpenseValues[category.id];
@@ -362,10 +452,10 @@ const IndirectExpenses = () => {
         return total + tempValue;
       }
 
-      const expenseValue = directExpenseValues.find(
-        (ev) => ev.categoryId === category.id
+      const expenseValue = directExpenses.find(
+        (exp) => exp.categoria_id === category.id && exp.mes_referencia === dateString
       );
-      return total + (expenseValue?.value || 0);
+      return total + (expenseValue?.valor_mensal || 0);
     }, 0);
   };
   // Calculate summary metrics
@@ -424,8 +514,7 @@ const IndirectExpenses = () => {
             </TabsTrigger>
           </TabsList>
           {/* Indirect Expenses Tab */}{" "}
-          <TabsContent value="indirect" className="mt-6">
-            <IndirectExpensesTable
+          <TabsContent value="indirect" className="mt-6">            <IndirectExpensesTable
               categories={convertedCategories}
               expenses={convertedExpenses}
               fixedExpenses={fixedExpenses}
@@ -439,6 +528,7 @@ const IndirectExpenses = () => {
               onToggleFixedExpense={toggleFixedExpense}
               onRemoveCategory={removeCategory}
               onAddNewCategory={addNewCategory}
+              onEditCategory={editCategory}
               onSetNewCategoryName={setNewCategoryName}
               onSetShowAddCategory={setShowAddCategory}
               getExpenseForCategory={getExpenseForCategory}
@@ -448,20 +538,34 @@ const IndirectExpenses = () => {
             />
           </TabsContent>{" "}
           {/* Direct Expenses Tab */}
-          <TabsContent value="direct" className="mt-6">
-            <DirectExpensesTable
+          <TabsContent value="direct" className="mt-6">            <DirectExpensesTable
               selectedMonth={selectedMonth}
               selectedYear={selectedYear}
-              categories={directCategories}
-              expenseValues={directExpenseValues}
+              categories={directCategories.map(cat => ({
+                id: cat.id,
+                name: cat.nome_categoria,
+                isCustom: !cat.is_predefinida
+              }))}
+              expenseValues={directExpenses
+                .filter(exp => {
+                  const monthNumber = MONTHS.findIndex((m) => m.key === selectedMonth) + 1;
+                  const dateString = `${selectedYear}-${monthNumber
+                    .toString()
+                    .padStart(2, "0")}-01`;
+                  return exp.mes_referencia === dateString;
+                })
+                .map(exp => ({
+                  categoryId: exp.categoria_id,
+                  value: exp.valor_mensal
+                }))}
               tempExpenseValues={tempDirectExpenseValues}
               hasUnsavedChanges={hasUnsavedDirectChanges}
               newCategoryName={newDirectCategoryName}
-              showAddCategory={showAddDirectCategory}
-              onUpdateExpense={updateDirectExpense}
+              showAddCategory={showAddDirectCategory}              onUpdateExpense={updateDirectExpense}
               onSaveExpenseValues={saveDirectExpenseValues}
               onAddNewCategory={addNewDirectCategory}
               onRemoveCategory={removeDirectCategory}
+              onEditCategory={editDirectCategory}
               onSetNewCategoryName={setNewDirectCategoryName}
               onSetShowAddCategory={setShowAddDirectCategory}
               getTempExpenseValue={getTempDirectExpenseValue}

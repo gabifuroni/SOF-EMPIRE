@@ -1,5 +1,5 @@
 
-import { Plus, Trash2, Save } from 'lucide-react';
+import { Plus, Trash2, Save, Edit2, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -29,6 +29,7 @@ interface DirectExpensesTableProps {
   onSaveExpenseValues: () => void;
   onAddNewCategory: () => void;
   onRemoveCategory: (categoryId: string) => void;
+  onEditCategory: (categoryId: string, newName: string) => void;
   onSetNewCategoryName: (name: string) => void;
   onSetShowAddCategory: (show: boolean) => void;
   getTempExpenseValue: (categoryId: string) => number;
@@ -61,58 +62,57 @@ const DirectExpenseInput = ({
   initialValue: number;
   onValueChange: (value: number) => void;
   hasChanges: boolean;
-}) => {
-  const [localValue, setLocalValue] = useState("");
+}) => {  const [localValue, setLocalValue] = useState(() => 
+    initialValue === 0 ? "" : initialValue.toString()
+  );
   const [isFocused, setIsFocused] = useState(false);
+  const previousInitialValue = useRef(initialValue);
 
-  // Only update when not focused and when the external value is different from what we have
+  // Only update local value when initialValue changes significantly and not focused
   useEffect(() => {
-    if (!isFocused) {
-      const currentNumber = parseFloat(localValue) || 0;
-      if (currentNumber !== initialValue) {
-        setLocalValue(initialValue === 0 ? '' : initialValue.toString());
-      }
+    if (!isFocused && previousInitialValue.current !== initialValue) {
+      setLocalValue(initialValue === 0 ? "" : initialValue.toString());
+      previousInitialValue.current = initialValue;
     }
-  }, [initialValue, isFocused, localValue]);
-
+  }, [initialValue, isFocused]);
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setLocalValue(value);
     
-    // Immediately notify parent of changes
-    const numericValue = parseFloat(value) || 0;
-    onValueChange(numericValue);
+    // Allow empty string or valid numbers
+    if (value === "" || !isNaN(parseFloat(value))) {
+      const numericValue = value === "" ? 0 : parseFloat(value);
+      onValueChange(numericValue);
+    }
   };
-
   const handleFocus = () => {
     setIsFocused(true);
-    // Clear if it's showing 0
-    if (localValue === '0' || (parseFloat(localValue) || 0) === 0) {
-      setLocalValue('');
-    }
   };
 
   const handleBlur = () => {
     setIsFocused(false);
     const numericValue = parseFloat(localValue) || 0;
     
-    // Update the display value
-    setLocalValue(numericValue === 0 ? '' : numericValue.toString());
+    // Only update display if value is different
+    if (localValue !== (numericValue === 0 ? "" : numericValue.toString())) {
+      setLocalValue(numericValue === 0 ? "" : numericValue.toString());
+    }
     
     // Final notification to parent
     onValueChange(numericValue);
   };
 
   return (
-    <div className="relative">      
-    <Input
+    <div className="relative">
+      <Input
         type="number"
         min="0"
         step="1"
         value={localValue}
         onChange={handleChange}
         onFocus={handleFocus}
-        onBlur={handleBlur}        className={`text-right max-w-32 ml-auto focus:border-symbol-gold ${
+        onBlur={handleBlur}
+        className={`text-right max-w-32 ml-auto focus:border-symbol-gold ${
           hasChanges
             ? 'bg-symbol-beige/30 border-symbol-gold/50' 
             : 'bg-symbol-gray-50 border-symbol-gray-300'
@@ -139,12 +139,34 @@ const DirectExpensesTable = ({
   onSaveExpenseValues,
   onAddNewCategory,
   onRemoveCategory,
+  onEditCategory,
   onSetNewCategoryName,
   onSetShowAddCategory,
   getTempExpenseValue,
   calculateMonthTotal,
 }: DirectExpensesTableProps) => {
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState("");
+  
   const selectedMonthLabel = MONTHS.find(m => m.key === selectedMonth)?.label || '';
+
+  const handleStartEdit = (category: DirectExpenseCategory) => {
+    setEditingCategoryId(category.id);
+    setEditingCategoryName(category.name);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingCategoryId && editingCategoryName.trim()) {
+      onEditCategory(editingCategoryId, editingCategoryName.trim());
+      setEditingCategoryId(null);
+      setEditingCategoryName("");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCategoryId(null);
+    setEditingCategoryName("");
+  };
 
   return (
     <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -180,11 +202,23 @@ const DirectExpensesTable = ({
               const savedValue = expenseValues.find(ev => ev.categoryId === category.id)?.value || 0;
               const currentValue = getTempExpenseValue(category.id);
               const hasChanges = currentValue !== savedValue;
-              
-              return (
+                return (
                 <TableRow key={category.id} className={index % 2 === 0 ? 'bg-symbol-gray-50/30' : ''}>
                   <TableCell className="font-medium brand-body text-symbol-black">
-                    {category.name}
+                    {editingCategoryId === category.id ? (
+                      <Input
+                        value={editingCategoryName}
+                        onChange={(e) => setEditingCategoryName(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") handleSaveEdit();
+                          if (e.key === "Escape") handleCancelEdit();
+                        }}
+                        className="border-symbol-gold"
+                        autoFocus
+                      />
+                    ) : (
+                      category.name
+                    )}
                   </TableCell>
                   <TableCell className="text-right">
                     <DirectExpenseInput
@@ -192,19 +226,53 @@ const DirectExpensesTable = ({
                       initialValue={currentValue}
                       onValueChange={(value) => onUpdateExpense(category.id, value)}
                       hasChanges={hasChanges}
-                    />
-                  </TableCell>
+                    />                  </TableCell>
                   <TableCell className="text-center">
-                    {category.isCustom && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRemoveCategory(category.id)}
-                        className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
+                    <div className="flex justify-center gap-2">
+                      {editingCategoryId === category.id ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleSaveEdit}
+                            className="text-green-600 hover:text-green-700 h-8 w-8 p-0"
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCancelEdit}
+                            className="text-gray-600 hover:text-gray-700 h-8 w-8 p-0"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          {category.isCustom && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleStartEdit(category)}
+                                className="text-blue-600 hover:text-blue-700 h-8 w-8 p-0"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onRemoveCategory(category.id)}
+                                className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );

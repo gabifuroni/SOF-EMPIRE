@@ -69,6 +69,44 @@ export type Database = {
         }
         Relationships: []
       }
+      despesas_diretas_valores: {
+        Row: {
+          categoria_id: string
+          created_at: string
+          id: string
+          mes_referencia: string
+          updated_at: string
+          user_id: string
+          valor_mensal: number
+        }
+        Insert: {
+          categoria_id: string
+          created_at?: string
+          id?: string
+          mes_referencia: string
+          updated_at?: string
+          user_id: string
+          valor_mensal: number
+        }
+        Update: {
+          categoria_id?: string
+          created_at?: string
+          id?: string
+          mes_referencia?: string
+          updated_at?: string
+          user_id?: string
+          valor_mensal?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "despesas_diretas_valores_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias_despesas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       despesas_indiretas_categorias: {
         Row: {
           created_at: string
@@ -468,7 +506,7 @@ export type Tables<
   }
     ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {

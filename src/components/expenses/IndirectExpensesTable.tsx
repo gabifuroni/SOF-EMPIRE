@@ -1,4 +1,4 @@
-import { Plus, Trash2, Save } from "lucide-react";
+import { Plus, Trash2, Save, Edit2, Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,6 +27,7 @@ interface IndirectExpensesTableProps {
   onToggleFixedExpense: (categoryId: string, isFixed: boolean) => void;
   onRemoveCategory: (categoryId: string) => void;
   onAddNewCategory: () => void;
+  onEditCategory: (categoryId: string, newName: string) => void;
   onSetNewCategoryName: (name: string) => void;
   onSetShowAddCategory: (show: boolean) => void;
   getExpenseForCategory: (categoryId: string) => MonthlyExpense;
@@ -64,50 +65,50 @@ const ExpenseInput = ({
   onValueChange: (value: number) => void;
   hasChanges: boolean;
 }) => {
-  const [localValue, setLocalValue] = useState("");
+  const [localValue, setLocalValue] = useState(() => 
+    initialValue === 0 ? "" : initialValue.toString()
+  );
   const [isFocused, setIsFocused] = useState(false);
+  const previousInitialValue = useRef(initialValue);
 
-  // Only update when not focused and when the external value is different from what we have
+  // Only update local value when initialValue changes significantly and not focused
   useEffect(() => {
-    if (!isFocused) {
-      const currentNumber = parseFloat(localValue) || 0;
-      if (currentNumber !== initialValue) {
-        setLocalValue(initialValue === 0 ? "" : initialValue.toString());
-      }
+    if (!isFocused && previousInitialValue.current !== initialValue) {
+      setLocalValue(initialValue === 0 ? "" : initialValue.toString());
+      previousInitialValue.current = initialValue;
     }
-  }, [initialValue, isFocused, localValue]);
+  }, [initialValue, isFocused]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setLocalValue(value);
-
-    // Immediately notify parent of changes
-    const numericValue = parseFloat(value) || 0;
-    onValueChange(numericValue);
+    
+    // Allow empty string or valid numbers
+    if (value === "" || !isNaN(parseFloat(value))) {
+      const numericValue = value === "" ? 0 : parseFloat(value);
+      onValueChange(numericValue);
+    }
   };
 
   const handleFocus = () => {
     setIsFocused(true);
-    // Clear if it's showing 0
-    if (localValue === "0" || (parseFloat(localValue) || 0) === 0) {
-      setLocalValue("");
-    }
   };
 
   const handleBlur = () => {
     setIsFocused(false);
     const numericValue = parseFloat(localValue) || 0;
-
-    // Update the display value
-    setLocalValue(numericValue === 0 ? "" : numericValue.toString());
-
+    
+    // Only update display if value is different
+    if (localValue !== (numericValue === 0 ? "" : numericValue.toString())) {
+      setLocalValue(numericValue === 0 ? "" : numericValue.toString());
+    }
+    
     // Final notification to parent
     onValueChange(numericValue);
   };
 
   return (
     <div className="relative">
-      {" "}
       <Input
         type="number"
         min="0"
@@ -145,6 +146,7 @@ const IndirectExpensesTable = ({
   onToggleFixedExpense,
   onRemoveCategory,
   onAddNewCategory,
+  onEditCategory,
   onSetNewCategoryName,
   onSetShowAddCategory,
   getExpenseForCategory,
@@ -152,8 +154,29 @@ const IndirectExpensesTable = ({
   calculateYearlyTotal,
   calculateMonthTotal,
 }: IndirectExpensesTableProps) => {
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState("");
+  
   const selectedMonthLabel =
     MONTHS.find((m) => m.key === selectedMonth)?.label || "";
+
+  const handleStartEdit = (category: ExpenseCategory) => {
+    setEditingCategoryId(category.id);
+    setEditingCategoryName(category.name);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingCategoryId && editingCategoryName.trim()) {
+      onEditCategory(editingCategoryId, editingCategoryName.trim());
+      setEditingCategoryId(null);
+      setEditingCategoryName("");
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCategoryId(null);
+    setEditingCategoryName("");
+  };
   return (
     <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
       <div className="mb-6 flex justify-between items-center">
@@ -174,11 +197,9 @@ const IndirectExpensesTable = ({
         )}
       </div>
 
-      <div className="overflow-x-auto">
-        <Table>
+      <div className="overflow-x-auto">        <Table>
           <TableHeader>
             <TableRow>
-              {" "}
               <TableHead className="w-1/2 brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">
                 Categoria
               </TableHead>
@@ -197,7 +218,6 @@ const IndirectExpensesTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {" "}
             {categories.map((category, index) => {
               const expense = getExpenseForCategory(category.id);
               const savedValue =
@@ -210,10 +230,22 @@ const IndirectExpensesTable = ({
               return (
                 <TableRow
                   key={category.id}
-                  className={index % 2 === 0 ? "bg-symbol-gray-50/30" : ""}
-                >
+                  className={index % 2 === 0 ? "bg-symbol-gray-50/30" : ""}                >
                   <TableCell className="font-medium brand-body text-symbol-black">
-                    {category.name}
+                    {editingCategoryId === category.id ? (
+                      <Input
+                        value={editingCategoryName}
+                        onChange={(e) => setEditingCategoryName(e.target.value)}
+                        onKeyPress={(e) => {
+                          if (e.key === "Enter") handleSaveEdit();
+                          if (e.key === "Escape") handleCancelEdit();
+                        }}
+                        className="border-symbol-gold"
+                        autoFocus
+                      />
+                    ) : (
+                      category.name
+                    )}
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center">
@@ -227,13 +259,12 @@ const IndirectExpensesTable = ({
                             )
                           }
                           className="data-[state=checked]:bg-symbol-gold data-[state=checked]:border-symbol-gold h-6 w-6 border-2 border-symbol-gray-400 rounded-md shadow-sm hover:shadow-md transition-all duration-300"
-                        />
-                        <span className="text-sm font-semibold text-symbol-gray-800 min-w-[60px]">
+                        />                        <span className="text-sm font-semibold text-symbol-gray-800 min-w-[60px]">
                           FIXO
                         </span>
                       </div>
                     </div>
-                  </TableCell>{" "}
+                  </TableCell>
                   <TableCell className="text-right">
                     <ExpenseInput
                       categoryId={category.id}
@@ -254,19 +285,53 @@ const IndirectExpensesTable = ({
                     R${" "}
                     {yearlyTotal.toLocaleString("pt-BR", {
                       minimumFractionDigits: 2,
-                    })}
-                  </TableCell>
+                    })}                  </TableCell>
                   <TableCell className="text-center">
-                    {category.isCustom && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRemoveCategory(category.id)}
-                        className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
+                    <div className="flex justify-center gap-2">
+                      {editingCategoryId === category.id ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleSaveEdit}
+                            className="text-green-600 hover:text-green-700 h-8 w-8 p-0"
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleCancelEdit}
+                            className="text-gray-600 hover:text-gray-700 h-8 w-8 p-0"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          {category.isCustom && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleStartEdit(category)}
+                                className="text-blue-600 hover:text-blue-700 h-8 w-8 p-0"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => onRemoveCategory(category.id)}
+                                className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
                   </TableCell>
                 </TableRow>
               );
