@@ -1,11 +1,17 @@
-
-import { Plus, Trash2, Save } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Checkbox } from '@/components/ui/checkbox';
-import { ExpenseCategory, MonthlyExpense } from '@/types';
-import { useState, useEffect, useRef } from 'react';
+import { Plus, Trash2, Save } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ExpenseCategory, MonthlyExpense } from "@/types";
+import { useState, useEffect, useRef } from "react";
 
 interface IndirectExpensesTableProps {
   categories: ExpenseCategory[];
@@ -30,34 +36,37 @@ interface IndirectExpensesTableProps {
 }
 
 const MONTHS = [
-  { key: 'january', label: 'Janeiro' },
-  { key: 'february', label: 'Fevereiro' },
-  { key: 'march', label: 'Março' },
-  { key: 'april', label: 'Abril' },
-  { key: 'may', label: 'Maio' },
-  { key: 'june', label: 'Junho' },
-  { key: 'july', label: 'Julho' },
-  { key: 'august', label: 'Agosto' },
-  { key: 'september', label: 'Setembro' },
-  { key: 'october', label: 'Outubro' },
-  { key: 'november', label: 'Novembro' },
-  { key: 'december', label: 'Dezembro' },
+  { key: "january", label: "Janeiro" },
+  { key: "february", label: "Fevereiro" },
+  { key: "march", label: "Março" },
+  { key: "april", label: "Abril" },
+  { key: "may", label: "Maio" },
+  { key: "june", label: "Junho" },
+  { key: "july", label: "Julho" },
+  { key: "august", label: "Agosto" },
+  { key: "september", label: "Setembro" },
+  { key: "october", label: "Outubro" },
+  { key: "november", label: "Novembro" },
+  { key: "december", label: "Dezembro" },
 ];
 
 // Component for individual expense input
-const ExpenseInput = ({ 
-  categoryId, 
-  initialValue, 
-  isDisabled, 
-  onValueChange, 
-  hasChanges 
+const ExpenseInput = ({
+  categoryId,
+  initialValue,
+  isDisabled,
+  onValueChange,
+  hasChanges,
 }: {
   categoryId: string;
   initialValue: number;
   isDisabled: boolean;
   onValueChange: (value: number) => void;
   hasChanges: boolean;
-}) => {  const [localValue, setLocalValue] = useState(initialValue === 0 ? '' : initialValue.toString());
+}) => {
+  const [localValue, setLocalValue] = useState(
+    initialValue === 0 ? "" : initialValue.toString()
+  );
   const [isFocused, setIsFocused] = useState(false);
 
   // Only update when not focused and when the external value is different from what we have
@@ -65,7 +74,7 @@ const ExpenseInput = ({
     if (!isFocused) {
       const currentNumber = parseFloat(localValue) || 0;
       if (currentNumber !== initialValue) {
-        setLocalValue(initialValue === 0 ? '' : initialValue.toString());
+        setLocalValue(initialValue === 0 ? "" : initialValue.toString());
       }
     }
   }, [initialValue, isFocused, localValue]);
@@ -73,7 +82,7 @@ const ExpenseInput = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setLocalValue(value);
-    
+
     // Immediately notify parent of changes
     const numericValue = parseFloat(value) || 0;
     onValueChange(numericValue);
@@ -82,34 +91,37 @@ const ExpenseInput = ({
   const handleFocus = () => {
     setIsFocused(true);
     // Clear if it's showing 0
-    if (localValue === '0' || (parseFloat(localValue) || 0) === 0) {
-      setLocalValue('');
+    if (localValue === "0" || (parseFloat(localValue) || 0) === 0) {
+      setLocalValue("");
     }
   };
 
   const handleBlur = () => {
     setIsFocused(false);
     const numericValue = parseFloat(localValue) || 0;
-    
+
     // Update the display value
-    setLocalValue(numericValue === 0 ? '' : numericValue.toString());
-    
+    setLocalValue(numericValue === 0 ? "" : numericValue.toString());
+
     // Final notification to parent
     onValueChange(numericValue);
   };
 
   return (
-    <div className="relative">      <Input
+    <div className="relative">
+      {" "}
+      <Input
         type="number"
         min="0"
         step="0.01"
         value={localValue}
         onChange={handleChange}
         onFocus={handleFocus}
-        onBlur={handleBlur}        className={`text-right max-w-32 ml-auto focus:border-symbol-gold ${
+        onBlur={handleBlur}
+        className={`text-right max-w-32 ml-auto focus:border-symbol-gold ${
           hasChanges
-            ? 'bg-symbol-beige/30 border-symbol-gold/50' 
-            : 'bg-symbol-gray-50 border-symbol-gray-300'
+            ? "bg-symbol-beige/30 border-symbol-gold/50"
+            : "bg-symbol-gray-50 border-symbol-gray-300"
         }`}
         placeholder="0,00"
         disabled={isDisabled}
@@ -142,7 +154,8 @@ const IndirectExpensesTable = ({
   calculateYearlyTotal,
   calculateMonthTotal,
 }: IndirectExpensesTableProps) => {
-  const selectedMonthLabel = MONTHS.find(m => m.key === selectedMonth)?.label || '';
+  const selectedMonthLabel =
+    MONTHS.find((m) => m.key === selectedMonth)?.label || "";
   return (
     <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
       <div className="mb-6 flex justify-between items-center">
@@ -153,7 +166,7 @@ const IndirectExpensesTable = ({
           <div className="w-8 h-px bg-symbol-beige"></div>
         </div>
         {hasUnsavedChanges && (
-          <Button 
+          <Button
             onClick={onSaveExpenseValues}
             className="bg-symbol-gold hover:bg-symbol-gold/80 text-symbol-black font-semibold flex items-center gap-2"
           >
@@ -162,27 +175,45 @@ const IndirectExpensesTable = ({
           </Button>
         )}
       </div>
-      
+
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
-            <TableRow>              <TableHead className="w-1/2 brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Categoria</TableHead>
-              <TableHead className="text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Valor Fixo</TableHead>
-              <TableHead className="text-right brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Valor do Mês (R$)</TableHead>
-              <TableHead className="text-right brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Total Anual (R$)</TableHead>
-              <TableHead className="w-20 text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Ações</TableHead>
+            <TableRow>
+              {" "}
+              <TableHead className="w-1/2 brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">
+                Categoria
+              </TableHead>
+              <TableHead className="text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">
+                Valor Fixo
+              </TableHead>
+              <TableHead className="text-right brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">
+                Valor do Mês (R$)
+              </TableHead>
+              <TableHead className="text-right brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">
+                Total Anual (R$)
+              </TableHead>
+              <TableHead className="w-20 text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">
+                Ações
+              </TableHead>
             </TableRow>
           </TableHeader>
-          <TableBody>            {categories.map((category, index) => {
+          <TableBody>
+            {" "}
+            {categories.map((category, index) => {
               const expense = getExpenseForCategory(category.id);
-              const savedValue = expense[selectedMonth as keyof MonthlyExpense] as number || 0;
+              const savedValue =
+                (expense[selectedMonth as keyof MonthlyExpense] as number) || 0;
               const currentValue = getTempExpenseValue(category.id);
               const hasChanges = currentValue !== savedValue;
               const yearlyTotal = calculateYearlyTotal(category.id);
               const isFixed = fixedExpenses[category.id] || false;
-              
+
               return (
-                <TableRow key={category.id} className={index % 2 === 0 ? 'bg-symbol-gray-50/30' : ''}>
+                <TableRow
+                  key={category.id}
+                  className={index % 2 === 0 ? "bg-symbol-gray-50/30" : ""}
+                >
                   <TableCell className="font-medium brand-body text-symbol-black">
                     {category.name}
                   </TableCell>
@@ -191,7 +222,12 @@ const IndirectExpensesTable = ({
                       <div className="flex items-center space-x-3 bg-symbol-gray-50 p-3 rounded-xl border-2 border-symbol-gray-200 hover:border-symbol-gold transition-all duration-300 shadow-sm hover:shadow-md">
                         <Checkbox
                           checked={isFixed}
-                          onCheckedChange={(checked) => onToggleFixedExpense(category.id, checked as boolean)}
+                          onCheckedChange={(checked) =>
+                            onToggleFixedExpense(
+                              category.id,
+                              checked as boolean
+                            )
+                          }
                           className="data-[state=checked]:bg-symbol-gold data-[state=checked]:border-symbol-gold h-6 w-6 border-2 border-symbol-gray-400 rounded-md shadow-sm hover:shadow-md transition-all duration-300"
                         />
                         <span className="text-sm font-semibold text-symbol-gray-800 min-w-[60px]">
@@ -199,20 +235,28 @@ const IndirectExpensesTable = ({
                         </span>
                       </div>
                     </div>
-                  </TableCell>                  <TableCell className="text-right">
+                  </TableCell>{" "}
+                  <TableCell className="text-right">
                     <ExpenseInput
                       categoryId={category.id}
                       initialValue={currentValue}
-                      isDisabled={isFixed && selectedMonth !== 'january'}
-                      onValueChange={(value) => onUpdateExpense(category.id, value)}
+                      isDisabled={isFixed && selectedMonth !== "january"}
+                      onValueChange={(value) =>
+                        onUpdateExpense(category.id, value)
+                      }
                       hasChanges={hasChanges}
                     />
-                    {isFixed && selectedMonth !== 'january' && (
-                      <p className="text-xs text-symbol-gray-500 mt-1">Valor fixo definido</p>
+                    {isFixed && selectedMonth !== "january" && (
+                      <p className="text-xs text-symbol-gray-500 mt-1">
+                        Valor fixo definido
+                      </p>
                     )}
                   </TableCell>
                   <TableCell className="text-right font-semibold brand-body text-symbol-black">
-                    R$ {yearlyTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    R${" "}
+                    {yearlyTotal.toLocaleString("pt-BR", {
+                      minimumFractionDigits: 2,
+                    })}
                   </TableCell>
                   <TableCell className="text-center">
                     {category.isCustom && (
@@ -229,7 +273,6 @@ const IndirectExpensesTable = ({
                 </TableRow>
               );
             })}
-            
             {/* Add Category Row */}
             {showAddCategory ? (
               <TableRow className="bg-symbol-beige/20 border-2 border-dashed border-symbol-gold/40">
@@ -239,7 +282,7 @@ const IndirectExpensesTable = ({
                     onChange={(e) => onSetNewCategoryName(e.target.value)}
                     placeholder="Nome da nova categoria"
                     className="border-none bg-transparent focus:border-symbol-gold"
-                    onKeyPress={(e) => e.key === 'Enter' && onAddNewCategory()}
+                    onKeyPress={(e) => e.key === "Enter" && onAddNewCategory()}
                   />
                 </TableCell>
                 <TableCell></TableCell>
@@ -247,19 +290,19 @@ const IndirectExpensesTable = ({
                 <TableCell></TableCell>
                 <TableCell className="text-center">
                   <div className="flex justify-center gap-2">
-                    <Button 
-                      size="sm" 
-                      onClick={onAddNewCategory} 
+                    <Button
+                      size="sm"
+                      onClick={onAddNewCategory}
                       className="h-8 bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white"
                     >
                       <Plus className="w-3 h-3" />
                     </Button>
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
+                    <Button
+                      size="sm"
+                      variant="ghost"
                       onClick={() => {
                         onSetShowAddCategory(false);
-                        onSetNewCategoryName('');
+                        onSetNewCategoryName("");
                       }}
                       className="h-8 text-symbol-gray-600 hover:text-symbol-black"
                     >
@@ -281,7 +324,7 @@ const IndirectExpensesTable = ({
                   </Button>
                 </TableCell>
               </TableRow>
-            )}            
+            )}
             {/* Total Monthly Row */}
             <TableRow className="bg-symbol-gold/10 border-t-2 border-symbol-gold/30 font-semibold">
               <TableCell className="font-bold brand-subheading text-symbol-black">
@@ -289,12 +332,14 @@ const IndirectExpensesTable = ({
               </TableCell>
               <TableCell></TableCell>
               <TableCell className="text-right font-bold text-symbol-gold">
-                R$ {calculateMonthTotal().toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                R${" "}
+                {calculateMonthTotal().toLocaleString("pt-BR", {
+                  minimumFractionDigits: 2,
+                })}
               </TableCell>
               <TableCell></TableCell>
               <TableCell></TableCell>
             </TableRow>
-            
             {/* Total Annual Row */}
             <TableRow className="bg-symbol-beige/20 font-semibold">
               <TableCell className="font-bold brand-subheading text-symbol-black">
@@ -303,12 +348,20 @@ const IndirectExpensesTable = ({
               <TableCell></TableCell>
               <TableCell></TableCell>
               <TableCell className="text-right font-bold brand-body text-symbol-black">
-                R$ {expenses.reduce((total, expense) => {
-                  return total + MONTHS.reduce((categoryTotal, month) => {
-                    const monthKey = month.key as keyof MonthlyExpense;
-                    return categoryTotal + (expense[monthKey] as number || 0);
-                  }, 0);
-                }, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                R${" "}
+                {expenses
+                  .reduce((total, expense) => {
+                    return (
+                      total +
+                      MONTHS.reduce((categoryTotal, month) => {
+                        const monthKey = month.key as keyof MonthlyExpense;
+                        return (
+                          categoryTotal + ((expense[monthKey] as number) || 0)
+                        );
+                      }, 0)
+                    );
+                  }, 0)
+                  .toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
               </TableCell>
               <TableCell></TableCell>
             </TableRow>

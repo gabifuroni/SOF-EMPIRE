@@ -104,7 +104,8 @@ const DirectExpenseInput = ({
   };
 
   return (
-    <div className="relative">      <Input
+    <div className="relative">      
+    <Input
         type="number"
         min="0"
         step="0.01"
