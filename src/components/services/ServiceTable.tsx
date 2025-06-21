@@ -1,8 +1,9 @@
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Edit, Trash2, BarChart3 } from 'lucide-react';
-import { Service } from '@/types';
+import { Service, Material } from '@/types';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
+import { useMaterials } from '@/hooks/useMaterials';
 
 interface ServiceTableProps {
   services: Service[];
@@ -13,6 +14,12 @@ interface ServiceTableProps {
 
 const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTableProps) => {
   const { params } = useBusinessParams();
+  const { materials } = useMaterials();
+
+  // Função auxiliar para obter o nome do material
+  const getMaterialName = (materialId: string) => {
+    return materials.find(m => m.id === materialId)?.name || 'Material não encontrado';
+  };
 
   if (services.length === 0) {
     return (
@@ -43,6 +50,8 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
             <TableHead className="font-semibold text-elite-charcoal-800">Cartão ($)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Imposto (%)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Imposto ($)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Mat. Prima ($)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Mat. Prima (%)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Total ($)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Total (%)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Margem Op. ($)</TableHead>
@@ -60,6 +69,12 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
             const commissionCost = (service.salePrice * service.commissionRate) / 100;
             const cardTaxCost = (service.salePrice * params.weightedAverageRate) / 100;
             const taxCost = (service.salePrice * params.impostosRate) / 100;
+            
+            // Cálculo do custo total de matéria-prima
+            const materialCosts = service.materialCosts || [];
+            const totalMaterialCost = materialCosts.reduce((sum, mc) => sum + mc.cost, 0);
+            const materialCostPercentage = service.salePrice > 0 ? (totalMaterialCost / service.salePrice) * 100 : 0;
+            
             const totalDirectCosts = service.totalCost;
             const directExpensePercentage = service.salePrice > 0 ? (totalDirectCosts / service.salePrice) * 100 : 0;
             
@@ -100,6 +115,29 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
               </TableCell>
               <TableCell className="text-purple-600">
                 R$ {taxCost.toFixed(2)}
+              </TableCell>
+              <TableCell className="text-emerald-600 font-medium">
+                <div className="flex flex-col" title={materialCosts.length > 0 ? 
+                  materialCosts.map(mc => `${getMaterialName(mc.materialId)}: R$ ${mc.cost.toFixed(2)}`).join('\n') : 
+                  'Nenhuma matéria-prima utilizada'
+                }>
+                  <span>R$ {totalMaterialCost.toFixed(2)}</span>
+                  {materialCosts.length > 0 && (
+                    <span className="text-xs text-emerald-500">
+                      {materialCosts.length} item{materialCosts.length > 1 ? 's' : ''}
+                    </span>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell className="text-emerald-600 font-medium">
+                <div className="flex flex-col" title={`${materialCostPercentage.toFixed(2)}% do valor total do serviço`}>
+                  <span>{materialCostPercentage.toFixed(1)}%</span>
+                  {materialCosts.length > 0 && (
+                    <span className="text-xs text-emerald-500">
+                      do total
+                    </span>
+                  )}
+                </div>
               </TableCell>
               <TableCell className="text-red-600 font-medium">
                 R$ {totalDirectCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
