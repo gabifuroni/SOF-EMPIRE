@@ -10,19 +10,43 @@ import AddEntryModal from '@/components/cash-flow/AddEntryModal';
 import AddExpenseModal from '@/components/cash-flow/AddExpenseModal';
 import { format } from 'date-fns';
 import { useTransactions } from '@/hooks/useTransactions';
+import { CashFlowEntry } from '@/types';
+
+interface Transaction {
+  id: string;
+  date: string;
+  description: string;
+  tipo_transacao: 'ENTRADA' | 'SAIDA';
+  valor: number;
+  payment_method?: string | null;
+  category?: string | null;
+  user_id: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface EntryData {
+  description: string;
+  amount: number;
+  date: Date;
+  paymentMethod?: string;
+  category?: string;
+}
+
+type FilterType = 'todos' | 'entradas' | 'saidas';
 
 const CashFlow = () => {
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
   const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
-  const [editingEntry, setEditingEntry] = useState<any>(null);
-  const [filterType, setFilterType] = useState('todos');
+  const [editingEntry, setEditingEntry] = useState<CashFlowEntry | null>(null);
+  const [filterType, setFilterType] = useState<FilterType>('todos');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
   const { transactions, isLoading, addTransaction, updateTransaction, deleteTransaction } = useTransactions();
 
   // Convert Supabase transactions to CashFlowEntry format for compatibility
-  const convertedEntries = transactions.map(t => ({
+  const convertedEntries: CashFlowEntry[] = transactions.map((t: Transaction) => ({
     id: t.id,
     date: new Date(t.date),
     description: t.description,
@@ -62,7 +86,7 @@ const CashFlow = () => {
 
   const saldoPeriodo = totalEntradas - totalSaidas;
 
-  const handleAddEntry = async (entryData: any) => {
+  const handleAddEntry = async (entryData: EntryData) => {
     try {
       await addTransaction.mutateAsync({
         description: entryData.description,
@@ -77,7 +101,7 @@ const CashFlow = () => {
     }
   };
 
-  const handleAddExpense = async (expenseData: any) => {
+  const handleAddExpense = async (expenseData: EntryData) => {
     try {
       await addTransaction.mutateAsync({
         description: expenseData.description,
@@ -92,7 +116,7 @@ const CashFlow = () => {
     }
   };
 
-  const handleEditEntry = async (entryData: any) => {
+  const handleEditEntry = async (entryData: EntryData) => {
     if (!editingEntry) return;
     
     try {
@@ -118,7 +142,7 @@ const CashFlow = () => {
     }
   };
 
-  const openEditModal = (entry: any) => {
+  const openEditModal = (entry: CashFlowEntry) => {
     setEditingEntry(entry);
     if (entry.type === 'entrada') {
       setIsAddEntryModalOpen(true);
@@ -263,7 +287,7 @@ const CashFlow = () => {
             <Label className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
               Tipo
             </Label>
-            <Select value={filterType} onValueChange={setFilterType}>
+            <Select value={filterType} onValueChange={(value: string) => setFilterType(value as FilterType)}>
               <SelectTrigger className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold">
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
@@ -313,11 +337,11 @@ const CashFlow = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`text-sm font-medium ${
-                    entry.tipo_transacao === 'ENTRADA' 
+                    entry.type === 'entrada' 
                       ? 'text-green-600' 
                       : 'text-red-600'
                   }`}>
-                    {entry.tipo_transacao === 'ENTRADA' ? '+' : '-'} R$ {Number(entry.valor).toFixed(2)}
+                    {entry.type === 'entrada' ? '+' : '-'} R$ {entry.amount.toFixed(2)}
                   </span>
                   <div className="flex gap-1">
                     <Button
@@ -339,9 +363,9 @@ const CashFlow = () => {
                   </div>
                 </div>
               </div>
-              {entry.payment_method && (
+              {entry.paymentMethod && (
                 <p className="text-xs text-symbol-gray-600">
-                  <span className="font-medium">Método:</span> {entry.payment_method}
+                  <span className="font-medium">Método:</span> {entry.paymentMethod}
                 </p>
               )}
               {entry.category && (
