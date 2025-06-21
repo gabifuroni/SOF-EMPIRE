@@ -63,13 +63,16 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
             const totalDirectCosts = service.totalCost;
             const directExpensePercentage = service.salePrice > 0 ? (totalDirectCosts / service.salePrice) * 100 : 0;
             
-            // Cálculos operacionais
-            const operationalCost = (service.salePrice * params.despesasIndiretasDepreciacao) / 100;
-            const operationalProfit = service.grossProfit - operationalCost;
-            const operationalMargin = service.salePrice > 0 ? (operationalProfit / service.salePrice) * 100 : 0;
+            // Cálculos corrigidos conforme especificação:
+            // Margem Operacional = Custo Cobrado no Serviço - Despesas Diretas Totais
+            const operationalMargin = service.salePrice - totalDirectCosts;
+            const operationalMarginPercentage = service.salePrice > 0 ? (operationalMargin / service.salePrice) * 100 : 0;
             
-            // Lucro parcial (após custos operacionais)
-            const partialProfit = operationalProfit;
+            // Custo Operacional (definido nos parâmetros do negócio)
+            const operationalCost = (service.salePrice * params.despesasIndiretasDepreciacao) / 100;
+            
+            // Lucro Parcial = Margem Operacional - Custo Operacional
+            const partialProfit = operationalMargin - operationalCost;
             const partialProfitMargin = service.salePrice > 0 ? (partialProfit / service.salePrice) * 100 : 0;
             
             return (
@@ -105,10 +108,10 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
                 {directExpensePercentage.toFixed(1)}%
               </TableCell>
               <TableCell className="text-green-600 font-medium">
-                R$ {operationalProfit.toFixed(2)}
+                R$ {operationalMargin.toFixed(2)}
               </TableCell>
               <TableCell className="text-green-600 font-medium">
-                {operationalMargin.toFixed(1)}%
+                {operationalMarginPercentage.toFixed(1)}%
               </TableCell>
               <TableCell className="text-blue-600">
                 R$ {operationalCost.toFixed(2)}
