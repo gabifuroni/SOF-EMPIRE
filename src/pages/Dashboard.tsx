@@ -91,8 +91,7 @@ const Dashboard = () => {
   };
 
   const goalProgress = (getCurrentValue() / getCurrentGoal()) * 100;
-  const remainingToGoal = Math.max(0, getCurrentGoal() - getCurrentValue());
-  const handleSaveGoal = () => {
+  const remainingToGoal = Math.max(0, getCurrentGoal() - getCurrentValue());  const handleSaveGoal = () => {
     if (goalType === 'financial') {
       const newGoal = parseFloat(goalInput) || 0;
       setMonthlyGoal(newGoal);
@@ -113,46 +112,48 @@ const Dashboard = () => {
     localStorage.setItem('goalType', goalType);
     setIsEditingGoal(false);
   };
-  useEffect(() => {
-    if (businessParams.monthlyGoal !== monthlyGoal) {
+
+  const handleGoalTypeChange = (newGoalType: 'financial' | 'attendance') => {
+    setGoalType(newGoalType);
+    localStorage.setItem('goalType', newGoalType);
+    updateParams({
+      goalType: newGoalType
+    });
+  };  useEffect(() => {
+    // Initialize from business params only once
+    if (businessParams.monthlyGoal && businessParams.monthlyGoal !== monthlyGoal) {
       setMonthlyGoal(businessParams.monthlyGoal);
       setGoalInput(businessParams.monthlyGoal.toString());
     }
-    if (businessParams.attendanceGoal !== attendanceGoal) {
+    if (businessParams.attendanceGoal && businessParams.attendanceGoal !== attendanceGoal) {
       setAttendanceGoal(businessParams.attendanceGoal);
       setAttendanceGoalInput(businessParams.attendanceGoal.toString());
     }
-    if (businessParams.goalType !== goalType) {
+    if (businessParams.goalType && businessParams.goalType !== goalType) {
       setGoalType(businessParams.goalType);
     }
+  }, [businessParams.monthlyGoal, businessParams.attendanceGoal, businessParams.goalType, monthlyGoal, attendanceGoal, goalType]);
 
+  // Initialize from localStorage on component mount
+  useEffect(() => {
     const savedGoal = localStorage.getItem('monthlyGoal');
     const savedAttendanceGoal = localStorage.getItem('attendanceGoal');
     const savedGoalType = localStorage.getItem('goalType') as 'financial' | 'attendance';
     
-    if (savedGoal) {
+    if (savedGoal && !businessParams.monthlyGoal) {
       const goal = parseFloat(savedGoal);
       setMonthlyGoal(goal);
       setGoalInput(goal.toString());
-      if (goal !== businessParams.monthlyGoal) {
-        updateParams({ monthlyGoal: goal });
-      }
     }
-    if (savedAttendanceGoal) {
+    if (savedAttendanceGoal && !businessParams.attendanceGoal) {
       const goal = parseInt(savedAttendanceGoal);
       setAttendanceGoal(goal);
       setAttendanceGoalInput(goal.toString());
-      if (goal !== businessParams.attendanceGoal) {
-        updateParams({ attendanceGoal: goal });
-      }
     }
-    if (savedGoalType) {
+    if (savedGoalType && !businessParams.goalType) {
       setGoalType(savedGoalType);
-      if (savedGoalType !== businessParams.goalType) {
-        updateParams({ goalType: savedGoalType });
-      }
     }
-  }, [businessParams, updateParams, monthlyGoal, attendanceGoal, goalType]);
+  }, [businessParams.monthlyGoal, businessParams.attendanceGoal, businessParams.goalType]); // Initialize on business params change
 
   if (profileLoading || transactionsLoading || businessParamsLoading || patentesLoading) {
     return (
@@ -317,9 +318,8 @@ const Dashboard = () => {
           </div>
           
           {isEditingGoal ? (
-            <div className="space-y-3">
-              {/* Goal Type Selection */}
-              <RadioGroup value={goalType} onValueChange={(value) => setGoalType(value as 'financial' | 'attendance')}>
+            <div className="space-y-3">              {/* Goal Type Selection */}
+              <RadioGroup value={goalType} onValueChange={handleGoalTypeChange}>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="financial" id="financial" />
                   <Label htmlFor="financial" className="text-xs">Meta Financeira</Label>
@@ -406,7 +406,7 @@ const Dashboard = () => {
         <div className="space-y-6">
           <div>
             <h3 className="brand-heading text-xl text-symbol-black mb-2">
-              Tendência de Faturamento
+              Gráfico de Faturamento Mensal
             </h3>
             <div className="w-8 h-px bg-symbol-beige mb-4"></div>
             <p className="brand-body text-symbol-gray-600 text-sm">
