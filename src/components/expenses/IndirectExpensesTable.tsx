@@ -64,9 +64,7 @@ const ExpenseInput = ({
   onValueChange: (value: number) => void;
   hasChanges: boolean;
 }) => {
-  const [localValue, setLocalValue] = useState(
-    initialValue === 0 ? "" : initialValue.toString()
-  );
+  const [localValue, setLocalValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
   // Only update when not focused and when the external value is different from what we have
@@ -113,7 +111,7 @@ const ExpenseInput = ({
       <Input
         type="number"
         min="0"
-        step="0.01"
+        step="1"
         value={localValue}
         onChange={handleChange}
         onFocus={handleFocus}
