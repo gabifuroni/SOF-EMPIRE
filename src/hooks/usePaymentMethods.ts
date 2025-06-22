@@ -8,7 +8,6 @@ type PaymentMethodUpdate = TablesUpdate<'config_formas_pagamento'>;
 
 export const usePaymentMethods = () => {
   const queryClient = useQueryClient();
-
   const { data: paymentMethods = [], isLoading } = useQuery({
     queryKey: ['paymentMethods'],
     queryFn: async () => {
@@ -22,6 +21,14 @@ export const usePaymentMethods = () => {
         .order('nome_metodo', { ascending: true });
       
       if (error) throw error;
+      
+      // Se não há dados, inicializar com valores padrão
+      if (!data || data.length === 0) {
+        console.log('No payment methods found, initializing with defaults');
+        const defaultData = await initializeDefaultPaymentMethods();
+        return defaultData;
+      }
+      
       return data;
     },
   });
@@ -92,6 +99,55 @@ export const usePaymentMethods = () => {
     return weightedSum / totalDistribution;
   };
 
+  // Função para inicializar dados padrão no banco
+  const initializeDefaultPaymentMethods = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const defaultMethods = [
+      {
+        user_id: user.id,
+        nome_metodo: 'Crédito',
+        taxa_percentual: 3.20,
+        percentual_distribuicao: 50.0,
+        prazo_recebimento_dias: 30,
+        is_ativo: true
+      },
+      {
+        user_id: user.id,
+        nome_metodo: 'Crédito Parcelado',
+        taxa_percentual: 6.34,
+        percentual_distribuicao: 5.0,
+        prazo_recebimento_dias: 30,
+        is_ativo: true
+      },
+      {
+        user_id: user.id,
+        nome_metodo: 'Débito',
+        taxa_percentual: 1.39,
+        percentual_distribuicao: 15.0,
+        prazo_recebimento_dias: 1,
+        is_ativo: true
+      },
+      {
+        user_id: user.id,
+        nome_metodo: 'Dinheiro/Pix',
+        taxa_percentual: 0.00,
+        percentual_distribuicao: 30.0,
+        prazo_recebimento_dias: 0,
+        is_ativo: true
+      }
+    ];
+
+    const { data, error } = await supabase
+      .from('config_formas_pagamento')
+      .insert(defaultMethods)
+      .select();
+
+    if (error) throw error;
+    return data;
+  };
+
   return {
     paymentMethods,
     isLoading,
@@ -99,5 +155,6 @@ export const usePaymentMethods = () => {
     updatePaymentMethod,
     deletePaymentMethod,
     calculateWeightedAverageRate,
+    initializeDefaultPaymentMethods,
   };
 };

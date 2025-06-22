@@ -13,7 +13,6 @@ import { createPaymentMethodUtils, createHolidayUtils } from '@/utils/paymentSet
 
 const PaymentSettings = () => {
   const logic = usePaymentSettingsLogic();
-
   // Initialize payment methods
   usePaymentMethodsInitialization(
     logic.dbPaymentMethods,
@@ -21,7 +20,7 @@ const PaymentSettings = () => {
     logic.paymentMethods,
     logic.setPaymentMethods,
     logic.setIsInitialized,
-    logic.getDefaultPaymentMethods,
+    () => [], // Não usado mais, mas mantemos para compatibilidade
     logic.removeDuplicatePaymentMethods
   );
 
@@ -51,14 +50,13 @@ const PaymentSettings = () => {
     calculateWorkingDaysPerYear: logic.calculateWorkingDaysPerYear,
     getTotalDistribution: logic.getTotalDistribution
   });
-
   // Create utility functions
   const paymentMethodUtils = createPaymentMethodUtils(
     logic.paymentMethods,
     logic.setPaymentMethods,
     logic.dbPaymentMethods,
     logic.updateDbPaymentMethod,
-    logic.getDefaultPaymentMethods,
+    () => [], // Não usado mais
     logic.removeDuplicatePaymentMethods,
     logic.toast
   );

@@ -116,43 +116,42 @@ export const usePaymentSettingsLogic = () => {
       }
     });
     
-    return Array.from(uniqueMethods.values());
-  }, []);
+    return Array.from(uniqueMethods.values());  }, []);
 
-  const getDefaultPaymentMethods = useCallback((): PaymentMethod[] => [
-    {
-      id: 'credit',
-      name: 'Crédito',
-      icon: CreditCard,
-      isActive: true,
-      distributionPercentage: 50.0,
-      taxRate: 3.20
-    },
-    {
-      id: 'credit_installment',
-      name: 'Crédito Parcelado',
-      icon: CreditCard,
-      isActive: true,
-      distributionPercentage: 5.0,
-      taxRate: 6.34
-    },
-    {
-      id: 'debit',
-      name: 'Débito',
-      icon: CreditCard,
-      isActive: true,
-      distributionPercentage: 15.0,
-      taxRate: 1.39
-    },
-    {
-      id: 'cash',
-      name: 'Dinheiro/Pix',
-      icon: Banknote,
-      isActive: true,
-      distributionPercentage: 30.0,
-      taxRate: 0.00
-    }
-  ], []);
+  // const getDefaultPaymentMethods = useCallback((): PaymentMethod[] => [
+  //   {
+  //     id: 'credit',
+  //     name: 'Crédito',
+  //     icon: CreditCard,
+  //     isActive: true,
+  //     distributionPercentage: 50.0,
+  //     taxRate: 3.20
+  //   },
+  //   {
+  //     id: 'credit_installment',
+  //     name: 'Crédito Parcelado',
+  //     icon: CreditCard,
+  //     isActive: true,
+  //     distributionPercentage: 5.0,
+  //     taxRate: 6.34
+  //   },
+  //   {
+  //     id: 'debit',
+  //     name: 'Débito',
+  //     icon: CreditCard,
+  //     isActive: true,
+  //     distributionPercentage: 15.0,
+  //     taxRate: 1.39
+  //   },
+  //   {
+  //     id: 'cash',
+  //     name: 'Dinheiro/Pix',
+  //     icon: Banknote,
+  //     isActive: true,
+  //     distributionPercentage: 30.0,
+  //     taxRate: 0.00
+  //   }
+  // ], []);
 
   const calculateWeightedAverageRate = useCallback(() => {
     const activeMethods = paymentMethods.filter(method => method.isActive);
@@ -228,11 +227,9 @@ export const usePaymentSettingsLogic = () => {
     updateParams,
     saveSettings,
     dbPaymentMethods,
-    updateDbPaymentMethod,
-
-    // Utility functions
+    updateDbPaymentMethod,    // Utility functions
     removeDuplicatePaymentMethods,
-    getDefaultPaymentMethods,
+    // getDefaultPaymentMethods, // Não usado mais
     calculateWeightedAverageRate,
     getTotalDistribution,
     calculateWorkingDaysPerYear

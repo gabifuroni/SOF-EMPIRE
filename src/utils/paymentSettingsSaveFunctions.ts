@@ -357,15 +357,19 @@ export const createSaveFunctions = ({
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const handleSavePaymentMethods = async () => {
+  };  const handleSavePaymentMethods = async () => {
+    console.log('=== INICIANDO SALVAMENTO DE MÉTODOS DE PAGAMENTO ===');
+    console.log('Payment methods para salvar:', paymentMethods);
+    console.log('Payment methods IDs:', paymentMethods.map(m => ({ name: m.name, id: m.id })));
+    console.log('DB Payment methods:', dbPaymentMethods);
+    console.log('DB Payment methods IDs:', dbPaymentMethods.map(m => ({ name: m.nome_metodo, id: m.id })));
     setIsSaving(true);
     
     try {
       console.log('Salvando métodos de pagamento:', paymentMethods);
 
       const totalDistribution = getTotalDistribution();
+      console.log('Total distribution:', totalDistribution);
       if (Math.abs(totalDistribution - 100) > 0.01) {
         toast({
           title: "Erro de Validação",
@@ -374,14 +378,25 @@ export const createSaveFunctions = ({
         });
         setIsSaving(false);
         return;
-      }
-
-      const savePromises = paymentMethods.map(async (method) => {
+      }      const savePromises = paymentMethods.map(async (method) => {
+        console.log(`Processando método: ${method.name}`);
         const dbMethod = dbPaymentMethods.find(m => 
           m.id === method.id || 
-          m.nome_metodo.toLowerCase().includes(method.name.toLowerCase().split(' ')[0])
+          m.nome_metodo.toLowerCase() === method.name.toLowerCase()
         );
-          if (dbMethod && updateDbPaymentMethod) {
+        
+        console.log(`DB Method encontrado para ${method.name}:`, dbMethod);
+        
+        if (dbMethod && updateDbPaymentMethod) {
+          console.log(`Atualizando no banco:`, {
+            id: dbMethod.id,
+            nome_metodo: method.name,
+            is_ativo: method.isActive,
+            percentual_distribuicao: method.distributionPercentage,
+            prazo_recebimento_dias: dbMethod.prazo_recebimento_dias,
+            taxa_percentual: method.taxRate,
+          });
+          
           await updateDbPaymentMethod.mutateAsync({
             id: dbMethod.id,
             nome_metodo: method.name,
@@ -390,10 +405,35 @@ export const createSaveFunctions = ({
             prazo_recebimento_dias: dbMethod.prazo_recebimento_dias, // Manter o valor original de dias
             taxa_percentual: method.taxRate,
           });
-        }
-      });
+        } else {
+          // Se não existe no banco, criar novo registro
+          console.log(`Criando novo registro no banco para: ${method.name}`);
+          const { data: { user } } = await supabase.auth.getUser();
+          if (!user) throw new Error('User not authenticated');
 
-      await Promise.allSettled(savePromises);
+          const { error } = await supabase
+            .from('config_formas_pagamento')
+            .insert({
+              user_id: user.id,
+              nome_metodo: method.name,
+              is_ativo: method.isActive,
+              percentual_distribuicao: method.distributionPercentage,
+              prazo_recebimento_dias: method.name.toLowerCase().includes('crédito') ? 30 : 
+                                      method.name.toLowerCase().includes('débito') ? 1 : 0,
+              taxa_percentual: method.taxRate,
+            });
+
+          if (error) {
+            console.error(`Erro ao criar ${method.name}:`, error);
+            throw error;
+          }
+        }
+      });      await Promise.allSettled(savePromises);
+
+      // Recarregar os dados do banco após salvar
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
 
       updateParams({
         paymentMethods: paymentMethods,
@@ -402,7 +442,7 @@ export const createSaveFunctions = ({
 
       toast({
         title: "Sucesso!",
-        description: "Métodos de pagamento salvos com sucesso!",
+        description: "Métodos de pagamento salvos com sucesso! Recarregando...",
         variant: "default"
       });
     } catch (error) {

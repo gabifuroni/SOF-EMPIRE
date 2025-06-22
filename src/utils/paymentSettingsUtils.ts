@@ -54,13 +54,16 @@ export const createPaymentMethodUtils = (
   removeDuplicatePaymentMethods: (methods: PaymentMethod[]) => PaymentMethod[],
   toast: Toast
 ) => {  const updatePaymentMethod = (id: string, field: keyof PaymentMethod, value: string | number | boolean) => {
-    setPaymentMethods((prev: PaymentMethod[]) => 
-      prev.map((method: PaymentMethod) => 
+    console.log('Updating payment method:', { id, field, value });
+    setPaymentMethods((prev: PaymentMethod[]) => {
+      const updated = prev.map((method: PaymentMethod) => 
         method.id === id 
           ? { ...method, [field]: value }
           : method
-      )
-    );
+      );
+      console.log('Payment methods after update:', updated);
+      return updated;
+    });
   };
   const normalizeDistributionPercentages = () => {
     const activeMethods = paymentMethods.filter((method: PaymentMethod) => method.isActive);
@@ -91,11 +94,10 @@ export const createPaymentMethodUtils = (
       const uniqueMethods = removeDuplicatePaymentMethods(paymentMethods);
       
       setPaymentMethods(uniqueMethods);
-      
-      const savePromises = uniqueMethods.map(async (method: PaymentMethod) => {
+        const savePromises = uniqueMethods.map(async (method: PaymentMethod) => {
         const dbMethod = dbPaymentMethods.find((m: DbPaymentMethod) => 
           m.id === method.id || 
-          m.nome_metodo.toLowerCase().includes(method.name.toLowerCase().split(' ')[0])
+          m.nome_metodo.toLowerCase() === method.name.toLowerCase()
         );
             if (dbMethod && updateDbPaymentMethod) {
           await updateDbPaymentMethod.mutateAsync({
