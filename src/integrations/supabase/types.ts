@@ -106,11 +106,11 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      despesas_indiretas_categorias: {
+      }      despesas_indiretas_categorias: {
         Row: {
           created_at: string
           id: string
+          is_fixed: boolean
           is_predefinida: boolean
           nome_categoria_despesa: string
           updated_at: string
@@ -119,6 +119,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          is_fixed?: boolean
           is_predefinida?: boolean
           nome_categoria_despesa: string
           updated_at?: string
@@ -127,6 +128,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          is_fixed?: boolean
           is_predefinida?: boolean
           nome_categoria_despesa?: string
           updated_at?: string

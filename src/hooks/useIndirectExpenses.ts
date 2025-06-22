@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -77,6 +76,23 @@ export const useIndirectExpenseCategories = () => {
     },
   });
 
+  const updateCategoryFixed = useMutation({
+    mutationFn: async ({ id, isFixed }: { id: string; isFixed: boolean }) => {
+      const { data, error } = await supabase
+        .from('despesas_indiretas_categorias')
+        .update({ is_fixed: isFixed })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['indirect-expense-categories'] });
+    },
+  });
+
   const deleteCategory = useMutation({
     mutationFn: async (id: string) => {
       // Primeiro, deletar todos os valores relacionados à categoria
@@ -106,6 +122,7 @@ export const useIndirectExpenseCategories = () => {
     isLoading,
     addCategory,
     updateCategory,
+    updateCategoryFixed,
     deleteCategory,
   };
 };

@@ -51,8 +51,7 @@ const IndirectExpenses = () => {
   );
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const currentMonth = new Date().getMonth();
-    return MONTHS[currentMonth].key;
-  });
+    return MONTHS[currentMonth].key;  });
 
   // Indirect expenses hooks
   const {
@@ -60,6 +59,7 @@ const IndirectExpenses = () => {
     isLoading: categoriesLoading,
     addCategory,
     updateCategory,
+    updateCategoryFixed,
     deleteCategory,
   } = useIndirectExpenseCategories();
 
@@ -89,11 +89,9 @@ const IndirectExpenses = () => {
     deleteExpenseValue: deleteDirectExpenseValue,
     getTotalByMonth: getDirectTotalByMonth,
   } = useDirectExpenseValues();
-
   // State for indirect expenses
   const [newCategoryName, setNewCategoryName] = useState("");
   const [showAddCategory, setShowAddCategory] = useState(false);
-  const [fixedExpenses, setFixedExpenses] = useState<Record<string, boolean>>({});
   const [tempExpenseValues, setTempExpenseValues] = useState<Record<string, number>>({});
 
   // State for direct expenses
@@ -211,15 +209,49 @@ const IndirectExpenses = () => {
     );
     return expenseValue?.valor_mensal || 0;
   };
+  const toggleFixedExpense = async (categoryId: string, isFixed: boolean) => {
+    try {
+      // Update the database
+      await updateCategoryFixed.mutateAsync({ id: categoryId, isFixed });
+      
+      // If marking as fixed and there's a current value, apply it to all 12 months
+      if (isFixed) {
+        const currentValue = getTempExpenseValue(categoryId);
+        if (currentValue > 0) {
+          // Create entries for all 12 months with the current value
+          const savePromises = MONTHS.map(async (month, index) => {
+            const monthNumber = index + 1;
+            const dateString = `${selectedYear}-${monthNumber.toString().padStart(2, "0")}-01`;
+            
+            const existingExpense = expenses.find(
+              (exp) => exp.categoria_id === categoryId && exp.mes_referencia === dateString
+            );
 
-  const toggleFixedExpense = (categoryId: string, isFixed: boolean) => {
-    setFixedExpenses((prev) => ({
-      ...prev,
-      [categoryId]: isFixed,
-    }));
-    toast.success(
-      `Despesa ${isFixed ? "marcada como fixa" : "desmarcada como fixa"}`
-    );
+            if (existingExpense) {
+              return updateExpenseValue.mutateAsync({
+                id: existingExpense.id,
+                valor_mensal: currentValue,
+              });
+            } else {
+              return addExpenseValue.mutateAsync({
+                categoria_id: categoryId,
+                mes_referencia: dateString,
+                valor_mensal: currentValue,
+              });
+            }
+          });
+
+          await Promise.all(savePromises);
+        }
+      }
+      
+      toast.success(
+        `Despesa ${isFixed ? "marcada como fixa" : "desmarcada como fixa"}`
+      );
+    } catch (error) {
+      console.error("Error toggling fixed expense:", error);
+      toast.error("Erro ao atualizar configuração de despesa fixa");
+    }
   };
 
   const addNewCategory = () => {
@@ -236,15 +268,9 @@ const IndirectExpenses = () => {
       },
     });
   };
-
   const removeCategory = (categoryId: string) => {
     deleteCategory.mutate(categoryId, {
       onSuccess: () => {
-        setFixedExpenses((prev) => {
-          const updated = { ...prev };
-          delete updated[categoryId];
-          return updated;
-        });
         toast.success("Categoria removida com sucesso!");
       },
       onError: () => {
@@ -295,11 +321,21 @@ const IndirectExpenses = () => {
       return total + (expenseValue?.valor_mensal || 0);
     }, 0);
   };
-
   const calculateYearlyTotal = (categoryId: string) => {
-    return expenses
-      .filter(exp => exp.categoria_id === categoryId)
-      .reduce((total, exp) => total + exp.valor_mensal, 0);
+    // Find the category to check if it's fixed
+    const category = categories.find(cat => cat.id === categoryId);
+    const isFixed = category?.is_fixed || false;
+    
+    if (isFixed) {
+      // For fixed expenses, multiply current month value by 12
+      const currentValue = getTempExpenseValue(categoryId);
+      return currentValue * 12;
+    } else {
+      // For variable expenses, sum all saved values
+      return expenses
+        .filter(exp => exp.categoria_id === categoryId)
+        .reduce((total, exp) => total + exp.valor_mensal, 0);
+    }
   };
 
   // DIRECT EXPENSES FUNCTIONS
@@ -444,10 +480,9 @@ const IndirectExpenses = () => {
   const indirectMonthTotal = calculateMonthTotal();
   const directMonthTotal = calculateDirectMonthTotal();
   const totalMonthExpenses = indirectMonthTotal + directMonthTotal;
-  
-  // Calculate fixed expenses total based on categories marked as fixed
-  const fixedExpensesTotal = convertedCategories
-    .filter((cat) => fixedExpenses[cat.id])
+    // Calculate fixed expenses total based on categories marked as fixed in database
+  const fixedExpensesTotal = categories
+    .filter((cat) => cat.is_fixed)
     .reduce((sum, cat) => {
       const tempValue = tempExpenseValues[cat.id];
       if (tempValue !== undefined) {
@@ -500,11 +535,10 @@ const IndirectExpenses = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="indirect" className="mt-6">
-            <IndirectExpensesTable
+          <TabsContent value="indirect" className="mt-6">            <IndirectExpensesTable
               categories={convertedCategories}
               expenses={convertedExpenses}
-              fixedExpenses={fixedExpenses}
+              fixedExpenses={categories.reduce((acc, cat) => ({ ...acc, [cat.id]: cat.is_fixed }), {})}
               selectedMonth={selectedMonth}
               selectedYear={selectedYear}
               newCategoryName={newCategoryName}
