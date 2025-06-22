@@ -66,6 +66,18 @@ serve(async (req) => {
       descricaoSalao
     } = await req.json()
 
+    console.log('Received data:', { 
+      name, email, telefone, endereco, cidade, estado, nomeSalao, descricaoSalao 
+    })
+
+    // Validate required fields
+    if (!name || !email || !password) {
+      return new Response(
+        JSON.stringify({ error: 'Nome, email e senha são obrigatórios' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Create the user
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
@@ -86,27 +98,38 @@ serve(async (req) => {
 
     if (authData.user) {
       // Update the profile with additional information
-      const { error: profileError } = await supabaseAdmin
+      const profileUpdateData = {
+        nome_profissional_ou_salao: name,
+        email: email,
+        telefone: telefone || null,
+        endereco: endereco || null,
+        nome_salao: nomeSalao || null,
+        descricao_salao: descricaoSalao || null,
+        cidade: cidade || null,
+        estado: estado || null,
+        role: 'professional'
+      };
+      
+      console.log('Updating profile with data:', profileUpdateData);
+      
+      const { data: updateResult, error: profileError } = await supabaseAdmin
         .from('profiles')
-        .update({
-          nome_profissional_ou_salao: name,
-          email: email,
-          telefone: telefone,
-          endereco: endereco,
-          nome_salao: nomeSalao,
-          descricao_salao: descricaoSalao,
-          cidade: cidade,
-          estado: estado
-        })
+        .update(profileUpdateData)
         .eq('id', authData.user.id)
+        .select()
 
       if (profileError) {
         console.error('Profile update error:', profileError)
         return new Response(
-          JSON.stringify({ error: 'User created but profile update failed' }),
+          JSON.stringify({ 
+            error: 'User created but profile update failed', 
+            details: profileError.message 
+          }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
+
+      console.log('Profile updated successfully:', updateResult)
 
       return new Response(
         JSON.stringify({ 

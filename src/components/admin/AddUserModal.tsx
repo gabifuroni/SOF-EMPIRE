@@ -54,37 +54,58 @@ const AddUserModal = ({ show, onClose, onAddUser }: AddUserModalProps) => {
     setLoading(true);
 
     try {
-      // Get the current session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('Não autenticado');
+      // Validar campos obrigatórios
+      if (!newUser.nome_profissional_ou_salao || !newUser.email || !newUser.password) {
+        throw new Error('Nome, email e senha são obrigatórios');
       }
 
-      // Call the edge function to create the user
-      const { data, error } = await supabase.functions.invoke('create-user', {
-        body: {
-          name: newUser.nome_profissional_ou_salao,
-          email: newUser.email,
-          password: newUser.password,
-          telefone: newUser.telefone,
-          endereco: newUser.endereco,
-          cidade: newUser.cidade,
-          estado: newUser.estado,
-          nomeSalao: newUser.nome_salao,
-          descricaoSalao: newUser.descricao_salao
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+      // 1. Criar usuário na autenticação
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: newUser.email,
+        password: newUser.password,
+        options: {
+          data: {
+            nome_profissional_ou_salao: newUser.nome_profissional_ou_salao
+          }
+        }
       });
 
-      if (error) {
-        throw error;
+      if (authError) {
+        throw new Error(`Erro ao criar usuário: ${authError.message}`);
+      }
+
+      if (!authData.user) {
+        throw new Error('Falha ao criar usuário');
+      }
+
+      // 2. Aguardar um momento para o trigger criar o profile
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // 3. Atualizar o perfil com as informações adicionais
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          nome_profissional_ou_salao: newUser.nome_profissional_ou_salao,
+          email: newUser.email,
+          telefone: newUser.telefone || null,
+          endereco: newUser.endereco || null,
+          cidade: newUser.cidade || null,
+          estado: newUser.estado || null,
+          nome_salao: newUser.nome_salao || null,
+          descricao_salao: newUser.descricao_salao || null,
+          role: 'user',
+          status: 'active'
+        })
+        .eq('id', authData.user.id);
+
+      if (profileError) {
+        console.error('Erro ao atualizar perfil:', profileError);
+        throw new Error(`Erro ao salvar informações do perfil: ${profileError.message}`);
       }
 
       // Create user object for UI update
       const user = {
+        id: authData.user.id,
         name: newUser.nome_profissional_ou_salao,
         email: newUser.email,
         role: 'professional' as const,
@@ -101,6 +122,8 @@ const AddUserModal = ({ show, onClose, onAddUser }: AddUserModalProps) => {
       };
       
       onAddUser(user);
+      
+      // Limpar formulário
       setNewUser({ 
         nome_profissional_ou_salao: '', 
         email: '', 
@@ -112,6 +135,7 @@ const AddUserModal = ({ show, onClose, onAddUser }: AddUserModalProps) => {
         descricao_salao: '',
         password: ''
       });
+      
       onClose();
 
       toast({
