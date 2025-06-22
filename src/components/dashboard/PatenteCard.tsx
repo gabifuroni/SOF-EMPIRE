@@ -20,19 +20,21 @@ const PatenteCard = ({ currentRevenue }: PatenteCardProps) => {
       </div>
     );
   }
-
   // Calculate total accumulated revenue from transactions (only ENTRADA)
   const totalRevenue = transactions
     .filter(transaction => transaction.tipo_transacao === 'ENTRADA')
     .reduce((sum, transaction) => sum + Number(transaction.valor), 0);
   
-  // Find current patente
-  const currentPatente = patentes.find(p => 
-    totalRevenue >= p.faturamento_minimo_necessario
-  ) || patentes[0];
+  // Sort patentes by faturamento_minimo_necessario to ensure correct order
+  const sortedPatentes = [...patentes].sort((a, b) => a.faturamento_minimo_necessario - b.faturamento_minimo_necessario);
+  
+  // Find current patente (highest one that user has achieved)
+  const currentPatente = sortedPatentes
+    .filter(p => totalRevenue >= p.faturamento_minimo_necessario)
+    .pop() || sortedPatentes[0];
 
-  // Find next patente
-  const nextPatente = patentes.find(p => 
+  // Find next patente (first one above current revenue)
+  const nextPatente = sortedPatentes.find(p => 
     p.faturamento_minimo_necessario > totalRevenue
   );
 
