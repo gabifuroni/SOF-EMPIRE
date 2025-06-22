@@ -58,13 +58,12 @@ serve(async (req) => {
       name, 
       email, 
       password, 
-      salonName, 
-      phone, 
-      nomeSalao, 
-      descricaoSalao, 
+      telefone, 
       endereco, 
       cidade, 
-      estado 
+      estado,
+      nomeSalao, 
+      descricaoSalao
     } = await req.json()
 
     // Create the user
@@ -92,8 +91,8 @@ serve(async (req) => {
         .update({
           nome_profissional_ou_salao: name,
           email: email,
-          telefone: phone,
-          endereco: endereco || salonName,
+          telefone: telefone,
+          endereco: endereco,
           nome_salao: nomeSalao,
           descricao_salao: descricaoSalao,
           cidade: cidade,

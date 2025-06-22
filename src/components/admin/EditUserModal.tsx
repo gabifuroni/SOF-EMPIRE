@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { X, User as UserIcon, Mail, Building, Phone, MapPin, Edit } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { User } from '@/types';
@@ -27,6 +29,25 @@ const EditUserModal = ({ show, onClose, onUpdateUser, user }: EditUserModalProps
   });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+
+  // Controlar scroll do body quando modal está aberto
+  useEffect(() => {
+    if (show) {
+      // Bloquear scroll do body
+      document.body.style.overflow = 'hidden';
+      document.body.style.paddingRight = 'var(--scrollbar-width, 0px)';
+    } else {
+      // Restaurar scroll do body
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    }
+
+    // Cleanup ao desmontar
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [show]);
 
   useEffect(() => {
     if (user) {
@@ -100,145 +121,253 @@ const EditUserModal = ({ show, onClose, onUpdateUser, user }: EditUserModalProps
     } finally {
       setLoading(false);
     }
-  };
-
-  if (!show || !user) return null;
-
+  };  if (!show || !user) return null;
   return (
-    <div className="fixed inset-0 bg-symbol-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="symbol-card p-8 w-full max-w-2xl shadow-xl max-h-[80vh] overflow-y-auto">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <h3 className="brand-heading text-xl text-symbol-black">
-            Editar Usuário
-          </h3>
+    <div 
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 modal-overlay"
+      onClick={onClose}
+      style={{ overflowY: 'auto' }}
+    >
+      <div 
+        className="bg-white rounded-xl shadow-2xl w-full max-w-2xl my-8 relative max-h-[90vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+          {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gray-900 rounded-lg flex items-center justify-center">
+              <Edit className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Editar Usuário</h2>
+              <p className="text-sm text-gray-600">Atualize as informações do usuário</p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-8 w-8 p-0 hover:bg-gray-100"
+            disabled={loading}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="p-6 space-y-6">
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="name" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Nome Completo</Label>
-              <Input
-                id="name"
-                value={editUser.name}
-                onChange={(e) => setEditUser({...editUser, name: e.target.value})}
-                className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-                required
-                disabled={loading}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="email" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">E-mail</Label>
-              <Input
-                id="email"
-                type="email"
-                value={editUser.email}
-                onChange={(e) => setEditUser({...editUser, email: e.target.value})}
-                className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-                required
-                disabled={loading}
-              />
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="salonName" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Nome do Salão/Profissional</Label>
-              <Input
-                id="salonName"
-                value={editUser.salonName}
-                onChange={(e) => setEditUser({...editUser, salonName: e.target.value})}
-                className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-                disabled={loading}
-              />
-            </div>
-            
-            <div>
-              <Label htmlFor="phone" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Telefone</Label>
-              <Input
-                id="phone"
-                value={editUser.phone}
-                onChange={(e) => setEditUser({...editUser, phone: e.target.value})}
-                className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-                disabled={loading}
-              />
-            </div>
-          </div>
+          {/* Informações Básicas */}
+          <Card className="border-symbol-gray-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <UserIcon className="h-4 w-4 text-symbol-gray-600" />
+                Informações Pessoais
+              </CardTitle>
+              <CardDescription>
+                Dados básicos do usuário
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">                  <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                    Nome Profissional/Salão *
+                  </Label>
+                  <div className="relative">
+                    <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                      id="name"
+                      value={editUser.name}
+                      onChange={(e) => setEditUser({...editUser, name: e.target.value})}
+                      className="pl-10 border-gray-300 focus:border-gray-900 focus:ring-gray-900"
+                      placeholder="Digite o nome do profissional ou salão"
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
 
-          <div>
-            <Label htmlFor="nomeSalao" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Nome do Salão (Opcional)</Label>
-            <Input
-              id="nomeSalao"
-              value={editUser.nomeSalao}
-              onChange={(e) => setEditUser({...editUser, nomeSalao: e.target.value})}
-              className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-              disabled={loading}
-            />
-          </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-sm font-medium text-symbol-gray-700">
+                    Telefone
+                  </Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-symbol-gray-400" />
+                    <Input
+                      id="phone"
+                      value={editUser.phone}
+                      onChange={(e) => setEditUser({...editUser, phone: e.target.value})}
+                      className="pl-10 border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+              </div>
 
-          <div>
-            <Label htmlFor="descricaoSalao" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Descrição do Salão (Opcional)</Label>
-            <Input
-              id="descricaoSalao"
-              value={editUser.descricaoSalao}
-              onChange={(e) => setEditUser({...editUser, descricaoSalao: e.target.value})}
-              className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-              disabled={loading}
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium text-symbol-gray-700">
+                  E-mail *
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-symbol-gray-400" />
+                  <Input
+                    id="email"
+                    type="email"
+                    value={editUser.email}
+                    onChange={(e) => setEditUser({...editUser, email: e.target.value})}
+                    className="pl-10 border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          <div>
-            <Label htmlFor="endereco" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Endereço (Opcional)</Label>
-            <Input
-              id="endereco"
-              value={editUser.endereco}
-              onChange={(e) => setEditUser({...editUser, endereco: e.target.value})}
-              className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-              disabled={loading}
-            />
-          </div>
+          {/* Informações do Salão */}
+          <Card className="border-symbol-gray-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Building className="h-4 w-4 text-symbol-gray-600" />
+                Informações do Salão
+              </CardTitle>
+              <CardDescription>
+                Dados do estabelecimento
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="salonName" className="text-sm font-medium text-symbol-gray-700">
+                    Nome do Salão/Profissional
+                  </Label>
+                  <div className="relative">
+                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-symbol-gray-400" />
+                    <Input
+                      id="salonName"
+                      value={editUser.salonName}
+                      onChange={(e) => setEditUser({...editUser, salonName: e.target.value})}
+                      className="pl-10 border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>  
-              <Label htmlFor="cidade" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Cidade (Opcional)</Label>
-              <Input
-                id="cidade"
-                value={editUser.cidade}
-                onChange={(e) => setEditUser({...editUser, cidade: e.target.value})}
-                className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-                disabled={loading}
-              />
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nomeSalao" className="text-sm font-medium text-symbol-gray-700">
+                    Nome Fantasia
+                  </Label>
+                  <Input
+                    id="nomeSalao"
+                    value={editUser.nomeSalao}
+                    onChange={(e) => setEditUser({...editUser, nomeSalao: e.target.value})}
+                    className="border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                    disabled={loading}
+                  />
+                </div>
+              </div>
 
-            <div>
-              <Label htmlFor="estado" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Estado (Opcional)</Label>
-              <Input
-                id="estado"
-                value={editUser.estado}
-                onChange={(e) => setEditUser({...editUser, estado: e.target.value})}
-                className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-                disabled={loading}
-              />
-            </div>
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-2 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1 border-symbol-gray-300 text-symbol-gray-700 hover:bg-symbol-gray-50"
-              disabled={loading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1 bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white"
-              disabled={loading}
-            >
-              {loading ? 'Salvando...' : 'Salvar Alterações'}
-            </Button>
-          </div>
-        </form>
+              <div className="space-y-2">
+                <Label htmlFor="descricaoSalao" className="text-sm font-medium text-symbol-gray-700">
+                  Descrição do Salão
+                </Label>
+                <Input
+                  id="descricaoSalao"
+                  value={editUser.descricaoSalao}
+                  onChange={(e) => setEditUser({...editUser, descricaoSalao: e.target.value})}
+                  className="border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                  disabled={loading}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Informações de Localização */}
+          <Card className="border-symbol-gray-200">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <MapPin className="h-4 w-4 text-symbol-gray-600" />
+                Localização
+              </CardTitle>
+              <CardDescription>
+                Endereço do estabelecimento
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="endereco" className="text-sm font-medium text-symbol-gray-700">
+                  Endereço Completo
+                </Label>
+                <div className="relative">
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-symbol-gray-400" />
+                  <Input
+                    id="endereco"
+                    value={editUser.endereco}
+                    onChange={(e) => setEditUser({...editUser, endereco: e.target.value})}
+                    className="pl-10 border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="cidade" className="text-sm font-medium text-symbol-gray-700">
+                    Cidade
+                  </Label>
+                  <Input
+                    id="cidade"
+                    value={editUser.cidade}
+                    onChange={(e) => setEditUser({...editUser, cidade: e.target.value})}
+                    className="border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                    disabled={loading}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="estado" className="text-sm font-medium text-symbol-gray-700">
+                    Estado
+                  </Label>
+                  <Input
+                    id="estado"
+                    value={editUser.estado}
+                    onChange={(e) => setEditUser({...editUser, estado: e.target.value})}
+                    className="border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                    maxLength={2}
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>          {/* Footer com botões */}
+          </form>
+        </div>
+        
+        <div className="flex justify-end gap-3 p-6 border-t border-gray-200 bg-white flex-shrink-0">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
+            disabled={loading}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            className="bg-gray-900 hover:bg-gray-800 text-white px-6"
+            disabled={loading}
+          >
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                Salvando...
+              </div>
+            ) : (
+              'Salvar Alterações'
+            )}
+          </Button>
+        </div>
       </div>
     </div>
   );

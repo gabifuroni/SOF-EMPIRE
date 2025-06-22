@@ -349,7 +349,7 @@ const Profile = () => {
 
             <div>
               <Label htmlFor="description" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
-                Sobre o Salão
+                Sobre o seu negócio
               </Label>
               <Textarea
                 id="description"
