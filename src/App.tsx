@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { BusinessParamsProvider } from "@/contexts/BusinessParamsContext";
+import AuthWrapper from "@/components/common/AuthWrapper";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -95,42 +96,46 @@ const App = () => {
           <Routes>
             {/* Admin Routes */}
             <Route path="/admin" element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
+              <AuthWrapper>
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              </AuthWrapper>
             } />
             
             {/* Regular User Routes */}
             <Route path="/*" element={
-              <div className="min-h-screen flex w-full bg-elite-pearl-50">
-                <Sidebar 
-                  userRole={appUser.role} 
-                  isMobileMenuOpen={isMobileMenuOpen}
-                  onCloseMobileMenu={handleCloseMobileMenu}
-                />
-                
-                <div className="flex-1 flex flex-col min-w-0">
-                  <Header 
-                    user={appUser} 
-                    onLogout={handleLogout}
-                    onToggleMobileMenu={handleToggleMobileMenu}
+              <AuthWrapper>
+                <div className="min-h-screen flex w-full bg-elite-pearl-50">
+                  <Sidebar 
+                    userRole={appUser.role} 
+                    isMobileMenuOpen={isMobileMenuOpen}
+                    onCloseMobileMenu={handleCloseMobileMenu}
                   />
-                  <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
-                    <Routes>
-                      <Route path="/dashboard" element={<Dashboard />} />
-                      <Route path="/daily-cash-flow" element={<DailyCashFlow />} />
-                      <Route path="/services" element={<Services />} />
-                      <Route path="/materials" element={<Materials />} />
-                      <Route path="/cash-flow" element={<CashFlow />} />
-                      <Route path="/expenses" element={<IndirectExpenses />} />
-                      <Route path="/reports" element={<Reports />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/payment-settings" element={<PaymentSettings />} />
-                      <Route path="*" element={<Navigate to="/dashboard" replace />} />
-                    </Routes>
-                  </main>
+                  
+                  <div className="flex-1 flex flex-col min-w-0">
+                    <Header 
+                      user={appUser} 
+                      onLogout={handleLogout}
+                      onToggleMobileMenu={handleToggleMobileMenu}
+                    />
+                    <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+                      <Routes>
+                        <Route path="/dashboard" element={<Dashboard />} />
+                        <Route path="/daily-cash-flow" element={<DailyCashFlow />} />
+                        <Route path="/services" element={<Services />} />
+                        <Route path="/materials" element={<Materials />} />
+                        <Route path="/cash-flow" element={<CashFlow />} />
+                        <Route path="/expenses" element={<IndirectExpenses />} />
+                        <Route path="/reports" element={<Reports />} />
+                        <Route path="/profile" element={<Profile />} />
+                        <Route path="/payment-settings" element={<PaymentSettings />} />
+                        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                      </Routes>
+                    </main>
+                  </div>
                 </div>
-              </div>
+              </AuthWrapper>
             } />
           </Routes>
         </BrowserRouter>

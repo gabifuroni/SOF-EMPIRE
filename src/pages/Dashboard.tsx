@@ -445,8 +445,7 @@ const Dashboard = () => {
                   dataKey="revenue" 
                   stroke="#c5a876" 
                   strokeWidth={2}
-                  dot={{ fill: '#c5a876', strokeWidth: 1, r: 4 }}
-                  activeDot={{ r: 6, stroke: '#070808', strokeWidth: 1 }}
+                  dot={{ fill: '#c5a876', strokeWidth: 1, r: 4 }}                  activeDot={{ r: 6, stroke: '#070808', strokeWidth: 1 }}
                 />
               </LineChart>
             </ResponsiveContainer>

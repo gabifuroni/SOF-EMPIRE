@@ -52,11 +52,11 @@ const PatenteCard = ({ currentRevenue }: PatenteCardProps) => {
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-4">
           <div className="text-4xl">
-            {currentPatente?.icon || '🌟'}
+            {currentPatente?.icon || '🌱'}
           </div>
           <div>
             <h3 className="brand-heading text-xl text-symbol-black">
-              {currentPatente?.nome_patente || 'Beauty Starters'}
+              {currentPatente?.nome_patente || 'Iniciante'}
             </h3>
             <p className="brand-body text-symbol-gray-600 text-sm">
               Sua patente atual
