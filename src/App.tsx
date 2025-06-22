@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { BusinessParamsProvider } from "@/contexts/BusinessParamsContext";
 import AuthWrapper from "@/components/common/AuthWrapper";
 import Login from "./pages/Login";
@@ -20,14 +21,18 @@ import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
 import PaymentSettings from "./pages/PaymentSettings";
 import NotFound from "./pages/NotFound";
+import Index from "./pages/Index";
 import AdminRoute from "./components/layout/AdminRoute";
+import AdminRedirect from "./components/layout/AdminRedirect";
 import Sidebar from "./components/layout/Sidebar";
 import Header from "./components/layout/Header";
 
 const queryClient = new QueryClient();
 
-const App = () => {
+// Componente interno que tem acesso ao QueryClient
+const AppContent = () => {
   const { user, loading, signOut } = useSupabaseAuth();
+  const { isAdmin, loading: adminLoading } = useAdminAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleToggleMobileMenu = () => {
@@ -44,7 +49,7 @@ const App = () => {
     setIsMobileMenuOpen(false);
   };
 
-  if (loading) {
+  if (loading || adminLoading) {
     return (
       <div className="min-h-screen elite-gradient flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -57,18 +62,14 @@ const App = () => {
 
   if (!user) {
     return (
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Login />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </QueryClientProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/admin/login" element={<Login />} />
+          <Route path="/" element={<Index />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
     );
   }
 
@@ -77,7 +78,7 @@ const App = () => {
     id: user.id,
     name: user.user_metadata?.nome_profissional_ou_salao || user.email?.split('@')[0] || 'Usuário',
     email: user.email || '',
-    role: 'professional' as const,
+    role: isAdmin ? 'admin' as const : 'professional' as const,
     status: 'active' as const,
     createdAt: new Date(user.created_at),
   };
@@ -87,25 +88,22 @@ const App = () => {
   };
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <BusinessParamsProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Admin Routes */}
-            <Route path="/admin" element={
-              <AuthWrapper>
-                <AdminRoute>
-                  <AdminDashboard />
-                </AdminRoute>
-              </AuthWrapper>
-            } />
-            
-            {/* Regular User Routes */}
-            <Route path="/*" element={
-              <AuthWrapper>
+    <BusinessParamsProvider>
+      <BrowserRouter>
+        <Routes>
+          {/* Admin Routes */}
+          <Route path="/admin" element={
+            <AuthWrapper>
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            </AuthWrapper>
+          } />
+          
+          {/* Regular User Routes */}
+          <Route path="/*" element={
+            <AuthWrapper>
+              <AdminRedirect>
                 <div className="min-h-screen flex w-full bg-elite-pearl-50">
                   <Sidebar 
                     userRole={appUser.role} 
@@ -135,12 +133,23 @@ const App = () => {
                     </main>
                   </div>
                 </div>
-              </AuthWrapper>
-            } />
-          </Routes>
-        </BrowserRouter>
+              </AdminRedirect>
+            </AuthWrapper>
+          } />
+        </Routes>
+      </BrowserRouter>
+    </BusinessParamsProvider>
+  );
+};
+
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <AppContent />
       </TooltipProvider>
-      </BusinessParamsProvider>
     </QueryClientProvider>
   );
 };

@@ -1,24 +1,30 @@
 
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 
 const Index = () => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useSupabaseAuth();
+  const { isAdmin, loading: adminLoading } = useAdminAuth();
 
   useEffect(() => {
-    // Redirect to login/dashboard based on authentication
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      if (user.role === 'admin') {
-        navigate('/admin');
-      } else {
-        navigate('/dashboard');
-      }
-    } else {
+    // Aguardar ambos os loadings terminarem
+    if (authLoading || adminLoading) return;
+
+    if (!user) {
       navigate('/login');
+      return;
     }
-  }, [navigate]);
+
+    // Redirecionar baseado no role real do usuário
+    if (isAdmin) {
+      navigate('/admin');
+    } else {
+      navigate('/dashboard');
+    }
+  }, [user, isAdmin, authLoading, adminLoading, navigate]);
 
   return (
     <div className="min-h-screen elite-gradient flex items-center justify-center">

@@ -1,28 +1,36 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSupabaseAuth } from '@/hooks/useSupabaseAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Shield, User } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [loginType, setLoginType] = useState<'professional' | 'admin'>('professional');
-  const { signIn } = useSupabaseAuth();
+  const { signIn, signOut } = useSupabaseAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
 
+  // Se veio de /admin/login, definir loginType como admin
+  useEffect(() => {
+    if (location.pathname === '/admin/login') {
+      setLoginType('admin');
+    }
+  }, [location.pathname]);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const { error } = await signIn(email, password);
+      const { data, error } = await signIn(email, password);
       
       if (error) {
         toast({
@@ -35,21 +43,52 @@ const Login = () => {
         return;
       }
 
-      toast({
-        title: "Login realizado com sucesso!",
-        description: loginType === 'admin' 
-          ? "Redirecionando para o painel administrativo..." 
-          : "Redirecionando para o dashboard...",
-      });
+      // Verificar o role real do usuário no banco de dados
+      if (data?.user) {
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
 
-      // Aguardar um momento para o estado de auth ser atualizado
-      setTimeout(() => {
-        if (loginType === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/dashboard');
+        const userRole = profileData?.role || 'professional';
+        
+        // Validar se o tipo de login selecionado corresponde ao role real
+        if (loginType === 'admin' && userRole !== 'admin') {
+          toast({
+            title: "Acesso Negado",
+            description: "Você não tem permissão para acessar o painel administrativo.",
+            variant: "destructive"
+          });
+          await signOut();
+          return;
         }
-      }, 500);
+
+        // Salvar informações do usuário no localStorage
+        const userData = {
+          id: data.user.id,
+          email: data.user.email,
+          role: userRole,
+          name: data.user.user_metadata?.nome_profissional_ou_salao || data.user.email?.split('@')[0] || 'Usuário'
+        };
+        localStorage.setItem('user', JSON.stringify(userData));
+
+        toast({
+          title: "Login realizado com sucesso!",
+          description: userRole === 'admin' 
+            ? "Redirecionando para o painel administrativo..." 
+            : "Redirecionando para o dashboard...",
+        });
+
+        // Redirecionar baseado no role real do usuário
+        setTimeout(() => {
+          if (userRole === 'admin') {
+            navigate('/admin');
+          } else {
+            navigate('/dashboard');
+          }
+        }, 500);
+      }
 
     } catch (error) {
       toast({

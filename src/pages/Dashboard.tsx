@@ -7,14 +7,25 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import PatenteCard from '@/components/dashboard/PatenteCard';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 import { useProfile } from '@/hooks/useProfile';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
 import { usePatentes } from '@/hooks/usePatentes';
+import { useAdminAuth } from '@/hooks/useAdminAuth';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const { isAdmin, loading: adminLoading } = useAdminAuth();
+  
+  // Redirecionar admins para o painel administrativo
+  useEffect(() => {
+    if (!adminLoading && isAdmin) {
+      navigate('/admin', { replace: true });
+    }
+  }, [isAdmin, adminLoading, navigate]);
+
   const [monthlyGoal, setMonthlyGoal] = useState(10000);
   const [goalType, setGoalType] = useState<'financial' | 'attendance'>('financial');
   const [attendanceGoal, setAttendanceGoal] = useState(50);
