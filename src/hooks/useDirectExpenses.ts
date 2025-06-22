@@ -89,6 +89,15 @@ export const useDirectExpenseCategories = () => {
 
   const deleteCategory = useMutation({
     mutationFn: async (id: string) => {
+      // Primeiro, deletar todos os valores relacionados à categoria
+      const { error: valuesError } = await supabase
+        .from('despesas_diretas_valores')
+        .delete()
+        .eq('categoria_id', id);
+
+      if (valuesError) throw valuesError;
+
+      // Depois, deletar a categoria
       const { error } = await supabase
         .from('categorias_despesas')
         .delete()
@@ -98,6 +107,7 @@ export const useDirectExpenseCategories = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['direct-expense-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['direct-expense-values'] });
     },
   });
 
@@ -134,6 +144,7 @@ export const useDirectExpenseValues = () => {
       }));
     },
   });
+
   const addExpenseValue = useMutation({
     mutationFn: async ({ 
       categoria_id, 
@@ -165,6 +176,7 @@ export const useDirectExpenseValues = () => {
       queryClient.invalidateQueries({ queryKey: ['direct-expense-values'] });
     },
   });
+
   const updateExpenseValue = useMutation({
     mutationFn: async ({ 
       id, 
@@ -187,6 +199,7 @@ export const useDirectExpenseValues = () => {
       queryClient.invalidateQueries({ queryKey: ['direct-expense-values'] });
     },
   });
+
   const deleteExpenseValue = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -208,6 +221,7 @@ export const useDirectExpenseValues = () => {
   const getTotalByMonth = (month: string) => {
     return getExpensesByMonth(month).reduce((total, expense) => total + expense.valor_mensal, 0);
   };
+
   return {
     expenses,
     isLoading,

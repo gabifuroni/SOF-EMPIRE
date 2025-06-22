@@ -62,7 +62,8 @@ const DirectExpenseInput = ({
   initialValue: number;
   onValueChange: (value: number) => void;
   hasChanges: boolean;
-}) => {  const [localValue, setLocalValue] = useState(() => 
+}) => {
+  const [localValue, setLocalValue] = useState(() => 
     initialValue === 0 ? "" : initialValue.toString()
   );
   const [isFocused, setIsFocused] = useState(false);
@@ -75,6 +76,7 @@ const DirectExpenseInput = ({
       previousInitialValue.current = initialValue;
     }
   }, [initialValue, isFocused]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setLocalValue(value);
@@ -85,6 +87,7 @@ const DirectExpenseInput = ({
       onValueChange(numericValue);
     }
   };
+
   const handleFocus = () => {
     setIsFocused(true);
   };
@@ -107,7 +110,7 @@ const DirectExpenseInput = ({
       <Input
         type="number"
         min="0"
-        step="1"
+        step="0.01"
         value={localValue}
         onChange={handleChange}
         onFocus={handleFocus}
@@ -202,7 +205,8 @@ const DirectExpensesTable = ({
               const savedValue = expenseValues.find(ev => ev.categoryId === category.id)?.value || 0;
               const currentValue = getTempExpenseValue(category.id);
               const hasChanges = currentValue !== savedValue;
-                return (
+
+              return (
                 <TableRow key={category.id} className={index % 2 === 0 ? 'bg-symbol-gray-50/30' : ''}>
                   <TableCell className="font-medium brand-body text-symbol-black">
                     {editingCategoryId === category.id ? (
@@ -226,7 +230,8 @@ const DirectExpensesTable = ({
                       initialValue={currentValue}
                       onValueChange={(value) => onUpdateExpense(category.id, value)}
                       hasChanges={hasChanges}
-                    />                  </TableCell>
+                    />
+                  </TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center gap-2">
                       {editingCategoryId === category.id ? (
@@ -250,25 +255,23 @@ const DirectExpensesTable = ({
                         </>
                       ) : (
                         <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleStartEdit(category)}
+                            className="text-blue-600 hover:text-blue-700 h-8 w-8 p-0"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
                           {category.isCustom && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleStartEdit(category)}
-                                className="text-blue-600 hover:text-blue-700 h-8 w-8 p-0"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onRemoveCategory(category.id)}
-                                className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onRemoveCategory(category.id)}
+                              className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           )}
                         </>
                       )}

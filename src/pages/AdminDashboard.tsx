@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { User as UserType } from '@/types';
@@ -24,23 +25,7 @@ const AdminDashboard = () => {
       // Buscar perfis dos usuários
       const { data: profiles, error } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          nome_profissional_ou_salao,
-          email,
-          telefone,
-          endereco,
-          cidade,
-          estado,
-          nome_salao,
-          descricao_salao,
-          foto_perfil,
-          role,
-          status,
-          faturamento_total_acumulado,
-          current_patente_id,
-          created_at
-        `);
+        .select('*');
 
       if (error) throw error;
 

@@ -86,7 +86,7 @@ export type Database = {
           mes_referencia: string
           updated_at?: string
           user_id: string
-          valor_mensal: number
+          valor_mensal?: number
         }
         Update: {
           categoria_id?: string
@@ -203,6 +203,105 @@ export type Database = {
           name?: string
           unit?: string
           unit_cost?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      metas_usuario: {
+        Row: {
+          created_at: string
+          id: string
+          meta_atendimentos_mensal: number | null
+          tipo_meta: string
+          updated_at: string
+          user_id: string
+          valor_meta_mensal: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meta_atendimentos_mensal?: number | null
+          tipo_meta: string
+          updated_at?: string
+          user_id: string
+          valor_meta_mensal?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meta_atendimentos_mensal?: number | null
+          tipo_meta?: string
+          updated_at?: string
+          user_id?: string
+          valor_meta_mensal?: number
+        }
+        Relationships: []
+      }
+      parametros_negocio: {
+        Row: {
+          created_at: string
+          depreciacao_mensal: number
+          depreciacao_total_mes_depreciado: number
+          depreciacao_valor_mobilizado: number
+          dias_trabalhados_ano: number
+          equipe_numero_profissionais: number
+          feriados: Json | null
+          id: string
+          lucro_desejado: number
+          taxa_impostos: number
+          taxa_media_ponderada: number
+          trabalha_domingo: boolean
+          trabalha_quarta: boolean
+          trabalha_quinta: boolean
+          trabalha_sabado: boolean
+          trabalha_segunda: boolean
+          trabalha_sexta: boolean
+          trabalha_terca: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          depreciacao_mensal?: number
+          depreciacao_total_mes_depreciado?: number
+          depreciacao_valor_mobilizado?: number
+          dias_trabalhados_ano?: number
+          equipe_numero_profissionais?: number
+          feriados?: Json | null
+          id?: string
+          lucro_desejado?: number
+          taxa_impostos?: number
+          taxa_media_ponderada?: number
+          trabalha_domingo?: boolean
+          trabalha_quarta?: boolean
+          trabalha_quinta?: boolean
+          trabalha_sabado?: boolean
+          trabalha_segunda?: boolean
+          trabalha_sexta?: boolean
+          trabalha_terca?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          depreciacao_mensal?: number
+          depreciacao_total_mes_depreciado?: number
+          depreciacao_valor_mobilizado?: number
+          dias_trabalhados_ano?: number
+          equipe_numero_profissionais?: number
+          feriados?: Json | null
+          id?: string
+          lucro_desejado?: number
+          taxa_impostos?: number
+          taxa_media_ponderada?: number
+          trabalha_domingo?: boolean
+          trabalha_quarta?: boolean
+          trabalha_quinta?: boolean
+          trabalha_sabado?: boolean
+          trabalha_segunda?: boolean
+          trabalha_sexta?: boolean
+          trabalha_terca?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -394,82 +493,15 @@ export type Database = {
           user_id?: string
           valor?: number
         }
-        Relationships: []
-      }
-      metas_usuario: {
-        Row: {
-          created_at: string
-          id: string
-          meta_atendimentos_mensal: number | null
-          tipo_meta: string
-          updated_at: string
-          user_id: string
-          valor_meta_mensal: number
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          meta_atendimentos_mensal?: number | null
-          tipo_meta: string
-          updated_at?: string
-          user_id: string
-          valor_meta_mensal?: number
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          meta_atendimentos_mensal?: number | null
-          tipo_meta?: string
-          updated_at?: string
-          user_id?: string
-          valor_meta_mensal?: number
-        }
-        Relationships: []
-      }
-      parametros_negocio: {
-        Row: {
-          created_at: string
-          depreciacao_mensal: number
-          depreciacao_total_mes_depreciado: number
-          depreciacao_valor_mobilizado: number
-          dias_trabalhados_ano: number
-          equipe_numero_profissionais: number
-          id: string
-          lucro_desejado: number
-          taxa_impostos: number
-          taxa_media_ponderada: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          depreciacao_mensal?: number
-          depreciacao_total_mes_depreciado?: number
-          depreciacao_valor_mobilizado?: number
-          dias_trabalhados_ano?: number
-          equipe_numero_profissionais?: number
-          id?: string
-          lucro_desejado?: number
-          taxa_impostos?: number
-          taxa_media_ponderada?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          depreciacao_mensal?: number
-          depreciacao_total_mes_depreciado?: number
-          depreciacao_valor_mobilizado?: number
-          dias_trabalhados_ano?: number
-          equipe_numero_profissionais?: number
-          id?: string
-          lucro_desejado?: number
-          taxa_impostos?: number
-          taxa_media_ponderada?: number
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "transacoes_financeiras_servico_id_fkey"
+            columns: ["servico_id"]
+            isOneToOne: false
+            referencedRelation: "servicos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -479,6 +511,10 @@ export type Database = {
       is_admin: {
         Args: { user_id: string }
         Returns: boolean
+      }
+      recalculate_user_revenue_and_patentes: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       update_user_patente: {
         Args: { user_uuid: string }
@@ -506,7 +542,7 @@ export type Tables<
   }
     ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never,
+    : never = never,
 > = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
   ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {

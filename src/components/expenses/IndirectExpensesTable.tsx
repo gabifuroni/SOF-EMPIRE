@@ -112,7 +112,7 @@ const ExpenseInput = ({
       <Input
         type="number"
         min="0"
-        step="1"
+        step="0.01"
         value={localValue}
         onChange={handleChange}
         onFocus={handleFocus}
@@ -177,6 +177,7 @@ const IndirectExpensesTable = ({
     setEditingCategoryId(null);
     setEditingCategoryName("");
   };
+
   return (
     <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
       <div className="mb-6 flex justify-between items-center">
@@ -197,7 +198,8 @@ const IndirectExpensesTable = ({
         )}
       </div>
 
-      <div className="overflow-x-auto">        <Table>
+      <div className="overflow-x-auto">
+        <Table>
           <TableHeader>
             <TableRow>
               <TableHead className="w-1/2 brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">
@@ -230,7 +232,8 @@ const IndirectExpensesTable = ({
               return (
                 <TableRow
                   key={category.id}
-                  className={index % 2 === 0 ? "bg-symbol-gray-50/30" : ""}                >
+                  className={index % 2 === 0 ? "bg-symbol-gray-50/30" : ""}
+                >
                   <TableCell className="font-medium brand-body text-symbol-black">
                     {editingCategoryId === category.id ? (
                       <Input
@@ -259,7 +262,8 @@ const IndirectExpensesTable = ({
                             )
                           }
                           className="data-[state=checked]:bg-symbol-gold data-[state=checked]:border-symbol-gold h-6 w-6 border-2 border-symbol-gray-400 rounded-md shadow-sm hover:shadow-md transition-all duration-300"
-                        />                        <span className="text-sm font-semibold text-symbol-gray-800 min-w-[60px]">
+                        />
+                        <span className="text-sm font-semibold text-symbol-gray-800 min-w-[60px]">
                           FIXO
                         </span>
                       </div>
@@ -285,7 +289,8 @@ const IndirectExpensesTable = ({
                     R${" "}
                     {yearlyTotal.toLocaleString("pt-BR", {
                       minimumFractionDigits: 2,
-                    })}                  </TableCell>
+                    })}
+                  </TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center gap-2">
                       {editingCategoryId === category.id ? (
@@ -309,25 +314,23 @@ const IndirectExpensesTable = ({
                         </>
                       ) : (
                         <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleStartEdit(category)}
+                            className="text-blue-600 hover:text-blue-700 h-8 w-8 p-0"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
                           {category.isCustom && (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleStartEdit(category)}
-                                className="text-blue-600 hover:text-blue-700 h-8 w-8 p-0"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => onRemoveCategory(category.id)}
-                                className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => onRemoveCategory(category.id)}
+                              className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           )}
                         </>
                       )}
@@ -336,6 +339,7 @@ const IndirectExpensesTable = ({
                 </TableRow>
               );
             })}
+
             {/* Add Category Row */}
             {showAddCategory ? (
               <TableRow className="bg-symbol-beige/20 border-2 border-dashed border-symbol-gold/40">
@@ -388,6 +392,7 @@ const IndirectExpensesTable = ({
                 </TableCell>
               </TableRow>
             )}
+
             {/* Total Monthly Row */}
             <TableRow className="bg-symbol-gold/10 border-t-2 border-symbol-gold/30 font-semibold">
               <TableCell className="font-bold brand-subheading text-symbol-black">
@@ -403,6 +408,7 @@ const IndirectExpensesTable = ({
               <TableCell></TableCell>
               <TableCell></TableCell>
             </TableRow>
+
             {/* Total Annual Row */}
             <TableRow className="bg-symbol-beige/20 font-semibold">
               <TableCell className="font-bold brand-subheading text-symbol-black">

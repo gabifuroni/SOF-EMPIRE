@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -78,6 +79,15 @@ export const useIndirectExpenseCategories = () => {
 
   const deleteCategory = useMutation({
     mutationFn: async (id: string) => {
+      // Primeiro, deletar todos os valores relacionados à categoria
+      const { error: valuesError } = await supabase
+        .from('despesas_indiretas_valores')
+        .delete()
+        .eq('categoria_id', id);
+
+      if (valuesError) throw valuesError;
+
+      // Depois, deletar a categoria
       const { error } = await supabase
         .from('despesas_indiretas_categorias')
         .delete()
@@ -87,6 +97,7 @@ export const useIndirectExpenseCategories = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['indirect-expense-categories'] });
+      queryClient.invalidateQueries({ queryKey: ['indirect-expense-values'] });
     },
   });
 
@@ -104,24 +115,22 @@ export const useIndirectExpenseValues = () => {
 
   const { data: expenses = [], isLoading } = useQuery({
     queryKey: ['indirect-expense-values'],
-    queryFn: async (): Promise<IndirectExpenseWithCategory[]> => {
+    queryFn: async (): Promise<IndirectExpenseValue[]> => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
         .from('despesas_indiretas_valores')
-        .select(`
-          *,
-          despesas_indiretas_categorias!inner(nome_categoria_despesa)
-        `)
+        .select('*')
         .eq('user_id', user.id)
         .order('mes_referencia', { ascending: true });
       
-      if (error) throw error;
-        return data.map(item => ({
-        ...item,
-        category_name: (item as unknown as { despesas_indiretas_categorias: { nome_categoria_despesa: string } }).despesas_indiretas_categorias.nome_categoria_despesa,
-      }));
+      if (error) {
+        console.error('Error fetching indirect expenses:', error);
+        throw error;
+      }
+      
+      return data || [];
     },
   });
 
@@ -138,6 +147,8 @@ export const useIndirectExpenseValues = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
+      console.log('Adding indirect expense value:', { categoria_id, mes_referencia, valor_mensal, user_id: user.id });
+
       const { data, error } = await supabase
         .from('despesas_indiretas_valores')
         .insert({
@@ -149,7 +160,10 @@ export const useIndirectExpenseValues = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding indirect expense value:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -165,6 +179,8 @@ export const useIndirectExpenseValues = () => {
       id: string;
       valor_mensal: number;
     }) => {
+      console.log('Updating indirect expense value:', { id, valor_mensal });
+
       const { data, error } = await supabase
         .from('despesas_indiretas_valores')
         .update({ valor_mensal })
@@ -172,7 +188,10 @@ export const useIndirectExpenseValues = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating indirect expense value:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
