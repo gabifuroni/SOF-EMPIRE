@@ -85,7 +85,7 @@ const Login = () => {
               <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="Geometric Symbol" className="w-20 transition-all duration-300" />
             </div>
             <h1 className="brand-heading text-5xl text-symbol-black mb-3 font-bold tracking-wider">
-              SOF IMPIRE
+              SOF EMPIRE
             </h1>
             <p className="brand-subheading text-symbol-gray-600 text-xs uppercase tracking-wider">
               Sistema de Organização Financeira
