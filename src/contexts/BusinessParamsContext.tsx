@@ -112,12 +112,13 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
       return Array.from(uniqueMethods.values());
     }
     return [];
-  }, [dbPaymentMethods, paymentMethodsLoading]);
-  // Memoizar configurações do negócio
+  }, [dbPaymentMethods, paymentMethodsLoading]);  // Memoizar configurações do negócio
   const memoizedBusinessSettings = useMemo(() => {
     if (!settingsLoading && businessSettings) {
+      console.log('BusinessParamsContext - memoizedBusinessSettings:', businessSettings);
       return {
         lucroDesejado: businessSettings.lucroDesejado,
+        despesasIndiretasDepreciacao: businessSettings.despesasIndiretasDepreciacao,
         impostosRate: businessSettings.taxaImpostos,
         weightedAverageRate: businessSettings.taxaMediaPonderada,
         workingDaysPerYear: businessSettings.diasTrabalhadosAno,
@@ -159,10 +160,10 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
       }));
     }
   }, [memoizedPaymentMethods]);
-
   // Atualizar params quando business settings mudarem
   useEffect(() => {
     if (memoizedBusinessSettings) {
+      console.log('BusinessParamsContext - Updating params with business settings:', memoizedBusinessSettings);
       setParams(prev => ({
         ...prev,
         ...memoizedBusinessSettings

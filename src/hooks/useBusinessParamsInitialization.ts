@@ -43,10 +43,10 @@ export const useBusinessParamsInitialization = (
   setNumProfessionals: (value: number) => void,
   setWorkingDays: React.Dispatch<React.SetStateAction<WorkingDays>>,
   setHolidays: React.Dispatch<React.SetStateAction<Holiday[]>>
-) => {
-  useEffect(() => {
+) => {  useEffect(() => {
     if (params) {
       console.log('Initializing business parameters from context:', params);
+      console.log('despesasIndiretasDepreciacao value:', params.despesasIndiretasDepreciacao);
       setLucroDesejado(params.lucroDesejado || 21.0);
       setDespesasIndiretasDepreciacao(params.despesasIndiretasDepreciacao || 35.0);
       setImpostosRate(params.impostosRate || 8.0);

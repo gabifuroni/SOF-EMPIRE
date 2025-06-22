@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 interface BusinessSettings {
   id?: string;
   lucroDesejado: number;
+  despesasIndiretasDepreciacao: number;
   taxaImpostos: number;
   taxaMediaPonderada: number;
   depreciacaoValorMobilizado: number;
@@ -60,10 +61,10 @@ export const useBusinessSettings = () => {
         ];
       }
 
-      const dbData = data as unknown as DatabaseBusinessSettings;
-      return {
+      const dbData = data as unknown as DatabaseBusinessSettings;      return {
         id: data.id,
         lucroDesejado: Number(data.lucro_desejado),
+        despesasIndiretasDepreciacao: Number(dbData.despesas_indiretas_depreciacao),
         taxaImpostos: Number(data.taxa_impostos),
         taxaMediaPonderada: Number(data.taxa_media_ponderada),
         depreciacaoValorMobilizado: Number(data.depreciacao_valor_mobilizado),
@@ -88,17 +89,17 @@ export const useBusinessSettings = () => {
     mutationFn: async (newSettings: Omit<BusinessSettings, 'id'>) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');      const { data, error } = await supabase
-        .from('parametros_negocio')
-        .upsert({
+        .from('parametros_negocio')        .upsert({
           user_id: user.id,
           lucro_desejado: newSettings.lucroDesejado,
+          despesas_indiretas_depreciacao: newSettings.despesasIndiretasDepreciacao,
           taxa_impostos: newSettings.taxaImpostos,
           taxa_media_ponderada: newSettings.taxaMediaPonderada,
           depreciacao_valor_mobilizado: newSettings.depreciacaoValorMobilizado,
           depreciacao_total_mes_depreciado: newSettings.depreciacaoTotalMesDepreciado,
           depreciacao_mensal: newSettings.depreciacaoMensal,
           dias_trabalhados_ano: newSettings.diasTrabalhadosAno,
-          equipe_numero_profissionais: newSettings.equipeNumeroProfissionais,          // Campos de dias da semana
+          equipe_numero_profissionais: newSettings.equipeNumeroProfissionais,// Campos de dias da semana
           trabalha_segunda: newSettings.trabalhaSegunda ?? true,
           trabalha_terca: newSettings.trabalhaTerca ?? true,
           trabalha_quarta: newSettings.trabalhaQuarta ?? true,

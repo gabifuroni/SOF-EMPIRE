@@ -71,7 +71,6 @@ const PaymentSettings = () => {
     logic.newHolidayName,
     logic.setNewHolidayName
   );
-
   const handleSaveAll = async () => {
     await saveFunctions.handleSaveMargins(
       logic.lucroDesejado,
@@ -125,9 +124,9 @@ const PaymentSettings = () => {
         totalDepreciado={logic.totalDepreciado}
         setTotalDepreciado={logic.setTotalDepreciado}
         depreciacaoMensal={logic.depreciacaoMensal}
-        isSaving={logic.isSaving}
-        onSave={() => saveFunctions.handleSaveDepreciation(
+        isSaving={logic.isSaving}        onSave={() => saveFunctions.handleSaveDepreciation(
           logic.lucroDesejado,
+          logic.despesasIndiretasDepreciacao,
           logic.impostosRate,
           logic.valorMobilizado,
           logic.totalDepreciado,
@@ -148,9 +147,9 @@ const PaymentSettings = () => {
         workingDaysPerYear={logic.workingDaysPerYear}
         isSaving={logic.isSaving}
         onAddHoliday={holidayUtils.addHoliday}
-        onRemoveHoliday={holidayUtils.removeHoliday}
-        onSave={() => saveFunctions.handleSaveWorkingDays(
+        onRemoveHoliday={holidayUtils.removeHoliday}        onSave={() => saveFunctions.handleSaveWorkingDays(
           logic.lucroDesejado,
+          logic.despesasIndiretasDepreciacao,
           logic.impostosRate,
           logic.valorMobilizado,
           logic.totalDepreciado,
@@ -164,9 +163,9 @@ const PaymentSettings = () => {
       <TeamSection
         numProfessionals={logic.numProfessionals}
         setNumProfessionals={logic.setNumProfessionals}
-        isSaving={logic.isSaving}
-        onSave={() => saveFunctions.handleSaveTeam(
+        isSaving={logic.isSaving}        onSave={() => saveFunctions.handleSaveTeam(
           logic.lucroDesejado,
+          logic.despesasIndiretasDepreciacao,
           logic.impostosRate,
           logic.valorMobilizado,
           logic.totalDepreciado,

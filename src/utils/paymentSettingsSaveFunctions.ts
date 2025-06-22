@@ -45,6 +45,7 @@ interface Toast {
 
 interface SaveSettingsParams {
   lucroDesejado: number;
+  despesasIndiretasDepreciacao: number;
   taxaImpostos: number;
   taxaMediaPonderada: number;
   depreciacaoValorMobilizado: number;
@@ -150,8 +151,7 @@ export const createSaveFunctions = ({
       return;
     }
 
-    try {
-      console.log('Saving margins with values:', {
+    try {      console.log('Saving margins with values:', {
         lucroDesejado,
         despesasIndiretasDepreciacao,
         despesasDiretas,
@@ -160,6 +160,7 @@ export const createSaveFunctions = ({
 
       await saveSettings.mutateAsync({
         lucroDesejado,
+        despesasIndiretasDepreciacao,
         taxaImpostos: impostosRate,
         taxaMediaPonderada: calculateWeightedAverageRate(),
         depreciacaoValorMobilizado: valorMobilizado,
@@ -236,9 +237,9 @@ export const createSaveFunctions = ({
       setIsSaving(false);
     }
   };
-
   const handleSaveDepreciation = async (
     lucroDesejado: number,
+    despesasIndiretasDepreciacao: number,
     impostosRate: number,
     valorMobilizado: number,
     totalDepreciado: number,
@@ -256,6 +257,7 @@ export const createSaveFunctions = ({
 
       await saveSettings.mutateAsync({
         lucroDesejado,
+        despesasIndiretasDepreciacao,
         taxaImpostos: impostosRate,
         taxaMediaPonderada: calculateWeightedAverageRate(),
         depreciacaoValorMobilizado: valorMobilizado,
@@ -286,9 +288,9 @@ export const createSaveFunctions = ({
     } finally {
       setIsSaving(false);
     }
-  };
-  const handleSaveWorkingDays = async (
+  };  const handleSaveWorkingDays = async (
     lucroDesejado: number,
+    despesasIndiretasDepreciacao: number,
     impostosRate: number,
     valorMobilizado: number,
     totalDepreciado: number,
@@ -308,6 +310,7 @@ export const createSaveFunctions = ({
 
       await saveSettings.mutateAsync({
         lucroDesejado,
+        despesasIndiretasDepreciacao,
         taxaImpostos: impostosRate,
         taxaMediaPonderada: calculateWeightedAverageRate(),
         depreciacaoValorMobilizado: valorMobilizado,
@@ -410,9 +413,9 @@ export const createSaveFunctions = ({
     } finally {
       setIsSaving(false);
     }
-  };
-  const handleSaveTeam = async (
+  };  const handleSaveTeam = async (
     lucroDesejado: number,
+    despesasIndiretasDepreciacao: number,
     impostosRate: number,
     valorMobilizado: number,
     totalDepreciado: number,
@@ -430,6 +433,7 @@ export const createSaveFunctions = ({
 
       await saveSettings.mutateAsync({
         lucroDesejado,
+        despesasIndiretasDepreciacao,
         taxaImpostos: impostosRate,
         taxaMediaPonderada: calculateWeightedAverageRate(),
         depreciacaoValorMobilizado: valorMobilizado,

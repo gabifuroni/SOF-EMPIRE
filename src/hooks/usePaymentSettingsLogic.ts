@@ -62,20 +62,16 @@ export const usePaymentSettingsLogic = () => {
   });
 
   // Holidays state
-  const [holidays, setHolidays] = useState<Holiday[]>([
-    { id: '1', date: '2024-01-01', name: 'Confraternização Universal' },
-    { id: '2', date: '2024-04-21', name: 'Tiradentes' },
-    { id: '3', date: '2024-09-07', name: 'Independência do Brasil' }
-  ]);
+  const [holidays, setHolidays] = useState<Holiday[]>([]);
 
   const [newHolidayDate, setNewHolidayDate] = useState('');
   const [newHolidayName, setNewHolidayName] = useState('');
   const [numProfessionals, setNumProfessionals] = useState(2);
 
   // Margins state
-  const [lucroDesejado, setLucroDesejado] = useState(21.0);
-  const [despesasIndiretasDepreciacao, setDespesasIndiretasDepreciacao] = useState(35.0);
-  const [impostosRate, setImpostosRate] = useState(8.0);
+  const [lucroDesejado, setLucroDesejado] = useState(0);
+  const [despesasIndiretasDepreciacao, setDespesasIndiretasDepreciacao] = useState(0);
+  const [impostosRate, setImpostosRate] = useState(0);
   const despesasDiretas = 100 - lucroDesejado - despesasIndiretasDepreciacao;
 
   // Utility functions
