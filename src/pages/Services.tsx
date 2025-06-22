@@ -6,11 +6,13 @@ import AddServiceModal from '@/components/services/AddServiceModal';
 import ServiceAnalysisModal from '@/components/services/ServiceAnalysisModal';
 import { useServices } from '@/hooks/useServices';
 import { useMaterials } from '@/hooks/useMaterials';
+import { useBusinessParams } from '@/hooks/useBusinessParams';
 import type { Service } from '@/types';
 
 const Services = () => {
   const { services, isLoading: servicesLoading, addService, updateService, deleteService } = useServices();
   const { materials, isLoading: materialsLoading } = useMaterials();
+  const { params } = useBusinessParams();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
@@ -197,6 +199,7 @@ const Services = () => {
       <ServiceAnalysisModal
         service={analyzingService}
         materials={materials}
+        businessParams={params}
         show={isAnalysisModalOpen}
         onClose={() => {
           setIsAnalysisModalOpen(false);

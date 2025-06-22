@@ -49,24 +49,39 @@ const AddServiceModal = ({ show, service, materials, onClose, onSave }: AddServi
     const cardTaxCost = (formData.salePrice * params.weightedAverageRate) / 100;
     const serviceTaxCost = (formData.salePrice * params.impostosRate) / 100;
     const commissionCost = (formData.salePrice * formData.commissionRate) / 100;
+    
+    const totalDirectCosts = materialTotal + cardTaxCost + serviceTaxCost + commissionCost;
+    const materialCostPercentage = formData.salePrice > 0 ? (materialTotal / formData.salePrice) * 100 : 0;
+    const totalDirectCostsPercentage = formData.salePrice > 0 ? (totalDirectCosts / formData.salePrice) * 100 : 0;
+    
+    // Margem Operacional = Preço - Custos Diretos
+    const operationalMargin = formData.salePrice - totalDirectCosts;
+    const operationalMarginPercentage = formData.salePrice > 0 ? (operationalMargin / formData.salePrice) * 100 : 0;
+    
+    // Custo Operacional (despesas indiretas)
     const operationalCost = (formData.salePrice * params.despesasIndiretasDepreciacao) / 100;
     
-    const totalCost = materialTotal + cardTaxCost + serviceTaxCost + commissionCost;
-    const grossProfit = formData.salePrice - totalCost;
-    const operationalProfit = grossProfit - operationalCost;
-    const profitMargin = formData.salePrice > 0 ? (grossProfit / formData.salePrice) * 100 : 0;
-    const operationalMargin = formData.salePrice > 0 ? (operationalProfit / formData.salePrice) * 100 : 0;
+    // Lucro Parcial = Margem Operacional - Custo Operacional
+    const partialProfit = operationalMargin - operationalCost;
+    const partialProfitPercentage = formData.salePrice > 0 ? (partialProfit / formData.salePrice) * 100 : 0;
     
     return { 
-      totalCost, 
-      grossProfit, 
-      profitMargin, 
+      totalCost: totalDirectCosts,
+      grossProfit: operationalMargin,
+      profitMargin: operationalMarginPercentage,
       operationalCost, 
-      operationalProfit, 
-      operationalMargin,
+      operationalProfit: partialProfit,
       cardTaxCost,
       serviceTaxCost,
-      commissionCost
+      commissionCost,
+      materialTotal,
+      materialCostPercentage,
+      totalDirectCosts,
+      totalDirectCostsPercentage,
+      operationalMargin,
+      operationalMarginPercentage,
+      partialProfit,
+      partialProfitPercentage
     };
   };
 
@@ -94,8 +109,17 @@ const AddServiceModal = ({ show, service, materials, onClose, onSave }: AddServi
     profitMargin, 
     operationalCost, 
     operationalProfit, 
+    cardTaxCost,
+    serviceTaxCost,
+    commissionCost,
+    materialTotal,
+    materialCostPercentage,
+    totalDirectCosts,
+    totalDirectCostsPercentage,
     operationalMargin,
-    commissionCost
+    operationalMarginPercentage,
+    partialProfit,
+    partialProfitPercentage
   } = calculateCosts();
 
   return (
@@ -136,13 +160,23 @@ const AddServiceModal = ({ show, service, materials, onClose, onSave }: AddServi
           />
 
           <FinancialSummary
-            totalCost={totalCost}
-            grossProfit={grossProfit}
-            profitMargin={profitMargin}
-            operationalCost={operationalCost}
-            operationalProfit={operationalProfit}
-            operationalMargin={operationalMargin}
+            salePrice={formData.salePrice}
+            commissionRate={formData.commissionRate}
             commissionCost={commissionCost}
+            cardTaxRate={params.weightedAverageRate}
+            cardTaxCost={cardTaxCost}
+            serviceTaxRate={params.impostosRate}
+            serviceTaxCost={serviceTaxCost}
+            materialCost={materialTotal}
+            materialCostPercentage={materialCostPercentage}
+            totalDirectCosts={totalDirectCosts}
+            totalDirectCostsPercentage={totalDirectCostsPercentage}
+            operationalMargin={operationalMargin}
+            operationalMarginPercentage={operationalMarginPercentage}
+            operationalCost={operationalCost}
+            operationalCostPercentage={params.despesasIndiretasDepreciacao}
+            partialProfit={partialProfit}
+            partialProfitPercentage={partialProfitPercentage}
           />
 
           <div className="flex flex-col sm:flex-row justify-end gap-3">
