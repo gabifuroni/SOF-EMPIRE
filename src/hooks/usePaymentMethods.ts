@@ -78,16 +78,15 @@ export const usePaymentMethods = () => {
       queryClient.invalidateQueries({ queryKey: ['paymentMethods'] });
     },
   });
-
   // Função para calcular a taxa média ponderada
   const calculateWeightedAverageRate = (): number => {
     const activeMethods = paymentMethods.filter(method => method.is_ativo);
-    const totalDistribution = activeMethods.reduce((sum, method) => sum + (method.prazo_recebimento_dias || 0), 0);
+    const totalDistribution = activeMethods.reduce((sum, method) => sum + (method.percentual_distribuicao || 0), 0);
     
     if (totalDistribution === 0) return 0;
     
     const weightedSum = activeMethods.reduce((sum, method) => 
-      sum + (method.taxa_percentual * (method.prazo_recebimento_dias || 0)), 0
+      sum + (method.taxa_percentual * (method.percentual_distribuicao || 0)), 0
     );
     
     return weightedSum / totalDistribution;

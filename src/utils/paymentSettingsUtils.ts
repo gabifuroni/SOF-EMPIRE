@@ -17,6 +17,7 @@ interface DbPaymentMethod {
   id: string;
   nome_metodo: string;
   is_ativo: boolean;
+  percentual_distribuicao: number;
   prazo_recebimento_dias: number;
   taxa_percentual: number;
 }
@@ -35,6 +36,7 @@ interface UpdateDbPaymentMethodParams {
   id: string;
   nome_metodo: string;
   is_ativo: boolean;
+  percentual_distribuicao: number;
   prazo_recebimento_dias: number;
   taxa_percentual: number;
 }
@@ -95,13 +97,13 @@ export const createPaymentMethodUtils = (
           m.id === method.id || 
           m.nome_metodo.toLowerCase().includes(method.name.toLowerCase().split(' ')[0])
         );
-          
-        if (dbMethod && updateDbPaymentMethod) {
+            if (dbMethod && updateDbPaymentMethod) {
           await updateDbPaymentMethod.mutateAsync({
             id: dbMethod.id,
             nome_metodo: method.name,
             is_ativo: method.isActive,
-            prazo_recebimento_dias: Math.round(method.distributionPercentage),
+            percentual_distribuicao: method.distributionPercentage,
+            prazo_recebimento_dias: dbMethod.prazo_recebimento_dias, // Manter o valor original de dias
             taxa_percentual: method.taxRate,
           });
         }

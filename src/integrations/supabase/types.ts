@@ -36,12 +36,12 @@ export type Database = {
         }
         Relationships: []
       }
-      config_formas_pagamento: {
-        Row: {
+      config_formas_pagamento: {        Row: {
           created_at: string
           id: string
           is_ativo: boolean
           nome_metodo: string
+          percentual_distribuicao: number
           prazo_recebimento_dias: number
           taxa_percentual: number
           updated_at: string
@@ -52,6 +52,7 @@ export type Database = {
           id?: string
           is_ativo?: boolean
           nome_metodo: string
+          percentual_distribuicao?: number
           prazo_recebimento_dias?: number
           taxa_percentual?: number
           updated_at?: string
@@ -62,6 +63,7 @@ export type Database = {
           id?: string
           is_ativo?: boolean
           nome_metodo?: string
+          percentual_distribuicao?: number
           prazo_recebimento_dias?: number
           taxa_percentual?: number
           updated_at?: string
@@ -97,16 +99,16 @@ export type Database = {
           user_id?: string
           valor_mensal?: number
         }
-        Relationships: [
-          {
-            foreignKeyName: "despesas_diretas_valores_categoria_id_fkey"
+        Relationships: [          {
+            foreignKeyName: "despesas_diretas_valores_categoria_id_fkey",
             columns: ["categoria_id"]
             isOneToOne: false
             referencedRelation: "categorias_despesas"
             referencedColumns: ["id"]
           },
         ]
-      }      despesas_indiretas_categorias: {
+      }
+      despesas_indiretas_categorias: {
         Row: {
           created_at: string
           id: string

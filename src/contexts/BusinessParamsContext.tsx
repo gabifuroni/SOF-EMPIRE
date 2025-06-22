@@ -88,15 +88,14 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
       { id: '2', date: '2024-04-21', name: 'Tiradentes' },
       { id: '3', date: '2024-09-07', name: 'Independência do Brasil' }
     ],
-  });
-  // Memoizar paymentMethods para evitar mudanças desnecessárias
+  });  // Memoizar paymentMethods para evitar mudanças desnecessárias
   const memoizedPaymentMethods = useMemo(() => {
     if (!paymentMethodsLoading && dbPaymentMethods.length > 0) {
       const mappedMethods = dbPaymentMethods.map(pm => ({
         id: pm.id,
         name: pm.nome_metodo,
         isActive: pm.is_ativo,
-        distributionPercentage: pm.prazo_recebimento_dias,
+        distributionPercentage: pm.percentual_distribuicao,
         taxRate: pm.taxa_percentual
       }));
       
@@ -187,12 +186,12 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
     // Fallback para cálculo local se não há dados do banco
     // Usa os dados mais recentes diretamente do hook
     const activeMethods = dbPaymentMethods.filter(method => method.is_ativo);
-    const totalDistribution = activeMethods.reduce((sum, method) => sum + method.prazo_recebimento_dias, 0);
+    const totalDistribution = activeMethods.reduce((sum, method) => sum + method.percentual_distribuicao, 0);
     
     if (totalDistribution === 0) return 0;
     
     const weightedSum = activeMethods.reduce((sum, method) => 
-      sum + (method.taxa_percentual * method.prazo_recebimento_dias), 0
+      sum + (method.taxa_percentual * method.percentual_distribuicao), 0
     );
     
     return weightedSum / totalDistribution;

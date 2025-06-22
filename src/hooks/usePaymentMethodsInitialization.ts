@@ -14,6 +14,7 @@ interface DbPaymentMethod {
   id: string;
   nome_metodo: string;
   is_ativo: boolean;
+  percentual_distribuicao: number;
   prazo_recebimento_dias: number;
   taxa_percentual: number;
 }
@@ -35,8 +36,7 @@ export const usePaymentMethodsInitialization = (
     });
 
     if (!isInitialized) {
-      if (dbPaymentMethods && dbPaymentMethods.length > 0) {
-        console.log('Initializing from database:', dbPaymentMethods);
+      if (dbPaymentMethods && dbPaymentMethods.length > 0) {        console.log('Initializing from database:', dbPaymentMethods);
         const mappedMethods = dbPaymentMethods.map(pm => ({
           id: pm.id,
           name: pm.nome_metodo,
@@ -44,7 +44,7 @@ export const usePaymentMethodsInitialization = (
                pm.nome_metodo.toLowerCase().includes('débito') || pm.nome_metodo.toLowerCase().includes('debit') ? CreditCard :
                pm.nome_metodo.toLowerCase().includes('pix') ? Smartphone : Banknote,
           isActive: pm.is_ativo,
-          distributionPercentage: Math.max(0, Math.min(100, pm.prazo_recebimento_dias || 0)),
+          distributionPercentage: Math.max(0, Math.min(100, pm.percentual_distribuicao || 0)),
           taxRate: pm.taxa_percentual || 0
         }));
 
