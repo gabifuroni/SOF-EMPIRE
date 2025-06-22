@@ -204,11 +204,11 @@ const AdminDashboard = () => {
         {/* Navegação por Abas */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
-            <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
+            <TabsTrigger value="dashboard" className="flex items-center text-black gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <TrendingUp className="h-4 w-4" />
               Dashboard
             </TabsTrigger>
-            <TabsTrigger value="profile" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
+            <TabsTrigger value="profile" className="flex items-center text-black gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
               <Settings className="h-4 w-4" />
               Meu Perfil
             </TabsTrigger>
