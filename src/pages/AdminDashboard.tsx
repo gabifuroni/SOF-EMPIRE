@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { User as UserType } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Plus, Users, TrendingUp, Building, MapPin, Calendar, Eye, Edit, MoreVertical } from 'lucide-react';
+import { LogOut, Plus, Users, TrendingUp, Building, MapPin, Calendar, Eye, Edit, MoreVertical, Settings, User } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +17,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import AddUserModal from '@/components/admin/AddUserModal';
 import EditUserModal from '@/components/admin/EditUserModal';
+import AdminProfile from '@/components/admin/AdminProfile';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState<UserType[]>([]);
@@ -23,6 +25,7 @@ const AdminDashboard = () => {
   const [showEditUser, setShowEditUser] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('dashboard');
   const { toast } = useToast();
   const loadUsers = useCallback(async () => {
     try {
@@ -171,31 +174,22 @@ const AdminDashboard = () => {
         variant: "destructive",
       });
     }
-  };
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-symbol-gray-50 to-symbol-gray-100 p-6">
+  };  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">
       <div className="max-w-7xl mx-auto space-y-8">
         
         {/* Header */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div>
-            <h1 className="font-playfair text-4xl font-bold text-symbol-black mb-2">
+            <h1 className="font-playfair text-4xl font-bold text-gray-900 mb-2">
               Painel Administrativo
             </h1>
-            <p className="text-symbol-gray-600 text-lg">
+            <p className="text-gray-600 text-lg">
               Gerencie usuários e monitore o sistema SOF Empire
             </p>
           </div>
           
           <div className="flex items-center gap-3">
-            <Button
-              onClick={() => setShowAddUser(true)}
-              className="bg-symbol-black hover:bg-symbol-gray-800 text-white shadow-lg"
-            >
-              <Plus size={18} className="mr-2" />
-              Novo Usuário
-            </Button>
-            
             <Button
               onClick={handleLogout}
               variant="outline"
@@ -207,7 +201,31 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Métricas Principais */}
+        {/* Navegação por Abas */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 bg-white border border-gray-200">
+            <TabsTrigger value="dashboard" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
+              <TrendingUp className="h-4 w-4" />
+              Dashboard
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="flex items-center gap-2 data-[state=active]:bg-gray-900 data-[state=active]:text-white">
+              <Settings className="h-4 w-4" />
+              Meu Perfil
+            </TabsTrigger>
+          </TabsList>          {/* Conteúdo da Aba Dashboard */}
+          <TabsContent value="dashboard" className="space-y-6">
+            {/* Botão Novo Usuário */}
+            <div className="flex justify-end">
+              <Button
+                onClick={() => setShowAddUser(true)}
+                className="bg-gray-900 hover:bg-gray-800 text-white shadow-lg"
+              >
+                <Plus size={18} className="mr-2" />
+                Novo Usuário
+              </Button>
+            </div>
+
+            {/* Métricas Principais */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="bg-white border-symbol-gray-200 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -388,10 +406,16 @@ const AdminDashboard = () => {
                     </div>
                   </div>
                 ))}
-              </div>
-            )}
+              </div>            )}
           </CardContent>
         </Card>
+        </TabsContent>
+
+        {/* Conteúdo da Aba Perfil */}
+        <TabsContent value="profile">
+          <AdminProfile />
+        </TabsContent>
+        </Tabs>
 
         {/* Modais */}
         <AddUserModal
