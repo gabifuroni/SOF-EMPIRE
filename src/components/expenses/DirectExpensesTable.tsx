@@ -231,16 +231,16 @@ const DirectExpensesTable = ({
                       onValueChange={(value) => onUpdateExpense(category.id, value)}
                       hasChanges={hasChanges}
                     />
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex justify-center gap-2">
+                  </TableCell>                  <TableCell className="text-center">
+                    <div className="flex justify-center gap-1">
                       {editingCategoryId === category.id ? (
                         <>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={handleSaveEdit}
-                            className="text-green-600 hover:text-green-700 h-8 w-8 p-0"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50 h-8 w-8 p-0 transition-all duration-200"
+                            title="Salvar alterações"
                           >
                             <Check className="w-4 h-4" />
                           </Button>
@@ -248,7 +248,8 @@ const DirectExpensesTable = ({
                             variant="ghost"
                             size="sm"
                             onClick={handleCancelEdit}
-                            className="text-gray-600 hover:text-gray-700 h-8 w-8 p-0"
+                            className="text-gray-600 hover:text-gray-700 hover:bg-gray-50 h-8 w-8 p-0 transition-all duration-200"
+                            title="Cancelar edição"
                           >
                             <X className="w-4 h-4" />
                           </Button>
@@ -259,20 +260,29 @@ const DirectExpensesTable = ({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleStartEdit(category)}
-                            className="text-blue-600 hover:text-blue-700 h-8 w-8 p-0"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 w-8 p-0 transition-all duration-200"
+                            title="Editar categoria"
                           >
                             <Edit2 className="w-4 h-4" />
+                          </Button>                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              if (category.isCustom) {
+                                if (window.confirm(`Tem certeza que deseja remover a categoria "${category.name}"?`)) {
+                                  onRemoveCategory(category.id);
+                                }
+                              } else {
+                                if (window.confirm(`ATENÇÃO: "${category.name}" é uma categoria padrão do sistema. Tem certeza que deseja removê-la? Esta ação não pode ser desfeita.`)) {
+                                  onRemoveCategory(category.id);
+                                }
+                              }
+                            }}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0 transition-all duration-200 shadow-sm hover:shadow-md"
+                            title={category.isCustom ? "Remover categoria personalizada" : "Remover categoria padrão (cuidado!)"}
+                          >
+                            <Trash2 className="w-4 h-4" />
                           </Button>
-                          {category.isCustom && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => onRemoveCategory(category.id)}
-                              className="text-red-600 hover:text-red-700 h-8 w-8 p-0"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
                         </>
                       )}
                     </div>
