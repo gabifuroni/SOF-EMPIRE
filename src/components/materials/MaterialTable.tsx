@@ -87,7 +87,7 @@ const MaterialTable = ({ materials, onEdit, onDelete }: MaterialTableProps) => {
                 R$ {material.batchPrice.toFixed(2)}
               </TableCell>
               <TableCell className="font-medium text-elite-rose-600">
-                R$ {material.unitCost.toFixed(4)} / {material.unit}
+                R$ {material.unitCost.toFixed(2)} / {material.unit}
               </TableCell>
               <TableCell className="text-center">
                 <div className="flex justify-center gap-2">

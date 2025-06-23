@@ -46,12 +46,12 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
             <TableHead className="font-semibold text-elite-charcoal-800">Preço ($)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Comissão (%)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Valor Comissão ($)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Mat. Prima ($)</TableHead>
+            <TableHead className="font-semibold text-elite-charcoal-800">Mat. Prima (%)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Cartão (%)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Cartão ($)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Imposto (%)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Imposto ($)</TableHead>
-            <TableHead className="font-semibold text-elite-charcoal-800">Mat. Prima ($)</TableHead>
-            <TableHead className="font-semibold text-elite-charcoal-800">Mat. Prima (%)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Total ($)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Total (%)</TableHead>
             <TableHead className="font-semibold text-elite-charcoal-800">Margem Op. ($)</TableHead>
@@ -104,18 +104,6 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
               <TableCell className="text-orange-600">
                 R$ {commissionCost.toFixed(2)}
               </TableCell>
-              <TableCell className="text-blue-600">
-                {params.weightedAverageRate.toFixed(1)}%
-              </TableCell>
-              <TableCell className="text-blue-600">
-                R$ {cardTaxCost.toFixed(2)}
-              </TableCell>
-              <TableCell className="text-purple-600">
-                {params.impostosRate.toFixed(1)}%
-              </TableCell>
-              <TableCell className="text-purple-600">
-                R$ {taxCost.toFixed(2)}
-              </TableCell>
               <TableCell className="text-emerald-600 font-medium">
                 <div className="flex flex-col" title={materialCosts.length > 0 ? 
                   materialCosts.map(mc => `${getMaterialName(mc.materialId)}: R$ ${mc.cost.toFixed(2)}`).join('\n') : 
@@ -138,6 +126,18 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
                     </span>
                   )}
                 </div>
+              </TableCell>
+              <TableCell className="text-blue-600">
+                {params.weightedAverageRate.toFixed(1)}%
+              </TableCell>
+              <TableCell className="text-blue-600">
+                R$ {cardTaxCost.toFixed(2)}
+              </TableCell>
+              <TableCell className="text-purple-600">
+                {params.impostosRate.toFixed(1)}%
+              </TableCell>
+              <TableCell className="text-purple-600">
+                R$ {taxCost.toFixed(2)}
               </TableCell>
               <TableCell className="text-red-600 font-medium">
                 R$ {totalDirectCosts.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
