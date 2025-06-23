@@ -199,9 +199,19 @@ const DirectExpensesTable = ({
               <TableHead className="text-right brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Valor do Mês (R$)</TableHead>
               <TableHead className="w-20 text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Ações</TableHead>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {categories.map((category, index) => {
+          </TableHeader>          <TableBody>
+            {categories.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-8">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-symbol-gray-500 text-lg">📊</div>
+                    <p className="text-symbol-gray-600 font-medium">Sem categorias no momento</p>
+                    <p className="text-symbol-gray-500 text-sm">Adicione uma nova categoria para começar</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              categories.map((category, index) => {
               const savedValue = expenseValues.find(ev => ev.categoryId === category.id)?.value || 0;
               const currentValue = getTempExpenseValue(category.id);
               const hasChanges = currentValue !== savedValue;
@@ -284,14 +294,12 @@ const DirectExpensesTable = ({
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </>
-                      )}
-                    </div>
+                      )}                    </div>
                   </TableCell>
                 </TableRow>
               );
-            })}
-            
-            {/* Add Category Row */}
+            })
+            )}{/* Add Category Row */}
             {showAddCategory ? (
               <TableRow className="bg-symbol-beige/20 border-2 border-dashed border-symbol-gold/40">
                 <TableCell>

@@ -13,6 +13,7 @@ import {
   useDirectExpenseCategories,
   useDirectExpenseValues,
 } from "@/hooks/useDirectExpenses";
+import { useTransactions } from "@/hooks/useTransactions";
 import {
   convertExpenseCategoryFromDb,
   convertMonthlyExpenseFromDb,
@@ -75,8 +76,7 @@ const IndirectExpenses = () => {
   // Direct expenses hooks
   const {
     categories: directCategories,
-    isLoading: directCategoriesLoading,
-    addCategory: addDirectCategory,
+    isLoading: directCategoriesLoading,    addCategory: addDirectCategory,
     updateCategory: updateDirectCategory,
     deleteCategory: deleteDirectCategory,
   } = useDirectExpenseCategories();
@@ -89,6 +89,10 @@ const IndirectExpenses = () => {
     deleteExpenseValue: deleteDirectExpenseValue,
     getTotalByMonth: getDirectTotalByMonth,
   } = useDirectExpenseValues();
+
+  // Hook para transações (fluxo de caixa)
+  const { addTransaction } = useTransactions();
+
   // State for indirect expenses
   const [newCategoryName, setNewCategoryName] = useState("");
   const [showAddCategory, setShowAddCategory] = useState(false);
@@ -152,7 +156,6 @@ const IndirectExpenses = () => {
       [categoryId]: value,
     }));
   };
-
   const saveExpenseValues = async () => {
     try {
       const monthNumber = MONTHS.findIndex((m) => m.key === selectedMonth) + 1;
@@ -171,24 +174,60 @@ const IndirectExpenses = () => {
 
           console.log('Processing category:', categoryId, 'value:', value, 'existing:', existingExpense);
 
+          let result;
           if (existingExpense) {
-            return updateExpenseValue.mutateAsync({
+            result = await updateExpenseValue.mutateAsync({
               id: existingExpense.id,
               valor_mensal: value,
             });
           } else {
-            return addExpenseValue.mutateAsync({
+            result = await addExpenseValue.mutateAsync({
               categoria_id: categoryId,
               mes_referencia: dateString,
               valor_mensal: value,
             });
+          }          // Integração com fluxo de caixa
+          if (value > 0) {
+            const category = categories.find(cat => cat.id === categoryId);
+            const isFixed = category?.is_fixed || false;
+
+            if (isFixed) {
+              // Se é despesa fixa, criar 12 transações (uma para cada mês)
+              const cashFlowPromises = MONTHS.map(async (month, index) => {
+                const monthDate = `${selectedYear}-${(index + 1).toString().padStart(2, "0")}-01`;
+                return addTransaction.mutateAsync({
+                  description: `Despesa Indireta: ${category?.nome_categoria_despesa || 'Categoria desconhecida'}`,
+                  valor: -value, // Valor negativo para saída
+                  tipo_transacao: 'SAIDA',
+                  date: monthDate,
+                  category: 'Despesas Indiretas',
+                  payment_method: null,
+                  is_recurring: true,
+                  recurring_frequency: 'monthly',
+                });
+              });
+              await Promise.all(cashFlowPromises);
+            } else {
+              // Se não é fixa, criar apenas uma transação no mês selecionado
+              await addTransaction.mutateAsync({
+                description: `Despesa Indireta: ${category?.nome_categoria_despesa || 'Categoria desconhecida'}`,
+                valor: -value, // Valor negativo para saída
+                tipo_transacao: 'SAIDA',
+                date: dateString,
+                category: 'Despesas Indiretas',
+                payment_method: null,
+                is_recurring: false,
+              });
+            }
           }
+
+          return result;
         }
       );
 
       await Promise.all(savePromises);
       setTempExpenseValues({});
-      toast.success("Despesas indiretas salvas com sucesso!");
+      toast.success("Despesas indiretas salvas e integradas ao fluxo de caixa com sucesso!");
     } catch (error) {
       console.error("Error saving indirect expense values:", error);
       toast.error("Erro ao salvar despesas indiretas. Tente novamente.");
@@ -345,7 +384,6 @@ const IndirectExpenses = () => {
       [categoryId]: value,
     }));
   };
-
   const saveDirectExpenseValues = async () => {
     try {
       const monthNumber = MONTHS.findIndex((m) => m.key === selectedMonth) + 1;
@@ -364,24 +402,41 @@ const IndirectExpenses = () => {
 
           console.log('Processing category:', categoryId, 'value:', value, 'existing:', existingExpense);
 
+          let result;
           if (existingExpense) {
-            return updateDirectExpenseValue.mutateAsync({
+            result = await updateDirectExpenseValue.mutateAsync({
               id: existingExpense.id,
               valor_mensal: value,
             });
           } else {
-            return addDirectExpenseValue.mutateAsync({
+            result = await addDirectExpenseValue.mutateAsync({
               categoria_id: categoryId,
               mes_referencia: dateString,
               valor_mensal: value,
             });
+          }          // Integração com fluxo de caixa
+          if (value > 0) {
+            const category = directCategories.find(cat => cat.id === categoryId);
+            
+            // Despesas diretas não são fixas, criar apenas uma transação no mês selecionado
+            await addTransaction.mutateAsync({
+              description: `Despesa Direta: ${category?.nome_categoria || 'Categoria desconhecida'}`,
+              valor: -value, // Valor negativo para saída
+              tipo_transacao: 'SAIDA',
+              date: dateString,
+              category: 'Despesas Diretas',
+              payment_method: null,
+              is_recurring: false,
+            });
           }
+
+          return result;
         }
       );
 
       await Promise.all(savePromises);
       setTempDirectExpenseValues({});
-      toast.success("Despesas diretas salvas com sucesso!");
+      toast.success("Despesas diretas salvas e integradas ao fluxo de caixa com sucesso!");
     } catch (error) {
       console.error("Error saving direct expense values:", error);
       toast.error("Erro ao salvar despesas diretas. Tente novamente.");

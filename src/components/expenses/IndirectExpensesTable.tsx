@@ -218,9 +218,19 @@ const IndirectExpensesTable = ({
                 Ações
               </TableHead>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {categories.map((category, index) => {
+          </TableHeader>          <TableBody>
+            {categories.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-8">
+                  <div className="flex flex-col items-center gap-2">
+                    <div className="text-symbol-gray-500 text-lg">📊</div>
+                    <p className="text-symbol-gray-600 font-medium">Sem categorias no momento</p>
+                    <p className="text-symbol-gray-500 text-sm">Adicione uma nova categoria para começar</p>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : (
+              categories.map((category, index) => {
               const expense = getExpenseForCategory(category.id);
               const savedValue =
                 (expense[selectedMonth as keyof MonthlyExpense] as number) || 0;
@@ -342,12 +352,12 @@ const IndirectExpensesTable = ({
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </>
-                      )}
-                    </div>
+                      )}                    </div>
                   </TableCell>
                 </TableRow>
               );
-            })}
+            })
+            )}
 
             {/* Add Category Row */}
             {showAddCategory ? (
