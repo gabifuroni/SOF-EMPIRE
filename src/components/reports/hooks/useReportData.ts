@@ -61,11 +61,14 @@ export const useReportData = (
         const percentualComissao = businessParams?.lucroDesejado || 10;
         return sum + (Number(t.valor) * (percentualComissao / 100));
       }
-    }, 0);
-
-    // 2. Material costs (only "FORNECEDORES" category from cash flow)
+    }, 0);    // 2. Material costs (only "FORNECEDORES" category from cash flow) - for reference
     const custoMateriasPrimas = monthTransactions
       .filter(t => t.tipo_transacao === 'SAIDA' && t.category === 'FORNECEDORES')
+      .reduce((sum, t) => sum + Number(t.valor), 0);
+
+    // 2b. ALL CASH FLOW EXPENSES (todas as saídas do fluxo de caixa)
+    const todasSaidasFluxoCaixa = monthTransactions
+      .filter(t => t.tipo_transacao === 'SAIDA')
       .reduce((sum, t) => sum + Number(t.valor), 0);
 
     // 3. Credit card fees
@@ -81,8 +84,8 @@ export const useReportData = (
     const percentualMateriasPrimas = faturamento > 0 ? (custoMateriasPrimas / faturamento) * 100 : 0;
     const percentualImpostos = faturamento > 0 ? (impostos / faturamento) * 100 : 0;
 
-    // Total direct costs (like in ServiceTable: totalDirectCosts)
-    const custosDirectos = comissoesReais + custoMateriasPrimas + taxasCartao + impostos;
+    // Total direct costs: comissão + cartão + impostos + TODAS as saídas do fluxo de caixa
+    const custosDirectos = comissoesReais + taxasCartao + impostos + todasSaidasFluxoCaixa;
 
     // Operational margin (like in ServiceTable: operationalMargin)
     const margemOperacionalValor = faturamento - custosDirectos;    // Operational cost (like in ServiceTable: operationalCost)
@@ -192,9 +195,13 @@ export const useHistoricalData = (
           return sum + (Number(t.valor) * (percentualComissao / 100));
         }
       }, 0);
-      
-      const custoMateriasPrimas = monthTransactions
+        const custoMateriasPrimas = monthTransactions
         .filter(t => t.tipo_transacao === 'SAIDA' && t.category === 'FORNECEDORES')
+        .reduce((sum, t) => sum + Number(t.valor), 0);
+      
+      // All cash flow expenses (todas as saídas do fluxo de caixa)
+      const todasSaidasFluxoCaixa = monthTransactions
+        .filter(t => t.tipo_transacao === 'SAIDA')
         .reduce((sum, t) => sum + Number(t.valor), 0);
       
       const percentualCartao = businessParams?.weightedAverageRate || 3.5;
@@ -203,7 +210,8 @@ export const useHistoricalData = (
       const percentualImposto = businessParams?.impostosRate || 8;
       const impostos = faturamento * (percentualImposto / 100);
       
-      const custosDirectos = comissoesReais + custoMateriasPrimas + taxasCartao + impostos;
+      // Total direct costs: comissão + cartão + impostos + todas as saídas do fluxo de caixa
+      const custosDirectos = comissoesReais + taxasCartao + impostos + todasSaidasFluxoCaixa;
       
       const margemOperacionalValor = faturamento - custosDirectos;
         const percentualCustoOperacional = businessParams?.despesasIndiretasDepreciacao || 15;

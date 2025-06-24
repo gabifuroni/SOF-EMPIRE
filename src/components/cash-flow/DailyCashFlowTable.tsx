@@ -32,7 +32,8 @@ const DailyCashFlowTable = ({ todayEntries, today, onDeleteEntry }: DailyCashFlo
 
   return (
     <div className="overflow-x-auto">
-      <Table>        <TableHeader>
+      <Table>        
+        <TableHeader>
           <TableRow>
             <TableHead className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Descrição</TableHead>
             <TableHead className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Tipo</TableHead>

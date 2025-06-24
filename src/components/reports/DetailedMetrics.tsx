@@ -144,9 +144,7 @@ export const DetailedMetrics = ({ reportData, formatCurrency, selectedMonth, sel
               <td className="py-2 px-2 text-right text-rose-600">
                 {formatPercentage(reportData.percentualImpostos)}
               </td>
-            </tr>
-
-            {/* Total de Custos Diretos */}
+            </tr>            {/* Total de Custos Diretos - comissão + cartão + impostos + todas as saídas do fluxo de caixa */}
             <tr className="border-b-2 border-symbol-gray-300 bg-red-50">
               <td className="py-3 px-2 font-semibold text-symbol-black">Total Custos Diretos</td>
               <td className="py-3 px-2 text-right font-bold text-red-600">
@@ -218,12 +216,14 @@ export const DetailedMetrics = ({ reportData, formatCurrency, selectedMonth, sel
             )}
           </tbody>
         </table>
-      </div>
-
-      <div className="mt-4 p-4 bg-symbol-beige/20 rounded-lg">
+      </div>      <div className="mt-4 p-4 bg-symbol-beige/20 rounded-lg">
         <p className="text-xs text-symbol-gray-600">
           <strong>Nota:</strong> Esta análise segue exatamente a mesma metodologia da tabela de serviços, 
           mas aplicada aos dados reais do fluxo de caixa do período selecionado.
+        </p>
+        <p className="text-xs text-symbol-gray-600 mt-2">
+          <strong>Total Custos Diretos:</strong> Soma de Comissão + Cartão + Impostos + TODAS as saídas do fluxo de caixa 
+          (custos operacionais de todas as categorias).
         </p>
       </div>
     </div>
