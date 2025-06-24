@@ -52,12 +52,13 @@ const CashFlowTable = ({ entries, onEdit, onDelete }: CashFlowTableProps) => {
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow>
+          <TableRow className='text-black'>
             <TableHead>Data</TableHead>
             <TableHead>Descrição</TableHead>
             <TableHead>Forma de Pagamento</TableHead>
             <TableHead>Categoria</TableHead>
-            <TableHead className="text-right">Entrada (R$)</TableHead>
+            <TableHead className="text-right text-black">Entrada (R$)</TableHead>
+            <TableHead className="text-right">Comissão (%)</TableHead>
             <TableHead className="text-right">Saída (R$)</TableHead>
             <TableHead className="text-right">Saldo Acumulado (R$)</TableHead>
             <TableHead className="text-center">Ações</TableHead>
@@ -80,6 +81,13 @@ const CashFlowTable = ({ entries, onEdit, onDelete }: CashFlowTableProps) => {
                 {entry.type === 'entrada' ? (
                   <span className="text-green-600 font-semibold">
                     R$ {entry.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                ) : '-'}
+              </TableCell>
+              <TableCell className="text-right">
+                {entry.type === 'entrada' && entry.commission && entry.amount > 0 ? (
+                  <span className="text-blue-600 font-semibold">
+                    {((entry.commission / entry.amount) * 100).toFixed(1)}%
                   </span>
                 ) : '-'}
               </TableCell>

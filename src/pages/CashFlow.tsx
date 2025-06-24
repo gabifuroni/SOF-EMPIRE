@@ -20,6 +20,7 @@ interface Transaction {
   valor: number;
   payment_method?: string | null;
   category?: string | null;
+  commission?: number | null;
   user_id: string;
   created_at?: string;
   updated_at?: string;
@@ -31,6 +32,7 @@ interface EntryData {
   date: Date;
   paymentMethod?: string;
   category?: string;
+  commission?: number;
 }
 
 type FilterType = 'todos' | 'entradas' | 'saidas';
@@ -54,6 +56,7 @@ const CashFlow = () => {
     amount: Number(t.valor),
     paymentMethod: t.payment_method || undefined,
     category: t.category || undefined,
+    commission: t.commission || undefined,
   }));
 
   // Filter entries based on current filters
@@ -94,6 +97,7 @@ const CashFlow = () => {
         tipo_transacao: 'ENTRADA',
         date: format(entryData.date, 'yyyy-MM-dd'),
         payment_method: entryData.paymentMethod,
+        commission: entryData.commission ? (entryData.amount * entryData.commission) / 100 : null,
       });
       setIsAddEntryModalOpen(false);
     } catch (error) {
@@ -127,6 +131,7 @@ const CashFlow = () => {
         date: format(entryData.date, 'yyyy-MM-dd'),
         payment_method: entryData.paymentMethod,
         category: entryData.category,
+        commission: entryData.commission ? (entryData.amount * entryData.commission) / 100 : null,
       });
       setEditingEntry(null);
     } catch (error) {

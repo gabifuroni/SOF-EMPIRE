@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useIndirectExpenseValues } from '@/hooks/useIndirectExpenses';
+import { useDirectExpenseValues } from '@/hooks/useDirectExpenses';
 import { useMaterials } from '@/hooks/useMaterials';
 import { useServices } from '@/hooks/useServices';
+import { useBusinessParams } from '@/hooks/useBusinessParams';
 
 // Refactored components
 import { ReportHeader } from '@/components/reports/ReportHeader';
@@ -24,10 +26,12 @@ const Reports = () => {
 
   const { transactions, isLoading: transactionsLoading } = useTransactions();
   const { expenses: indirectExpenses, isLoading: expensesLoading, getTotalByMonth } = useIndirectExpenseValues();
+  const { expenses: directExpenses, isLoading: directExpensesLoading, getTotalByMonth: getDirectExpensesTotalByMonth } = useDirectExpenseValues();
   const { materials, isLoading: materialsLoading } = useMaterials();
   const { services, isLoading: servicesLoading } = useServices();
+  const { params: businessParams, isLoading: businessParamsLoading } = useBusinessParams();
 
-  const isLoading = transactionsLoading || expensesLoading || materialsLoading || servicesLoading;
+  const isLoading = transactionsLoading || expensesLoading || directExpensesLoading || materialsLoading || servicesLoading || businessParamsLoading;
 
   const months = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -42,7 +46,9 @@ const Reports = () => {
     selectedMonth,
     selectedYear,
     getTotalByMonth,
-    services
+    services,
+    getDirectExpensesTotalByMonth,
+    businessParams
   );
 
   // Chart data
@@ -61,8 +67,8 @@ const Reports = () => {
         <div className="animate-pulse">
           <div className="h-8 bg-symbol-gray-200 rounded w-1/3 mb-4"></div>
           <div className="h-4 bg-symbol-gray-200 rounded w-1/2 mb-8"></div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {[...Array(5)].map((_, i) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
               <div key={i} className="h-32 bg-symbol-gray-200 rounded"></div>
             ))}
           </div>

@@ -8,10 +8,16 @@ interface Transaction {
   date: string;
   tipo_transacao: 'ENTRADA' | 'SAIDA';
   valor: number;
+  category?: string | null;
+  commission?: number | null;
 }
 
 interface BusinessParams {
   impostosRate?: number;
+  lucroDesejado?: number;
+  weightedAverageRate?: number;
+  despesasDiretas?: number;
+  despesasIndiretasDepreciacao?: number;
 }
 
 export const useReportData = (
@@ -19,7 +25,9 @@ export const useReportData = (
   selectedMonth: number,
   selectedYear: number,
   getTotalByMonth: (monthKey: string) => number,
-  services: Service[]
+  services: Service[],
+  getDirectExpensesTotalByMonth?: (monthKey: string) => number,
+  businessParams?: BusinessParams
 ): MonthlyReportData => {
   return useMemo((): MonthlyReportData => {
     const targetDate = new Date(selectedYear, selectedMonth, 1);
@@ -33,52 +41,64 @@ export const useReportData = (
       return transactionDate >= monthStart && transactionDate <= monthEnd;
     });
 
-    // Calculate revenue (faturamento)
+    // Calculate revenue (faturamento) - only income transactions
     const faturamento = monthTransactions
       .filter(t => t.tipo_transacao === 'ENTRADA')
       .reduce((sum, t) => sum + Number(t.valor), 0);
 
-    // Calculate total expenses from transactions
+    // Calculate total expenses from transactions (all outgoing transactions)
     const totalExpenses = monthTransactions
       .filter(t => t.tipo_transacao === 'SAIDA')
+      .reduce((sum, t) => sum + Number(t.valor), 0);    // Get indirect expenses from database for the specific month
+    const despesasIndiretas = getTotalByMonth(monthKey);    // Calculate direct costs components (like in ServiceTable)
+    // 1. Commissions - sum real commissions from transactions or use percentage
+    const entradaTransactions = monthTransactions.filter(t => t.tipo_transacao === 'ENTRADA');
+    const comissoesReais = entradaTransactions.reduce((sum, t) => {
+      if (t.commission && t.commission > 0) {
+        return sum + Number(t.commission);
+      } else {
+        // If no commission specified, calculate using percentage
+        const percentualComissao = businessParams?.lucroDesejado || 10;
+        return sum + (Number(t.valor) * (percentualComissao / 100));
+      }
+    }, 0);
+
+    // 2. Material costs (only "FORNECEDORES" category from cash flow)
+    const custoMateriasPrimas = monthTransactions
+      .filter(t => t.tipo_transacao === 'SAIDA' && t.category === 'FORNECEDORES')
       .reduce((sum, t) => sum + Number(t.valor), 0);
 
-    // Get indirect expenses from database for the specific month
-    const despesasIndiretas = getTotalByMonth(monthKey);    // Calculate material costs (raw materials used in services)
-    const custoMateriasPrimas = services.reduce((total, service) => {
+    // 3. Credit card fees
+    const percentualCartao = businessParams?.weightedAverageRate || 3.5;
+    const taxasCartao = faturamento * (percentualCartao / 100);
+
+    // 4. Taxes
+    const percentualImposto = businessParams?.impostosRate || 8;
+    const impostos = faturamento * (percentualImposto / 100);
+
+    // Total direct costs (like in ServiceTable: totalDirectCosts)
+    const custosDirectos = comissoesReais + custoMateriasPrimas + taxasCartao + impostos;
+
+    // Operational margin (like in ServiceTable: operationalMargin)
+    const margemOperacionalValor = faturamento - custosDirectos;    // Operational cost (like in ServiceTable: operationalCost)
+    const percentualCustoOperacional = businessParams?.despesasIndiretasDepreciacao || 15;
+    const custoOperacional = (faturamento * percentualCustoOperacional) / 100;
+
+    // Net profit (like in ServiceTable: partialProfit)
+    const lucroLiquido = margemOperacionalValor - custoOperacional;
+
+    // Calculate margins
+    const margemLucro = faturamento > 0 ? (lucroLiquido / faturamento) * 100 : 0;
+    const margemOperacional = faturamento > 0 ? (margemOperacionalValor / faturamento) * 100 : 0;
+
+    // Calculate EBITDA
+    const ebitda = margemOperacionalValor + impostos;    // Calculate material costs from services (this is for reference, not used in main calculation)
+    const custoMateriasPrimasServicos = services.reduce((total, service) => {
       const serviceMaterialCost = service.materialCosts?.reduce((materialTotal: number, material: MaterialCost) => {
-        return materialTotal + material.cost; // Using the 'cost' property from MaterialCost
+        return materialTotal + material.cost;
       }, 0) || 0;
       return total + serviceMaterialCost;
     }, 0);
-
-    // Calculate direct costs (materials + direct labor)
-    // Using default percentages since these fields don't exist in BusinessParams
-    const percentualCustosDirectos = 25; // 25% default
-    const custosDirectos = custoMateriasPrimas + (faturamento * (percentualCustosDirectos / 100));
-
-    // Calculate operational cost (indirect expenses + admin costs)
-    const percentualCustoOperacional = 15; // 15% default
-    const custoOperacional = despesasIndiretas + (faturamento * (percentualCustoOperacional / 100));
-
-    // Calculate commissions based on business params
-    const percentualComissao = 10; // 10% default
-    const comissoes = faturamento * (percentualComissao / 100);
-
-    // Calculate taxes based on business params
-    const percentualImposto = 8; // 8% default
-    const impostos = faturamento * (percentualImposto / 100);
-
-    // Calculate profits
-    const lucroOperacional = faturamento - custosDirectos - custoOperacional;
-    const lucroLiquido = faturamento - custosDirectos - custoOperacional - comissoes - impostos;
-    
-    // Calculate margins
-    const margemLucro = faturamento > 0 ? (lucroLiquido / faturamento) * 100 : 0;
-    const margemOperacional = faturamento > 0 ? (lucroOperacional / faturamento) * 100 : 0;
-
-    // Calculate EBITDA (Earnings Before Interest, Taxes, Depreciation, and Amortization)
-    const ebitda = lucroOperacional + impostos;
 
     // Transaction metrics
     const transacoesEntrada = monthTransactions.filter(t => t.tipo_transacao === 'ENTRADA').length;
@@ -92,9 +112,9 @@ export const useReportData = (
       custosDirectos,
       custoOperacional,
       despesasIndiretas,
-      comissoes,
+      comissoes: comissoesReais,
       impostos,
-      lucroOperacional,
+      lucroOperacional: margemOperacionalValor, // This is the operational margin
       lucroLiquido,
       margemLucro,
       margemOperacional,
@@ -103,12 +123,12 @@ export const useReportData = (
       transacoesSaida,
       ticketMedio,
       servicosRealizados,
-      custoMateriasPrimas,
+      custoMateriasPrimas: custoMateriasPrimas, // Real material costs from purchases
       percentualCustosDirectos: faturamento > 0 ? (custosDirectos / faturamento) * 100 : 0,
-      percentualCustoOperacional: faturamento > 0 ? (custoOperacional / faturamento) * 100 : 0,
+      percentualCustoOperacional: percentualCustoOperacional,
       ebitda,
     };
-  }, [transactions, selectedMonth, selectedYear, getTotalByMonth, services]);
+  }, [transactions, selectedMonth, selectedYear, getTotalByMonth, services, businessParams]);
 };
 
 export const useHistoricalData = (
@@ -116,7 +136,8 @@ export const useHistoricalData = (
   selectedMonth: number,
   selectedYear: number,
   getTotalByMonth: (monthKey: string) => number,
-  params?: BusinessParams
+  getDirectExpensesTotalByMonth?: (monthKey: string) => number,
+  businessParams?: BusinessParams
 ): HistoricalDataItem[] => {
   return useMemo(() => {
     const months = [];
@@ -129,20 +150,39 @@ export const useHistoricalData = (
       const monthTransactions = transactions.filter(transaction => {
         const transactionDate = new Date(transaction.date);
         return transactionDate >= monthStart && transactionDate <= monthEnd;
-      });
-
-      const faturamento = monthTransactions
+      });      const faturamento = monthTransactions
         .filter(t => t.tipo_transacao === 'ENTRADA')
+        .reduce((sum, t) => sum + Number(t.valor), 0);      const despesasIndiretas = getTotalByMonth(monthKey);
+      
+      // Calculate direct costs like in ServiceTable
+      const entradaTransactionsMonth = monthTransactions.filter(t => t.tipo_transacao === 'ENTRADA');
+      const comissoesReais = entradaTransactionsMonth.reduce((sum, t) => {
+        if (t.commission && t.commission > 0) {
+          return sum + Number(t.commission);
+        } else {
+          // If no commission specified, calculate using percentage
+          const percentualComissao = businessParams?.lucroDesejado || 10;
+          return sum + (Number(t.valor) * (percentualComissao / 100));
+        }
+      }, 0);
+      
+      const custoMateriasPrimas = monthTransactions
+        .filter(t => t.tipo_transacao === 'SAIDA' && t.category === 'FORNECEDORES')
         .reduce((sum, t) => sum + Number(t.valor), 0);
-
-      const despesasIndiretas = getTotalByMonth(monthKey);
-      const percentualCustosDirectos = 25;
-      const percentualCustoOperacional = 15;
-      const custosDirectos = faturamento * (percentualCustosDirectos / 100);
-      const custoOperacional = despesasIndiretas + (faturamento * (percentualCustoOperacional / 100));
-      const comissoes = faturamento * (10 / 100);
-      const impostos = faturamento * ((params?.impostosRate || 8) / 100);
-      const lucroLiquido = faturamento - custosDirectos - custoOperacional - comissoes - impostos;
+      
+      const percentualCartao = businessParams?.weightedAverageRate || 3.5;
+      const taxasCartao = faturamento * (percentualCartao / 100);
+      
+      const percentualImposto = businessParams?.impostosRate || 8;
+      const impostos = faturamento * (percentualImposto / 100);
+      
+      const custosDirectos = comissoesReais + custoMateriasPrimas + taxasCartao + impostos;
+      
+      const margemOperacionalValor = faturamento - custosDirectos;
+        const percentualCustoOperacional = businessParams?.despesasIndiretasDepreciacao || 15;
+      const custoOperacional = (faturamento * percentualCustoOperacional) / 100;
+      
+      const lucroLiquido = margemOperacionalValor - custoOperacional;
 
       months.push({
         month: format(date, 'MMM', { locale: ptBR }),
@@ -155,5 +195,5 @@ export const useHistoricalData = (
       });
     }
     return months;
-  }, [transactions, selectedMonth, selectedYear, getTotalByMonth, params]);
+  }, [transactions, selectedMonth, selectedYear, getTotalByMonth, businessParams]);
 };

@@ -101,6 +101,7 @@ const DailyCashFlow = () => {
         tipo_transacao: 'ENTRADA',
         date: format(currentDate, 'yyyy-MM-dd'), // Always use current date for daily cash flow
         payment_method: entryData.paymentMethod,
+        commission: entryData.commission ? (entryData.amount * entryData.commission) / 100 : null,
       });
       setIsAddEntryModalOpen(false);
     } catch (error) {

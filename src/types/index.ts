@@ -72,6 +72,7 @@ export interface CashFlowEntry {
   category?: string; // For saida
   client?: string; // Optional for entrada
   supplier?: string; // Optional for saida
+  commission?: number; // Optional commission for entrada
 }
 
 export interface ExpenseCategory {

@@ -24,13 +24,13 @@ interface Service {
   sale_price: number;
 }
 
-const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryModalProps) => {
-  const [formData, setFormData] = useState({
+const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryModalProps) => {  const [formData, setFormData] = useState({
     date: format(defaultDate || new Date(), 'yyyy-MM-dd'),
     description: '',
     amount: '',
     paymentMethod: '',
-    client: ''
+    client: '',
+    commission: ''
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -68,15 +68,15 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
     };
 
     loadServices();
-  }, [show]);
-  useEffect(() => {
+  }, [show]);  useEffect(() => {
     if (entry) {
       setFormData({
         date: format(new Date(entry.date), 'yyyy-MM-dd'),
         description: entry.description,
         amount: entry.amount.toString(),
         paymentMethod: entry.paymentMethod || '',
-        client: entry.client || ''
+        client: entry.client || '',
+        commission: entry.commission && entry.amount > 0 ? ((entry.commission / entry.amount) * 100).toString() : ''
       });
     } else {
       setFormData({
@@ -84,7 +84,8 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
         description: '',
         amount: '',
         paymentMethod: '',
-        client: ''
+        client: '',
+        commission: ''
       });
       setSelectedServices([]);
     }
@@ -137,15 +138,14 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
-    }
-
-    const entryData: Omit<CashFlowEntry, 'id'> = {
+    }    const entryData: Omit<CashFlowEntry, 'id'> = {
       date: new Date(formData.date),
       description: formData.description.trim(),
       type: 'entrada',
       amount: parseFloat(formData.amount),
       paymentMethod: formData.paymentMethod,
-      client: formData.client.trim() || undefined
+      client: formData.client.trim() || undefined,
+      commission: formData.commission ? (parseFloat(formData.amount) * parseFloat(formData.commission)) / 100 : undefined
     };
 
     onSave(entryData);
@@ -226,9 +226,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
             {errors.description && (
               <p className="text-red-500 text-sm mt-1">{errors.description}</p>
             )}
-          </div>
-
-          <div>
+          </div>          <div>
             <Label htmlFor="amount" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Valor (R$) *</Label>
             <Input
               id="amount"
@@ -243,6 +241,22 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
             {errors.amount && (
               <p className="text-red-500 text-sm mt-1">{errors.amount}</p>
             )}
+          </div>          <div>
+            <Label htmlFor="commission" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Comissão (%) - Opcional</Label>
+            <Input
+              id="commission"
+              type="number"
+              step="0.1"
+              min="0"
+              max="100"
+              placeholder="0,0"
+              value={formData.commission}
+              onChange={(e) => setFormData(prev => ({ ...prev, commission: e.target.value }))}
+              className="mt-1 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
+            />
+            <p className="text-xs text-symbol-gray-600 mt-1">
+              Se não informado, será usado o percentual dos parâmetros do negócio
+            </p>
           </div>
 
           <div>

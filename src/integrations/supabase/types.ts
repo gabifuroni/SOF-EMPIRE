@@ -451,9 +451,9 @@ export type Database = {
         }
         Relationships: []
       }
-      transacoes_financeiras: {
-        Row: {
+      transacoes_financeiras: {        Row: {
           category: string | null
+          commission: number | null
           created_at: string
           date: string
           description: string
@@ -466,9 +466,9 @@ export type Database = {
           updated_at: string
           user_id: string
           valor: number
-        }
-        Insert: {
+        }        Insert: {
           category?: string | null
+          commission?: number | null
           created_at?: string
           date?: string
           description: string
@@ -481,9 +481,9 @@ export type Database = {
           updated_at?: string
           user_id: string
           valor: number
-        }
-        Update: {
+        }        Update: {
           category?: string | null
+          commission?: number | null
           created_at?: string
           date?: string
           description?: string

@@ -38,6 +38,7 @@ const DailyCashFlowTable = ({ todayEntries, today, onDeleteEntry }: DailyCashFlo
             <TableHead className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Tipo</TableHead>
             <TableHead className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Método/Categoria</TableHead>
             <TableHead className="text-right brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Valor (R$)</TableHead>
+            <TableHead className="text-right brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Comissão (%)</TableHead>
             <TableHead className="text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Horário</TableHead>
             <TableHead className="text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Ações</TableHead>
           </TableRow>
@@ -58,13 +59,18 @@ const DailyCashFlowTable = ({ todayEntries, today, onDeleteEntry }: DailyCashFlo
               </TableCell>
               <TableCell className="text-sm text-symbol-gray-600">
                 {entry.payment_method || entry.category || '-'}
-              </TableCell>
-              <TableCell className="text-right">
+              </TableCell>              <TableCell className="text-right">
                 <span className={`font-semibold ${
                   entry.tipo_transacao === 'ENTRADA' ? 'text-emerald-600' : 'text-red-600'
                 }`}>
                   R$ {Number(entry.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
+              </TableCell>              <TableCell className="text-right">
+                {entry.tipo_transacao === 'ENTRADA' && entry.commission && Number(entry.valor) > 0 ? (
+                  <span className="text-blue-600 font-semibold">
+                    {((Number(entry.commission) / Number(entry.valor)) * 100).toFixed(1)}%
+                  </span>
+                ) : '-'}
               </TableCell>
               <TableCell className="text-center text-sm text-symbol-gray-600">
                 {format(new Date(entry.created_at), 'HH:mm', { locale: ptBR })}
