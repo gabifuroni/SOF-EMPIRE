@@ -76,6 +76,11 @@ export const useReportData = (
     const percentualImposto = businessParams?.impostosRate || 8;
     const impostos = faturamento * (percentualImposto / 100);
 
+    // Calculate percentages
+    const percentualComissao = faturamento > 0 ? (comissoesReais / faturamento) * 100 : 0;
+    const percentualMateriasPrimas = faturamento > 0 ? (custoMateriasPrimas / faturamento) * 100 : 0;
+    const percentualImpostos = faturamento > 0 ? (impostos / faturamento) * 100 : 0;
+
     // Total direct costs (like in ServiceTable: totalDirectCosts)
     const custosDirectos = comissoesReais + custoMateriasPrimas + taxasCartao + impostos;
 
@@ -98,9 +103,7 @@ export const useReportData = (
         return materialTotal + material.cost;
       }, 0) || 0;
       return total + serviceMaterialCost;
-    }, 0);
-
-    // Transaction metrics
+    }, 0);    // Transaction metrics
     const transacoesEntrada = monthTransactions.filter(t => t.tipo_transacao === 'ENTRADA').length;
     const transacoesSaida = monthTransactions.filter(t => t.tipo_transacao === 'SAIDA').length;
     const totalTransacoes = monthTransactions.length;
@@ -108,24 +111,48 @@ export const useReportData = (
     const servicosRealizados = transacoesEntrada; // Assuming each income transaction is a service
 
     return {
+      // Valores base
       faturamento,
-      custosDirectos,
-      custoOperacional,
-      despesasIndiretas,
+      
+      // Comissão
       comissoes: comissoesReais,
+      percentualComissao,
+      
+      // Matéria Prima
+      custoMateriasPrimas,
+      percentualMateriasPrimas,
+      
+      // Cartão
+      taxasCartao,
+      percentualCartao,
+      
+      // Impostos
       impostos,
-      lucroOperacional: margemOperacionalValor, // This is the operational margin
+      percentualImpostos,
+      
+      // Totais diretos
+      custosDirectos,
+      percentualCustosDirectos: faturamento > 0 ? (custosDirectos / faturamento) * 100 : 0,
+      
+      // Margem Operacional
+      lucroOperacional: margemOperacionalValor,
+      margemOperacional,
+      
+      // Custo Operacional
+      custoOperacional,
+      percentualCustoOperacional,
+      
+      // Lucro Final
       lucroLiquido,
       margemLucro,
-      margemOperacional,
+      
+      // Outros campos existentes
+      despesasIndiretas,
       totalTransacoes,
       transacoesEntrada,
       transacoesSaida,
       ticketMedio,
       servicosRealizados,
-      custoMateriasPrimas: custoMateriasPrimas, // Real material costs from purchases
-      percentualCustosDirectos: faturamento > 0 ? (custosDirectos / faturamento) * 100 : 0,
-      percentualCustoOperacional: percentualCustoOperacional,
       ebitda,
     };
   }, [transactions, selectedMonth, selectedYear, getTotalByMonth, services, businessParams]);

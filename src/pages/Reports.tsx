@@ -13,6 +13,7 @@ import { NoDataScreen } from '@/components/reports/NoDataScreen';
 import { ExecutiveSummary } from '@/components/reports/ExecutiveSummary';
 import { MainMetrics } from '@/components/reports/MainMetrics';
 import { SecondaryMetrics } from '@/components/reports/SecondaryMetrics';
+import { DetailedMetrics } from '@/components/reports/DetailedMetrics';
 import { Charts } from '@/components/reports/Charts';
 
 // Hooks
@@ -116,6 +117,15 @@ const Reports = () => {
       <SecondaryMetrics
         reportData={reportData}
         formatCurrency={formatCurrency}
+      />
+
+      {/* Detailed Metrics - Same as Service Table */}
+      <DetailedMetrics
+        reportData={reportData}
+        formatCurrency={formatCurrency}
+        selectedMonth={selectedMonth}
+        selectedYear={selectedYear}
+        transactions={transactions}
       />
 
       {/* Charts Section */}

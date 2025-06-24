@@ -52,16 +52,16 @@ const CashFlowTable = ({ entries, onEdit, onDelete }: CashFlowTableProps) => {
     <div className="overflow-x-auto">
       <Table>
         <TableHeader>
-          <TableRow className='text-black'>
-            <TableHead>Data</TableHead>
-            <TableHead>Descrição</TableHead>
-            <TableHead>Forma de Pagamento</TableHead>
-            <TableHead>Categoria</TableHead>
-            <TableHead className="text-right text-black">Entrada (R$)</TableHead>
-            <TableHead className="text-right">Comissão (%)</TableHead>
-            <TableHead className="text-right">Saída (R$)</TableHead>
-            <TableHead className="text-right">Saldo Acumulado (R$)</TableHead>
-            <TableHead className="text-center">Ações</TableHead>
+          <TableRow className='text-gray-700'>
+            <TableHead className='text-gray-700'>Data</TableHead>
+            <TableHead className='text-gray-700'>Descrição</TableHead>
+            <TableHead className='text-gray-700'>Forma de Pagamento</TableHead>
+            <TableHead className='text-gray-700'>Categoria</TableHead>
+            <TableHead className="text-right text-gray-700">Entrada (R$)</TableHead>
+            <TableHead className="text-right text-gray-700">Comissão (%)</TableHead>
+            <TableHead className="text-right text-gray-700">Saída (R$)</TableHead>
+            <TableHead className="text-right text-gray-700">Saldo Acumulado (R$)</TableHead>
+            <TableHead className="text-center text-gray-700">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
