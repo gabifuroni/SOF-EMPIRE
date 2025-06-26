@@ -181,7 +181,7 @@ const Login = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder={loginType === 'admin' ? 'admin@gestao.com' : 'seu@email.com'}
+                  placeholder={loginType === 'admin' ? 'seu@email.com' : 'seu@email.com'}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -225,7 +225,7 @@ const Login = () => {
                 </div>
               )}
             </Button>
-
+{/* 
             <div className="text-center">
               <a 
                 href="#" 
@@ -233,9 +233,9 @@ const Login = () => {
               >
                 Esqueci minha senha
               </a>
-            </div>
+            </div> */}
 
-            {/* Demo Credentials */}
+            {/* Demo Credentials
             <div className="pt-6 border-t border-symbol-gray-200 text-center text-sm text-symbol-gray-500 brand-body">
               <p className="mb-4 uppercase tracking-wide">Acesso de demonstração</p>
               <div className="space-y-3">
@@ -266,7 +266,7 @@ const Login = () => {
                   <p>Profissional: profissional@salon.com / profissional123</p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </form>
         </div>
 
