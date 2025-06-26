@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
 import AddEntryModal from '@/components/cash-flow/AddEntryModal';
-import AddExpenseModal from '@/components/cash-flow/AddExpenseModal';
 import DailyCashFlowHeader from '@/components/cash-flow/DailyCashFlowHeader';
 import DailyCashFlowMetrics from '@/components/cash-flow/DailyCashFlowMetrics';
 import DailyCashFlowTable from '@/components/cash-flow/DailyCashFlowTable';
@@ -13,7 +12,6 @@ const DailyCashFlow = () => {
   const today = useMemo(() => new Date(), []); // Esta data será fixada no momento da renderização
   const currentDate = new Date(); // Data sempre atual para os modais
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
-  const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
 
   const { transactions, isLoading, addTransaction, deleteTransaction } = useTransactions();
   const { params, isLoading: paramsLoading } = useBusinessParams();
@@ -40,6 +38,7 @@ const DailyCashFlow = () => {
       .filter(entry => entry.tipo_transacao === 'ENTRADA')
       .reduce((sum, entry) => sum + Number(entry.valor || 0), 0);
 
+    // Saídas serão mostradas como resumo das despesas cadastradas (implementação futura)
     const totalSaidas = todayEntries
       .filter(entry => entry.tipo_transacao === 'SAIDA')
       .reduce((sum, entry) => sum + Number(entry.valor || 0), 0);
@@ -108,22 +107,6 @@ const DailyCashFlow = () => {
       console.error('Erro ao adicionar entrada:', error);
     }
   };
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleAddExpense = async (expenseData: any) => {
-    try {
-      await addTransaction.mutateAsync({
-        description: expenseData.description,
-        valor: expenseData.amount,
-        tipo_transacao: 'SAIDA',
-        date: format(currentDate, 'yyyy-MM-dd'), // Always use current date for daily cash flow
-        category: expenseData.category,
-      });
-      setIsAddExpenseModalOpen(false);
-    } catch (error) {
-      console.error('Erro ao adicionar saída:', error);
-    }
-  };
   const handleDeleteEntry = async (id: string) => {
     try {
       await deleteTransaction.mutateAsync(id);
@@ -149,7 +132,6 @@ const DailyCashFlow = () => {
       <DailyCashFlowHeader
         today={today}
         onAddEntry={() => setIsAddEntryModalOpen(true)}
-        onAddExpense={() => setIsAddExpenseModalOpen(true)}
       />      <DailyCashFlowMetrics
         totalEntradas={dailyTotals.totalEntradas}
         totalSaidas={dailyTotals.totalSaidas}
@@ -190,13 +172,6 @@ const DailyCashFlow = () => {
         show={isAddEntryModalOpen}
         onClose={() => setIsAddEntryModalOpen(false)}
         onSave={handleAddEntry}
-        defaultDate={currentDate}
-      />
-
-      <AddExpenseModal
-        show={isAddExpenseModalOpen}
-        onClose={() => setIsAddExpenseModalOpen(false)}
-        onSave={handleAddExpense}
         defaultDate={currentDate}
       />
     </div>

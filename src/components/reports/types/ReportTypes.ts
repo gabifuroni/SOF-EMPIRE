@@ -6,15 +6,15 @@ export interface MonthlyReportData {
   
   // Comissão
   comissoes: number; // Valor Comissão ($)
-  percentualComissao: number; // Comissão (%)
+  percentualComissoes?: number; // Comissão (%)
   
   // Matéria Prima
-  custoMateriasPrimas: number; // Mat. Prima ($)
-  percentualMateriasPrimas: number; // Mat. Prima (%)
+  custoMateriasPrimas?: number; // Mat. Prima ($)
+  percentualMateriasPrimas?: number; // Mat. Prima (%)
   
   // Cartão
-  taxasCartao: number; // Cartão ($)
-  percentualCartao: number; // Cartão (%)
+  taxasCartao?: number; // Cartão ($)
+  percentualCartao?: number; // Cartão (%)
   
   // Impostos
   impostos: number; // Imposto ($)
@@ -25,8 +25,8 @@ export interface MonthlyReportData {
   percentualCustosDirectos: number; // Total (%) - custos diretos
   
   // Margem Operacional
-  lucroOperacional: number; // Margem Op. ($)
-  margemOperacional: number; // Margem Op. (%)
+  lucroOperacional?: number; // Margem Op. ($)
+  margemOperacional?: number; // Margem Op. (%)
   
   // Custo Operacional
   custoOperacional: number; // Custo Op. ($)
@@ -37,13 +37,13 @@ export interface MonthlyReportData {
   margemLucro: number; // Lucro Parcial (%)
   
   // Outros campos existentes
-  despesasIndiretas: number;
-  totalTransacoes: number;
+  despesasIndiretas?: number;
+  totalTransacoes?: number;
   transacoesEntrada: number;
-  transacoesSaida: number;
+  transacoesSaida?: number;
   ticketMedio: number;
-  servicosRealizados: number;
-  ebitda: number;
+  servicosRealizados?: number;
+  ebitda?: number;
 }
 
 export interface PieDataItem {

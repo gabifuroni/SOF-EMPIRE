@@ -1,16 +1,16 @@
 
 import { useState } from 'react';
-import { Plus, Minus, Filter, TrendingUp, TrendingDown, DollarSign, Edit, Trash2 } from 'lucide-react';
+import { Plus, Filter, TrendingUp, TrendingDown, DollarSign, Edit, Trash2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import CashFlowTable from '@/components/cash-flow/CashFlowTable';
 import AddEntryModal from '@/components/cash-flow/AddEntryModal';
-import AddExpenseModal from '@/components/cash-flow/AddExpenseModal';
 import { format } from 'date-fns';
 import { useTransactions } from '@/hooks/useTransactions';
 import { CashFlowEntry } from '@/types';
+import { useNavigate } from 'react-router-dom';
 
 interface Transaction {
   id: string;
@@ -38,8 +38,8 @@ interface EntryData {
 type FilterType = 'todos' | 'entradas' | 'saidas';
 
 const CashFlow = () => {
+  const navigate = useNavigate();
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
-  const [isAddExpenseModalOpen, setIsAddExpenseModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<CashFlowEntry | null>(null);
   const [filterType, setFilterType] = useState<FilterType>('todos');
   const [startDate, setStartDate] = useState('');
@@ -105,21 +105,6 @@ const CashFlow = () => {
     }
   };
 
-  const handleAddExpense = async (expenseData: EntryData) => {
-    try {
-      await addTransaction.mutateAsync({
-        description: expenseData.description,
-        valor: expenseData.amount,
-        tipo_transacao: 'SAIDA',
-        date: format(expenseData.date, 'yyyy-MM-dd'),
-        category: expenseData.category,
-      });
-      setIsAddExpenseModalOpen(false);
-    } catch (error) {
-      console.error('Error adding expense:', error);
-    }
-  };
-
   const handleEditEntry = async (entryData: EntryData) => {
     if (!editingEntry) return;
     
@@ -130,7 +115,6 @@ const CashFlow = () => {
         valor: entryData.amount,
         date: format(entryData.date, 'yyyy-MM-dd'),
         payment_method: entryData.paymentMethod,
-        category: entryData.category,
         commission: entryData.commission ? (entryData.amount * entryData.commission) / 100 : null,
       });
       setEditingEntry(null);
@@ -148,18 +132,16 @@ const CashFlow = () => {
   };
 
   const openEditModal = (entry: CashFlowEntry) => {
-    setEditingEntry(entry);
+    // Só permite editar entradas
     if (entry.type === 'entrada') {
+      setEditingEntry(entry);
       setIsAddEntryModalOpen(true);
-    } else {
-      setIsAddExpenseModalOpen(true);
     }
   };
 
   const closeEditModal = () => {
     setEditingEntry(null);
     setIsAddEntryModalOpen(false);
-    setIsAddExpenseModalOpen(false);
   };
 
   if (isLoading) {
@@ -183,7 +165,7 @@ const CashFlow = () => {
           </h1>
           <div className="w-12 h-px bg-symbol-gold mb-4"></div>
           <p className="brand-body text-symbol-gray-600">
-            Controle suas movimentações financeiras diárias
+            Controle suas entradas financeiras diárias
           </p>
         </div>
         
@@ -197,11 +179,12 @@ const CashFlow = () => {
           </Button>
           
           <Button 
-            onClick={() => setIsAddExpenseModalOpen(true)}
-            className="bg-red-600 hover:bg-red-700 text-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
+            onClick={() => navigate('/expenses')}
+            variant="outline"
+            className="bg-transparent border-symbol-gray-300 text-symbol-gray-700 hover:bg-symbol-gray-50 font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
           >
-            <Minus className="w-4 h-4 mr-2" />
-            Adicionar Saída
+            <ExternalLink className="w-4 h-4 mr-2" />
+            Gerenciar Despesas
           </Button>
         </div>
       </div>
@@ -225,6 +208,14 @@ const CashFlow = () => {
         <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-red-50/50 to-red-100/30 border-red-200/50">
           <div className="flex items-center justify-between mb-4">
             <TrendingDown className="text-red-600" size={20} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/expenses')}
+              className="text-xs px-2 py-1 h-6"
+            >
+              Ver Despesas
+            </Button>
           </div>
           <div className="mb-2">
             <h3 className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wider">
@@ -349,22 +340,36 @@ const CashFlow = () => {
                     {entry.type === 'entrada' ? '+' : '-'} R$ {entry.amount.toFixed(2)}
                   </span>
                   <div className="flex gap-1">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditModal(entry)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteEntry(entry.id)}
-                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
+                    {entry.type === 'entrada' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditModal(entry)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                    )}
+                    {entry.type === 'entrada' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteEntry(entry.id)}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    )}
+                    {entry.type === 'saida' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate('/expenses')}
+                        className="h-8 px-2 text-xs"
+                      >
+                        Ver em Despesas
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -398,23 +403,8 @@ const CashFlow = () => {
         onSave={handleAddEntry}
       />
 
-      <AddExpenseModal
-        show={isAddExpenseModalOpen && !editingEntry}
-        onClose={() => setIsAddExpenseModalOpen(false)}
-        onSave={handleAddExpense}
-      />
-
       {editingEntry && editingEntry.type === 'entrada' && (
         <AddEntryModal
-          show={true}
-          onClose={closeEditModal}
-          onSave={handleEditEntry}
-          entry={editingEntry}
-        />
-      )}
-
-      {editingEntry && editingEntry.type === 'saida' && (
-        <AddExpenseModal
           show={true}
           onClose={closeEditModal}
           onSave={handleEditEntry}

@@ -512,6 +512,36 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_financial_summary: {
+        Args: { 
+          p_month: number;
+          p_year: number;
+          p_user_id?: string;
+        }
+        Returns: {
+          faturamento_bruto: number;
+          custos_diretos: number;
+          custos_indiretos: number;
+          comissoes: number;
+          impostos_taxas: number;
+          servicos_realizados: number;
+          ticket_medio: number;
+          resultado_liquido: number;
+          margem_lucro: number;
+          periodo: {
+            mes: number;
+            ano: number;
+            data_inicio: string;
+            data_fim: string;
+          };
+          percentuais: {
+            custos_diretos_pct: number;
+            custos_indiretos_pct: number;
+            impostos_pct: number;
+            comissoes_pct: number;
+          };
+        }
+      }
       is_admin: {
         Args: { user_id: string }
         Returns: boolean

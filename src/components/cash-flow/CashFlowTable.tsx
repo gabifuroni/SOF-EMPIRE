@@ -1,10 +1,11 @@
 
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CashFlowEntry } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 interface CashFlowTableProps {
   entries: CashFlowEntry[];
@@ -18,6 +19,7 @@ interface CashFlowEntryWithBalance extends CashFlowEntry {
 }
 
 const CashFlowTable = ({ entries, onEdit, onDelete }: CashFlowTableProps) => {
+  const navigate = useNavigate();
   // Calculate running balance
   const entriesWithBalance: CashFlowEntryWithBalance[] = entries
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -105,22 +107,37 @@ const CashFlowTable = ({ entries, onEdit, onDelete }: CashFlowTableProps) => {
               </TableCell>
               <TableCell className="text-center">
                 <div className="flex justify-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit(entry)}
-                    className="text-elite-charcoal-600 hover:text-elite-rose-600"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onDelete(entry.id)}
-                    className="text-elite-charcoal-600 hover:text-red-600"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {entry.type === 'entrada' && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(entry)}
+                        className="text-elite-charcoal-600 hover:text-elite-rose-600"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDelete(entry.id)}
+                        className="text-elite-charcoal-600 hover:text-red-600"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </>
+                  )}
+                  {entry.type === 'saida' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => navigate('/expenses')}
+                      className="text-elite-charcoal-600 hover:text-blue-600 text-xs"
+                    >
+                      <ExternalLink className="w-3 h-3 mr-1" />
+                      Despesas
+                    </Button>
+                  )}
                 </div>
               </TableCell>
             </TableRow>

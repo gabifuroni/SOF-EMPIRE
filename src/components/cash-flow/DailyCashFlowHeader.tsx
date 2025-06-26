@@ -1,16 +1,18 @@
 
-import { Plus, Minus } from 'lucide-react';
+import { Plus, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useNavigate } from 'react-router-dom';
 
 interface DailyCashFlowHeaderProps {
   today: Date;
   onAddEntry: () => void;
-  onAddExpense: () => void;
 }
 
-const DailyCashFlowHeader = ({ today, onAddEntry, onAddExpense }: DailyCashFlowHeaderProps) => {
+const DailyCashFlowHeader = ({ today, onAddEntry }: DailyCashFlowHeaderProps) => {
+  const navigate = useNavigate();
+
   return (
     <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
       <div>
@@ -19,7 +21,7 @@ const DailyCashFlowHeader = ({ today, onAddEntry, onAddExpense }: DailyCashFlowH
         </h1>
         <div className="w-12 h-px bg-symbol-gold mb-4"></div>
         <p className="brand-body text-symbol-gray-600">
-          Controle suas movimentações do dia {format(today, 'dd/MM/yyyy', { locale: ptBR })}
+          Controle suas entradas do dia {format(today, 'dd/MM/yyyy', { locale: ptBR })}
         </p>
       </div>
       
@@ -33,11 +35,12 @@ const DailyCashFlowHeader = ({ today, onAddEntry, onAddExpense }: DailyCashFlowH
         </Button>
         
         <Button 
-          onClick={onAddExpense}
-          className="bg-red-600 hover:bg-red-700 text-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
+          onClick={() => navigate('/expenses')}
+          variant="outline"
+          className="bg-transparent border-symbol-gray-300 text-symbol-gray-700 hover:bg-symbol-gray-50 font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
         >
-          <Minus className="w-4 h-4 mr-2" />
-          Adicionar Saída
+          <ExternalLink className="w-4 h-4 mr-2" />
+          Gerenciar Despesas
         </Button>
       </div>
     </div>
