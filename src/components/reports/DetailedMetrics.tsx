@@ -24,7 +24,7 @@ const months = [
 ];
 
 export const DetailedMetrics = ({ reportData, formatCurrency, selectedMonth, selectedYear, transactions }: DetailedMetricsProps) => {
-  const formatPercentage = (value: number) => `${value.toFixed(1)}%`;
+  const formatPercentage = (value: number | undefined | null) => `${Number(value ?? 0).toFixed(1)}%`;
 
   // Filter transactions for the selected month
   const targetDate = new Date(selectedYear, selectedMonth, 1);

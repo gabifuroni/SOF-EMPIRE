@@ -91,13 +91,13 @@ export const Charts = ({ reportData, pieData, chartConfig, formatCurrency }: Cha
             <p className="text-xs text-symbol-gray-600 mb-1">Distribuição do Faturamento</p>
             <div className="flex justify-between items-center text-xs">
               <span className="text-red-600 font-medium">
-                Custos: {(reportData.percentualCustosDirectos + reportData.percentualCustoOperacional).toFixed(1)}%
+                Custos: {Number((reportData.percentualCustosDirectos ?? 0) + (reportData.percentualCustoOperacional ?? 0)).toFixed(1)}%
               </span>
               <span className="text-purple-600 font-medium">
-                Deduções: {(((reportData.comissoes + reportData.impostos) / reportData.faturamento) * 100).toFixed(1)}%
+                Deduções: {Number(((Number(reportData.comissoes ?? 0) + Number(reportData.impostos ?? 0)) / Number(reportData.faturamento ?? 1)) * 100).toFixed(1)}%
               </span>
-              <span className={`font-bold ${reportData.lucroLiquido >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                Lucro: {reportData.margemLucro.toFixed(1)}%
+              <span className={`font-bold ${Number(reportData.lucroLiquido ?? 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                Lucro: {Number(reportData.margemLucro ?? 0).toFixed(1)}%
               </span>
             </div>
           </div>
@@ -133,7 +133,7 @@ export const Charts = ({ reportData, pieData, chartConfig, formatCurrency }: Cha
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-1">
             <span className="brand-body text-symbol-gray-700 text-sm lg:text-base">Eficiência Operacional</span>
             <span className="brand-heading text-symbol-black text-lg lg:text-xl">
-              {((reportData.faturamento - reportData.custosDirectos) / reportData.faturamento * 100).toFixed(1)}%
+              {Number(((Number(reportData.faturamento ?? 0) - Number(reportData.custosDirectos ?? 0)) / Number(reportData.faturamento ?? 1)) * 100).toFixed(1)}%
             </span>
           </div>
           <div className="w-full bg-symbol-gray-200 h-2 rounded-full">
@@ -143,7 +143,7 @@ export const Charts = ({ reportData, pieData, chartConfig, formatCurrency }: Cha
             />
           </div>
           <p className="text-xs text-symbol-gray-500 mt-1">
-            Meta ideal: acima de 70% • Atual: {((reportData.faturamento - reportData.custosDirectos) / reportData.faturamento * 100).toFixed(1)}%
+            Meta ideal: acima de 70% • Atual: {Number(((Number(reportData.faturamento ?? 0) - Number(reportData.custosDirectos ?? 0)) / Number(reportData.faturamento ?? 1)) * 100).toFixed(1)}%
           </p>
         </div>
         
@@ -151,7 +151,7 @@ export const Charts = ({ reportData, pieData, chartConfig, formatCurrency }: Cha
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-1">
             <span className="brand-body text-symbol-gray-700 text-sm lg:text-base">Controle de Custos</span>
             <span className="brand-heading text-symbol-black text-lg lg:text-xl">
-              {(reportData.custosDirectos / reportData.faturamento * 100).toFixed(1)}%
+              {Number((Number(reportData.custosDirectos ?? 0) / Number(reportData.faturamento ?? 1)) * 100).toFixed(1)}%
             </span>
           </div>
           <div className="w-full bg-symbol-gray-200 h-2 rounded-full">
@@ -161,7 +161,7 @@ export const Charts = ({ reportData, pieData, chartConfig, formatCurrency }: Cha
             />
           </div>
           <p className="text-xs text-symbol-gray-500 mt-1">
-            Meta ideal: abaixo de 30% • Atual: {(reportData.custosDirectos / reportData.faturamento * 100).toFixed(1)}%
+            Meta ideal: abaixo de 30% • Atual: {Number((Number(reportData.custosDirectos ?? 0) / Number(reportData.faturamento ?? 1)) * 100).toFixed(1)}%
           </p>
         </div>
 
@@ -169,7 +169,7 @@ export const Charts = ({ reportData, pieData, chartConfig, formatCurrency }: Cha
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-1">
             <span className="brand-body text-symbol-gray-700 text-sm lg:text-base">Margem Operacional</span>
             <span className="brand-heading text-symbol-black text-lg lg:text-xl">
-              {reportData.margemOperacional.toFixed(1)}%
+              {Number(reportData.margemOperacional ?? 0).toFixed(1)}%
             </span>
           </div>
           <div className="w-full bg-symbol-gray-200 h-2 rounded-full">
@@ -179,7 +179,7 @@ export const Charts = ({ reportData, pieData, chartConfig, formatCurrency }: Cha
             />
           </div>
           <p className="text-xs text-symbol-gray-500 mt-1">
-            Meta ideal: acima de 20% • Atual: {reportData.margemOperacional.toFixed(1)}%
+            Meta ideal: acima de 20% • Atual: {Number(reportData.margemOperacional ?? 0).toFixed(1)}%
           </p>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useBusinessSettings } from './useBusinessSettings';
 
 interface FinancialSummaryData {
   faturamento_bruto: number;
@@ -23,12 +24,16 @@ interface FinancialSummaryData {
     impostos_pct: number;
     comissoes_pct: number;
   };
+  depreciacao_mensal?: number; // Adicionado para facilitar downstream
 }
 
 export const useFinancialSummary = (month: number, year: number) => {
+  // Busca os parâmetros do negócio para pegar a depreciação mensal
+  const { settings: businessSettings } = useBusinessSettings();
+
   return useQuery({
-    queryKey: ['financial-summary', month, year],
-    queryFn: async (): Promise<FinancialSummaryData> => {
+    queryKey: ['financial-summary', month, year, businessSettings?.depreciacaoTotalMesDepreciado],
+    queryFn: async (): Promise<FinancialSummaryData & { depreciacao_mensal: number }> => {
       const { data, error } = await supabase.rpc('get_financial_summary', {
         p_month: month,
         p_year: year
@@ -39,9 +44,17 @@ export const useFinancialSummary = (month: number, year: number) => {
         throw error;
       }
 
-      return data;
+      // Buscar depreciação mensal dos parâmetros do negócio
+      let depreciacao_mensal = 0;
+      if (businessSettings && businessSettings.depreciacaoTotalMesDepreciado) {
+        depreciacao_mensal = Number(businessSettings.depreciacaoTotalMesDepreciado) || 0;
+      }
+      return {
+        ...data,
+        depreciacao_mensal
+      };
     },
-    enabled: month >= 1 && month <= 12 && year >= 2020,
+    enabled: month >= 1 && month <= 12 && year >= 2020 && !!businessSettings,
     staleTime: 1000 * 60 * 5, // 5 minutos
     gcTime: 1000 * 60 * 10, // 10 minutos
   });

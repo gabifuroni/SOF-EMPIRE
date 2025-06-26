@@ -25,15 +25,22 @@ export const FaturamentoModal = () => (
 export const CustosDirectosModal = () => (
   <div className="space-y-4">
     <p className="text-sm text-symbol-gray-700 leading-relaxed">
-      <strong>O que é:</strong> Custos diretamente relacionados à produção dos serviços, incluindo materiais, produtos e mão de obra direta.
+      <strong>O que é:</strong> Custos diretamente relacionados à execução dos serviços, como matéria-prima, insumos, impostos e taxas, entre outros. <br />
+      <span className="font-semibold">Atenção:</span> Comissões não entram aqui, pois são lançadas diretamente na entrada de caixa.
     </p>
     <div className="bg-red-50 p-4 rounded-lg">
       <h4 className="font-semibold text-red-800 mb-2">Inclui:</h4>
       <ul className="text-sm text-red-700 space-y-1">
-        <li>• Materiais e produtos utilizados nos serviços</li>
-        <li>• Mão de obra direta (25% do faturamento por padrão)</li>
-        <li>• Insumos consumidos na prestação do serviço</li>
+        <li>• Matéria-prima e insumos utilizados nos serviços</li>
+        <li>• Impostos e taxas pagos por serviço</li>
+        <li>• Outros custos diretamente ligados à execução do serviço</li>
       </ul>
+    </div>
+    <div className="bg-symbol-beige/20 p-4 rounded-lg">
+      <h4 className="font-semibold text-symbol-black mb-2">Como lançar:</h4>
+      <p className="text-sm text-symbol-gray-700">
+        Adicione todos os custos diretos na tabela de Despesas Diretas, exceto comissão, que deve ser informada no momento do lançamento da entrada de caixa.
+      </p>
     </div>
     <div className="bg-symbol-beige/20 p-4 rounded-lg">
       <h4 className="font-semibold text-symbol-black mb-2">Meta ideal:</h4>
@@ -185,6 +192,21 @@ export const TendenciaLucroModal = () => (
         <li>• Planejar estratégias futuras</li>
         <li>• Detectar problemas antecipadamente</li>
       </ul>
+    </div>
+  </div>
+);
+
+export const CustosIndiretosModal = () => (
+  <div className="space-y-4">
+    <p className="text-sm text-symbol-gray-700 leading-relaxed">
+      <strong>O que é:</strong> Despesas que não estão diretamente ligadas à execução de um serviço específico, mas são necessárias para manter o negócio funcionando. <br />
+      Exemplos: aluguel, água, luz, internet, salários administrativos, contabilidade, limpeza, etc.
+    </p>
+    <div className="bg-yellow-50 p-4 rounded-lg">
+      <h4 className="font-semibold text-yellow-800 mb-2">Como lançar:</h4>
+      <p className="text-sm text-yellow-700">
+        Adicione esses valores na tabela de Despesas Indiretas.
+      </p>
     </div>
   </div>
 );

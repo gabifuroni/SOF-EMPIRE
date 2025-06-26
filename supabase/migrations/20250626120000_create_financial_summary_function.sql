@@ -56,17 +56,13 @@ BEGIN
     AND date <= v_end_date
     AND commission IS NOT NULL;
 
-  -- 3. CUSTOS DIRETOS (despesas diretas + comissões)
-  -- Primeiro, obter as despesas diretas do mês
+  -- 3. CUSTOS DIRETOS (apenas despesas diretas do mês)
   SELECT COALESCE(SUM(ddv.valor_mensal), 0)
   INTO v_custos_diretos
   FROM despesas_diretas_valores ddv
   WHERE ddv.user_id = p_user_id
     AND EXTRACT(MONTH FROM ddv.mes_referencia) = p_month
     AND EXTRACT(YEAR FROM ddv.mes_referencia) = p_year;
-  
-  -- Adicionar as comissões aos custos diretos
-  v_custos_diretos := v_custos_diretos + v_comissoes;
 
   -- 4. CUSTOS INDIRETOS (despesas indiretas do mês)
   SELECT COALESCE(SUM(div.valor_mensal), 0)

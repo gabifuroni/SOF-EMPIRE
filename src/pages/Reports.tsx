@@ -1,10 +1,6 @@
 import React, { useState } from 'react';
 import { useTransactions } from '@/hooks/useTransactions';
-import { useIndirectExpenseValues } from '@/hooks/useIndirectExpenses';
-import { useDirectExpenseValues } from '@/hooks/useDirectExpenses';
-import { useMaterials } from '@/hooks/useMaterials';
-import { useServices } from '@/hooks/useServices';
-import { useBusinessParams } from '@/hooks/useBusinessParams';
+import { useFinancialSummary } from '@/hooks/useFinancialSummary';
 
 // Refactored components
 import { ReportHeader } from '@/components/reports/ReportHeader';
@@ -17,7 +13,6 @@ import { DetailedMetrics } from '@/components/reports/DetailedMetrics';
 import { Charts } from '@/components/reports/Charts';
 
 // Hooks
-import { useReportData } from '@/components/reports/hooks/useReportData';
 import { useChartData } from '@/components/reports/hooks/useChartData';
 
 const Reports = () => {
@@ -26,13 +21,9 @@ const Reports = () => {
   const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
 
   const { transactions, isLoading: transactionsLoading } = useTransactions();
-  const { expenses: indirectExpenses, isLoading: expensesLoading, getTotalByMonth } = useIndirectExpenseValues();
-  const { expenses: directExpenses, isLoading: directExpensesLoading, getTotalByMonth: getDirectExpensesTotalByMonth } = useDirectExpenseValues();
-  const { materials, isLoading: materialsLoading } = useMaterials();
-  const { services, isLoading: servicesLoading } = useServices();
-  const { params: businessParams, isLoading: businessParamsLoading } = useBusinessParams();
+  const { data: financialSummary, isLoading: financialSummaryLoading } = useFinancialSummary(selectedMonth + 1, selectedYear);
 
-  const isLoading = transactionsLoading || expensesLoading || directExpensesLoading || materialsLoading || servicesLoading || businessParamsLoading;
+  const isLoading = transactionsLoading || financialSummaryLoading;
 
   const months = [
     'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -41,16 +32,29 @@ const Reports = () => {
 
   const years = [2022, 2023, 2024, 2025, 2026, 2027];
 
-  // Calculate report data from real database data
-  const reportData = useReportData(
-    transactions,
-    selectedMonth,
-    selectedYear,
-    getTotalByMonth,
-    services,
-    getDirectExpensesTotalByMonth,
-    businessParams
-  );
+  // Convert financial summary data to match the expected MonthlyReportData format
+  const reportData = financialSummary ? {
+    // Valores base
+    faturamento: financialSummary.faturamento_bruto,
+    // Custos Diretos
+    custosDirectos: financialSummary.custos_diretos,
+    percentualCustosDirectos: financialSummary.percentuais.custos_diretos_pct,
+    // Custos Indiretos (despesas indiretas + impostos + comissão + depreciação mensal)
+    custosIndiretos: Number(financialSummary.custos_indiretos ?? 0),
+    // Propriedades obrigatórias para compatibilidade
+    comissoes: Number(financialSummary.comissoes ?? 0),
+    impostos: Number(financialSummary.impostos_taxas ?? 0),
+    percentualImpostos: Number(financialSummary.percentuais.impostos_pct ?? 0),
+    custoOperacional: 0, // Não será exibido
+    percentualCustoOperacional: 0, // Não será exibido
+    // Lucro e resultado
+    lucroLiquido: financialSummary.resultado_liquido,
+    margemLucro: financialSummary.margem_lucro,
+    // Serviços realizados e ticket médio
+    ticketMedio: financialSummary.ticket_medio,
+    servicosRealizados: financialSummary.servicos_realizados,
+    transacoesEntrada: financialSummary.servicos_realizados,
+  } : null;
 
   // Chart data
   const { chartConfig, pieData } = useChartData(reportData);
@@ -88,6 +92,7 @@ const Reports = () => {
     );
   }
 
+  // Renderização dos componentes: manter apenas os cards solicitados
   return (
     <div className="space-y-6 lg:space-y-8 p-4 lg:p-6 animate-minimal-fade">
       {/* Header Section */}
@@ -107,28 +112,19 @@ const Reports = () => {
         formatCurrency={formatCurrency}
       />
 
-      {/* Main Metrics Grid */}
+      {/* Main Metrics Grid - apenas cards solicitados */}
       <MainMetrics
         reportData={reportData}
         formatCurrency={formatCurrency}
       />
 
-      {/* Secondary Metrics */}
+      {/* Secondary Metrics - apenas cards solicitados */}
       <SecondaryMetrics
         reportData={reportData}
         formatCurrency={formatCurrency}
       />
 
-      {/* Detailed Metrics - Same as Service Table */}
-      <DetailedMetrics
-        reportData={reportData}
-        formatCurrency={formatCurrency}
-        selectedMonth={selectedMonth}
-        selectedYear={selectedYear}
-        transactions={transactions}
-      />
-
-      {/* Charts Section */}
+      {/* Charts Section - gráfico de pizza restaurado */}
       <Charts
         reportData={reportData}
         pieData={pieData}
