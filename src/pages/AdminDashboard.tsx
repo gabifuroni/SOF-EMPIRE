@@ -1,14 +1,14 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { User as UserType } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Plus, Users, TrendingUp, Building, MapPin, Calendar, Eye, Edit, MoreVertical, Settings, User } from 'lucide-react';
+import { LogOut, Plus, Users, TrendingUp, Building, MapPin, Calendar, Eye, Edit, MoreVertical, Settings, User, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +18,7 @@ import {
 import AddUserModal from '@/components/admin/AddUserModal';
 import EditUserModal from '@/components/admin/EditUserModal';
 import AdminProfile from '@/components/admin/AdminProfile';
+import { useAdminFinancialSummary, useAdminAnnualSummary } from '@/hooks/useAdminFinancialSummary';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState<UserType[]>([]);
@@ -27,6 +28,31 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const { toast } = useToast();
+  
+  // Estados para faturamento consolidado
+  const currentDate = new Date();
+  const [viewType, setViewType] = useState<'monthly' | 'annual'>('monthly');
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+  
+  // Hooks para dados financeiros
+  const { data: monthlyData, isLoading: monthlyLoading } = useAdminFinancialSummary(
+    viewType === 'monthly' ? selectedMonth : 0,
+    selectedYear
+  );
+  const { data: annualData, isLoading: annualLoading } = useAdminAnnualSummary(
+    viewType === 'annual' ? selectedYear : 0
+  );
+  
+  const financialData = viewType === 'monthly' ? monthlyData : annualData;
+  const financialLoading = viewType === 'monthly' ? monthlyLoading : annualLoading;
+  
+  const months = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+  
+  const years = [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030];
   const loadUsers = useCallback(async () => {
     try {
       setLoading(true);
@@ -240,16 +266,91 @@ const AdminDashboard = () => {
 
           <Card className="bg-white border-symbol-gray-200 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-symbol-gray-600">Faturamento Total</CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-sm font-medium text-symbol-gray-600">
+                  Faturamento {viewType === 'monthly' ? 'Mensal' : 'Anual'}
+                </CardTitle>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                      <ChevronDown className="h-3 w-3" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => setViewType('monthly')}>
+                      Visualização Mensal
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setViewType('annual')}>
+                      Visualização Anual
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
               <TrendingUp className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-symbol-black">
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalRevenue)}
+              <div className="space-y-3">
+                <div className="text-2xl font-bold text-symbol-black">
+                  {financialLoading ? (
+                    <div className="animate-pulse bg-gray-200 h-6 w-24 rounded"></div>
+                  ) : (
+                    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                      financialData?.faturamento_bruto || 0
+                    )
+                  )}
+                </div>
+                
+                {/* Seletores de período */}
+                <div className="flex gap-2">
+                  {viewType === 'monthly' && (
+                    <Select 
+                      value={selectedMonth.toString()} 
+                      onValueChange={(value) => setSelectedMonth(parseInt(value))}
+                    >
+                      <SelectTrigger className="h-6 text-xs flex-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {months.map((month, index) => (
+                          <SelectItem key={index} value={(index + 1).toString()}>
+                            {month}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  
+                  <Select 
+                    value={selectedYear.toString()} 
+                    onValueChange={(value) => setSelectedYear(parseInt(value))}
+                  >
+                    <SelectTrigger className="h-6 text-xs flex-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {years.map((year) => (
+                        <SelectItem key={year} value={year.toString()}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="text-xs text-symbol-gray-500">
+                  {financialLoading ? (
+                    <div className="animate-pulse bg-gray-200 h-3 w-32 rounded"></div>
+                  ) : (
+                    <>
+                      {financialData?.servicos_realizados || 0} serviços • Ticket: {
+                        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                          financialData?.ticket_medio || 0
+                        )
+                      }
+                    </>
+                  )}
+                </div>
               </div>
-              <p className="text-xs text-symbol-gray-500 mt-1">
-                Média: {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(avgRevenue)}
-              </p>
             </CardContent>
           </Card>
 
