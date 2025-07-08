@@ -126,7 +126,7 @@ const EditUserModal = ({ show, onClose, onUpdateUser, user }: EditUserModalProps
     <div 
       className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 modal-overlay"
       onClick={onClose}
-      style={{ overflowY: 'auto' }}
+      style={{ overflowY: 'auto', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}
     >
       <div 
         className="bg-white rounded-xl shadow-2xl w-full max-w-2xl my-8 relative max-h-[90vh] flex flex-col"
@@ -158,19 +158,20 @@ const EditUserModal = ({ show, onClose, onUpdateUser, user }: EditUserModalProps
           <form onSubmit={handleSubmit} className="p-6 space-y-6">
           
           {/* Informações Básicas */}
-          <Card className="border-symbol-gray-200">
+          <Card className="border-gray-200 bg-white">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <UserIcon className="h-4 w-4 text-symbol-gray-600" />
+                <UserIcon className="h-4 w-4 text-gray-600" />
                 Informações Pessoais
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-700">
                 Dados básicos do usuário
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">                  <Label htmlFor="name" className="text-sm font-medium text-gray-700">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-sm font-medium text-gray-700">
                     Nome Profissional/Salão *
                   </Label>
                   <div className="relative">
@@ -179,7 +180,7 @@ const EditUserModal = ({ show, onClose, onUpdateUser, user }: EditUserModalProps
                       id="name"
                       value={editUser.name}
                       onChange={(e) => setEditUser({...editUser, name: e.target.value})}
-                      className="pl-10 border-gray-300 focus:border-gray-900 focus:ring-gray-900"
+                      className="pl-10 border-gray-300 bg-white focus:border-gray-900 focus:ring-gray-900"
                       placeholder="Digite o nome do profissional ou salão"
                       required
                       disabled={loading}
@@ -188,16 +189,16 @@ const EditUserModal = ({ show, onClose, onUpdateUser, user }: EditUserModalProps
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm font-medium text-symbol-gray-700">
+                  <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
                     Telefone
                   </Label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-symbol-gray-400" />
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       id="phone"
                       value={editUser.phone}
                       onChange={(e) => setEditUser({...editUser, phone: e.target.value})}
-                      className="pl-10 border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                      className="pl-10 border-gray-300 bg-white focus:border-gray-900 focus:ring-gray-900"
                       disabled={loading}
                     />
                   </div>
@@ -205,17 +206,17 @@ const EditUserModal = ({ show, onClose, onUpdateUser, user }: EditUserModalProps
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium text-symbol-gray-700">
+                <Label htmlFor="email" className="text-sm font-medium text-gray-700">
                   E-mail *
                 </Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-symbol-gray-400" />
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     id="email"
                     type="email"
                     value={editUser.email}
                     onChange={(e) => setEditUser({...editUser, email: e.target.value})}
-                    className="pl-10 border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                    className="pl-10 border-gray-300 bg-white focus:border-gray-900 focus:ring-gray-900"
                     required
                     disabled={loading}
                   />
@@ -225,57 +226,57 @@ const EditUserModal = ({ show, onClose, onUpdateUser, user }: EditUserModalProps
           </Card>
 
           {/* Informações do Salão */}
-          <Card className="border-symbol-gray-200">
+          <Card className="border-gray-200 bg-white">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <Building className="h-4 w-4 text-symbol-gray-600" />
+                <Building className="h-4 w-4 text-gray-600" />
                 Informações do Salão
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-700">
                 Dados do estabelecimento
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="salonName" className="text-sm font-medium text-symbol-gray-700">
+                  <Label htmlFor="salonName" className="text-sm font-medium text-gray-700">
                     Nome do Salão/Profissional
                   </Label>
                   <div className="relative">
-                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-symbol-gray-400" />
+                    <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <Input
                       id="salonName"
                       value={editUser.salonName}
                       onChange={(e) => setEditUser({...editUser, salonName: e.target.value})}
-                      className="pl-10 border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                      className="pl-10 border-gray-300 bg-white focus:border-gray-900 focus:ring-gray-900"
                       disabled={loading}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="nomeSalao" className="text-sm font-medium text-symbol-gray-700">
+                  <Label htmlFor="nomeSalao" className="text-sm font-medium text-gray-700">
                     Nome Fantasia
                   </Label>
                   <Input
                     id="nomeSalao"
                     value={editUser.nomeSalao}
                     onChange={(e) => setEditUser({...editUser, nomeSalao: e.target.value})}
-                    className="border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                    className="border-gray-300 bg-white focus:border-gray-900 focus:ring-gray-900"
                     disabled={loading}
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="descricaoSalao" className="text-sm font-medium text-symbol-gray-700">
+                <Label htmlFor="descricaoSalao" className="text-sm font-medium text-gray-700">
                   Descrição do Salão
                 </Label>
                 <Input
                   id="descricaoSalao"
                   value={editUser.descricaoSalao}
                   onChange={(e) => setEditUser({...editUser, descricaoSalao: e.target.value})}
-                  className="border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                  className="border-gray-300 bg-white focus:border-gray-900 focus:ring-gray-900"
                   disabled={loading}
                 />
               </div>
@@ -283,28 +284,28 @@ const EditUserModal = ({ show, onClose, onUpdateUser, user }: EditUserModalProps
           </Card>
 
           {/* Informações de Localização */}
-          <Card className="border-symbol-gray-200">
+          <Card className="border-gray-200 bg-white">
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
-                <MapPin className="h-4 w-4 text-symbol-gray-600" />
+                <MapPin className="h-4 w-4 text-gray-600" />
                 Localização
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-gray-700">
                 Endereço do estabelecimento
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="endereco" className="text-sm font-medium text-symbol-gray-700">
+                <Label htmlFor="endereco" className="text-sm font-medium text-gray-700">
                   Endereço Completo
                 </Label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-symbol-gray-400" />
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     id="endereco"
                     value={editUser.endereco}
                     onChange={(e) => setEditUser({...editUser, endereco: e.target.value})}
-                    className="pl-10 border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                    className="pl-10 border-gray-300 bg-white focus:border-gray-900 focus:ring-gray-900"
                     disabled={loading}
                   />
                 </div>
@@ -312,27 +313,27 @@ const EditUserModal = ({ show, onClose, onUpdateUser, user }: EditUserModalProps
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="cidade" className="text-sm font-medium text-symbol-gray-700">
+                  <Label htmlFor="cidade" className="text-sm font-medium text-gray-700">
                     Cidade
                   </Label>
                   <Input
                     id="cidade"
                     value={editUser.cidade}
                     onChange={(e) => setEditUser({...editUser, cidade: e.target.value})}
-                    className="border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                    className="border-gray-300 bg-white focus:border-gray-900 focus:ring-gray-900"
                     disabled={loading}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="estado" className="text-sm font-medium text-symbol-gray-700">
+                  <Label htmlFor="estado" className="text-sm font-medium text-gray-700">
                     Estado
                   </Label>
                   <Input
                     id="estado"
                     value={editUser.estado}
                     onChange={(e) => setEditUser({...editUser, estado: e.target.value})}
-                    className="border-symbol-gray-300 focus:border-symbol-black focus:ring-symbol-black"
+                    className="border-gray-300 bg-white focus:border-gray-900 focus:ring-gray-900"
                     maxLength={2}
                     disabled={loading}
                   />
@@ -348,7 +349,7 @@ const EditUserModal = ({ show, onClose, onUpdateUser, user }: EditUserModalProps
             type="button"
             variant="outline"
             onClick={onClose}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6"
+            className="border-gray-300 bg-white text-gray-700 hover:bg-gray-50 px-6"
             disabled={loading}
           >
             Cancelar

@@ -279,7 +279,7 @@ const Profile = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Seção 1: Dados Cadastrais */}
-        <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+        <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300 bg-white border-gray-200">
           <div className="mb-6">
             <h2 className="brand-subheading text-symbol-black text-lg mb-2 flex items-center gap-3">
               <User size={20} className="text-symbol-gray-600" />
@@ -318,101 +318,101 @@ const Profile = () => {
             {/* Campos de Dados */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="name" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
+                <Label htmlFor="name" className="brand-body text-gray-700 text-sm font-medium">
                   Nome do Profissional
                 </Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-symbol-black"
+                  className="mt-2 bg-white border-gray-300 focus:border-gray-900 focus:ring-gray-900 text-symbol-black"
                 />
               </div>
               <div>
-                <Label htmlFor="salonName" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
+                <Label htmlFor="salonName" className="brand-body text-gray-700 text-sm font-medium">
                   Nome do Salão
                 </Label>
                 <Input
                   id="salonName"
                   value={formData.salonName}
                   onChange={(e) => handleInputChange('salonName', e.target.value)}
-                  className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-symbol-black"
+                  className="mt-2 bg-white border-gray-300 focus:border-gray-900 focus:ring-gray-900 text-symbol-black"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="phone" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
+                <Label htmlFor="phone" className="brand-body text-gray-700 text-sm font-medium">
                   Telefone / WhatsApp
                 </Label>
                 <Input
                   id="phone"
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
-                  className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-symbol-black"
+                  className="mt-2 bg-white border-gray-300 focus:border-gray-900 focus:ring-gray-900 text-symbol-black"
                 />
               </div>
               <div>
-                <Label htmlFor="email" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
+                <Label htmlFor="email" className="brand-body text-gray-700 text-sm font-medium">
                   Email de Acesso
                 </Label>
                 <Input
                   id="email"
                   value={formData.email}
                   disabled
-                  className="mt-2 bg-elite-pearl-100"
+                  className="mt-2 bg-gray-100"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="address" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
+              <Label htmlFor="address" className="brand-body text-gray-700 text-sm font-medium">
                 Endereço
               </Label>
               <Input
                 id="address"
                 value={formData.address}
                 onChange={(e) => handleInputChange('address', e.target.value)}
-                className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-symbol-black"
+                className="mt-2 bg-white border-gray-300 focus:border-gray-900 focus:ring-gray-900 text-symbol-black"
                 placeholder="Rua, número, bairro"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <Label htmlFor="city" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
+                <Label htmlFor="city" className="brand-body text-gray-700 text-sm font-medium">
                   Cidade
                 </Label>
                 <Input
                   id="city"
                   value={formData.city}
                   onChange={(e) => handleInputChange('city', e.target.value)}
-                  className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-symbol-black"
+                  className="mt-2 bg-white border-gray-300 focus:border-gray-900 focus:ring-gray-900 text-symbol-black"
                 />
               </div>
               <div>
-                <Label htmlFor="state" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
+                <Label htmlFor="state" className="brand-body text-gray-700 text-sm font-medium">
                   Estado
                 </Label>
                 <Input
                   id="state"
                   value={formData.state}
                   onChange={(e) => handleInputChange('state', e.target.value)}
-                  className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-symbol-black"
+                  className="mt-2 bg-white border-gray-300 focus:border-gray-900 focus:ring-gray-900 text-symbol-black"
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="description" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
+              <Label htmlFor="description" className="brand-body text-gray-700 text-sm font-medium">
                 Sobre o seu negócio
               </Label>
               <Textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) => handleInputChange('description', e.target.value)}
-                className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-symbol-black"
+                className="mt-2 bg-white border-gray-300 focus:border-gray-900 focus:ring-gray-900 text-symbol-black"
                 rows={3}
                 placeholder="Descreva brevemente seu salão e especialidades..."
               />
@@ -421,7 +421,7 @@ const Profile = () => {
         </div>
 
         {/* Seção 2: Segurança */}
-        <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
+        <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300 bg-white border-gray-200">
           <div className="mb-6">
             <h2 className="brand-subheading text-symbol-black text-lg mb-2 flex items-center gap-3">
               <Shield size={20} className="text-symbol-gray-600" />
@@ -432,7 +432,7 @@ const Profile = () => {
           
           <div className="space-y-6">
             <div>
-              <Label htmlFor="currentPassword" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
+              <Label htmlFor="currentPassword" className="brand-body text-gray-700 text-sm font-medium">
                 Senha Atual
               </Label>
               <Input
@@ -440,13 +440,13 @@ const Profile = () => {
                 type="password"
                 value={formData.currentPassword}
                 onChange={(e) => handleInputChange('currentPassword', e.target.value)}
-                className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-symbol-black"
+                className="mt-2 bg-white border-gray-300 focus:border-gray-900 focus:ring-gray-900 text-symbol-black"
                 placeholder="Digite sua senha atual"
               />
             </div>
 
             <div>
-              <Label htmlFor="newPassword" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
+              <Label htmlFor="newPassword" className="brand-body text-gray-700 text-sm font-medium">
                 Nova Senha
               </Label>
               <Input
@@ -454,13 +454,13 @@ const Profile = () => {
                 type="password"
                 value={formData.newPassword}
                 onChange={(e) => handleInputChange('newPassword', e.target.value)}
-                className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-symbol-black"
+                className="mt-2 bg-white border-gray-300 focus:border-gray-900 focus:ring-gray-900 text-symbol-black"
                 placeholder="Digite a nova senha"
               />
               {formData.newPassword && (
                 <div className="mt-2 space-y-1">
                   <div className="flex items-center gap-2">
-                    <div className="flex-1 h-2 bg-elite-pearl-300 rounded-full overflow-hidden">
+                    <div className="flex-1 h-2 bg-gray-300 rounded-full overflow-hidden">
                       <div 
                         className={`h-full transition-all duration-300 ${getPasswordStrengthColor()}`}
                         style={{ width: passwordStrength === 'Forte' ? '100%' : passwordStrength === 'Média' ? '66%' : '33%' }}
@@ -478,7 +478,7 @@ const Profile = () => {
             </div>
 
             <div>
-              <Label htmlFor="confirmPassword" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
+              <Label htmlFor="confirmPassword" className="brand-body text-gray-700 text-sm font-medium">
                 Confirmar Nova Senha
               </Label>
               <Input
@@ -486,13 +486,13 @@ const Profile = () => {
                 type="password"
                 value={formData.confirmPassword}
                 onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-symbol-black"
+                className="mt-2 bg-white border-gray-300 focus:border-gray-900 focus:ring-gray-900 text-symbol-black"
                 placeholder="Confirme a nova senha"
               />
             </div>
 
-            <div className="symbol-card p-6 bg-white border-symbol-gold/30">
-              <h4 className="brand-subheading text-symbol-black text-sm uppercase tracking-wide mb-3">
+            <div className="symbol-card p-6 bg-gray-50 border-gray-200">
+              <h4 className="brand-subheading text-symbol-black text-sm font-medium mb-3">
                 Requisitos da Senha
               </h4>
               <ul className="brand-body text-symbol-gray-600 space-y-1 text-sm">
@@ -510,7 +510,7 @@ const Profile = () => {
         <Button 
           onClick={handleSaveProfile}
           disabled={isSaving || isLoading}
-          className="bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-4 px-8 transition-all duration-300 flex items-center gap-3 uppercase tracking-wider text-sm disabled:opacity-50"
+          className="bg-gray-900 hover:bg-gray-800 text-white font-medium py-4 px-8 transition-all duration-300 flex items-center gap-3 text-sm disabled:opacity-50"
         >
           <Save size={20} />
           {isSaving ? 'Salvando...' : 'Salvar Alterações'}
