@@ -1,14 +1,23 @@
 import React from 'react';
 import { BarChart3 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { DateSelectors } from './DateSelectors';
 
 interface NoDataScreenProps {
   selectedMonth: number;
   selectedYear: number;
   months: string[];
+  onMonthChange: (month: number) => void;
+  onYearChange: (year: number) => void;
 }
 
-export const NoDataScreen = ({ selectedMonth, selectedYear, months }: NoDataScreenProps) => (
+export const NoDataScreen = ({ 
+  selectedMonth, 
+  selectedYear, 
+  months, 
+  onMonthChange, 
+  onYearChange 
+}: NoDataScreenProps) => (
   <div className="space-y-8 p-6 animate-minimal-fade">
     <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
       <div>
@@ -21,6 +30,14 @@ export const NoDataScreen = ({ selectedMonth, selectedYear, months }: NoDataScre
         </p>
       </div>
     </div>
+
+    {/* Date Selectors - sempre visíveis */}
+    <DateSelectors
+      selectedMonth={selectedMonth}
+      selectedYear={selectedYear}
+      onMonthChange={onMonthChange}
+      onYearChange={onYearChange}
+    />
 
     <Card className="symbol-card p-8 text-center shadow-lg bg-white border-symbol-gold/30">
       <CardContent>

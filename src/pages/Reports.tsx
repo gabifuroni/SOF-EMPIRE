@@ -88,6 +88,8 @@ const Reports = () => {
         selectedMonth={selectedMonth}
         selectedYear={selectedYear}
         months={months}
+        onMonthChange={setSelectedMonth}
+        onYearChange={setSelectedYear}
       />
     );
   }
