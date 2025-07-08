@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { User, Camera, Shield, Save } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useProfile } from '@/hooks/useProfile';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ProfileUpdateData {
   nome_profissional_ou_salao?: string;
@@ -93,6 +94,41 @@ const Profile = () => {
     }
   };
 
+  const handlePasswordChange = async () => {
+    // Validações
+    if (!formData.currentPassword || !formData.newPassword || !formData.confirmPassword) {
+      throw new Error('Todos os campos de senha são obrigatórios');
+    }
+
+    if (formData.newPassword !== formData.confirmPassword) {
+      throw new Error('A nova senha e a confirmação não coincidem');
+    }
+
+    if (formData.newPassword.length < 6) {
+      throw new Error('A nova senha deve ter pelo menos 6 caracteres');
+    }
+
+    // Tentar fazer login com a senha atual para validar
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user?.email) throw new Error('Email do usuário não encontrado');
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: user.email,
+      password: formData.currentPassword
+    });
+
+    if (signInError) {
+      throw new Error('Senha atual incorreta');
+    }
+
+    // Atualizar senha
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: formData.newPassword
+    });
+
+    if (updateError) throw updateError;
+  };
+
   const handleSaveProfile = async () => {
     // Validação básica
     if (formData.newPassword && formData.newPassword !== formData.confirmPassword) {
@@ -128,6 +164,32 @@ const Profile = () => {
       // Chamar a função de atualização do hook
       await updateProfile.mutateAsync(updateData);
 
+      // Processar mudança de senha se fornecida
+      if (formData.newPassword && formData.currentPassword) {
+        try {
+          await handlePasswordChange();
+          toast({
+            title: "Sucesso!",
+            description: "Perfil e senha atualizados com sucesso!",
+            variant: "default"
+          });
+        } catch (passwordError) {
+          // Se houve erro na senha, ainda assim o perfil foi salvo
+          toast({
+            title: "Perfil atualizado, mas erro na senha",
+            description: passwordError instanceof Error ? passwordError.message : "Erro ao alterar senha",
+            variant: "destructive"
+          });
+          return; // Não limpa os campos de senha para permitir nova tentativa
+        }
+      } else {
+        toast({
+          title: "Sucesso!",
+          description: "Perfil atualizado com sucesso!",
+          variant: "default"
+        });
+      }
+
       // Limpar campos de senha após salvamento bem-sucedido
       setFormData(prev => ({
         ...prev,
@@ -136,11 +198,6 @@ const Profile = () => {
         confirmPassword: ''
       }));
 
-      toast({
-        title: "Sucesso!",
-        description: "Perfil atualizado com sucesso!",
-        variant: "default"
-      });
     } catch (error) {
       console.error('Erro ao salvar perfil:', error);
       toast({
