@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -65,7 +66,7 @@ const MaterialCostSection = ({ materialCosts, materials, onMaterialCostsChange }
               <SelectContent>
                 {materials.map((material) => (
                   <SelectItem key={material.id} value={material.id}>
-                    {material.name} - R$ {material.unitCost.toFixed(2)}
+                    {material.name} - R$ {material.unitCost.toFixed(2)} ({material.unit})
                   </SelectItem>
                 ))}
               </SelectContent>

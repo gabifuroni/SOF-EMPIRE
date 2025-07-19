@@ -33,7 +33,7 @@ const AdminMetrics = ({ users }: AdminMetricsProps) => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <MetricCard
           title="Usuários Ativos"
           value={activeUsers}
@@ -56,13 +56,6 @@ const AdminMetrics = ({ users }: AdminMetricsProps) => {
           trend={{ value: 5, isPositive: true }}
           icon={<FileText className="text-elite-gold-600" size={20} />}
           color="gold"
-        />
-
-        <MetricCard
-          title="Salões Cadastrados"
-          value={usersWithSalons}
-          icon={<Building className="text-elite-emerald-600" size={20} />}
-          color="emerald"
         />
 
         <MetricCard
