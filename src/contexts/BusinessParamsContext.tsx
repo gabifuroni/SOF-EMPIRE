@@ -22,12 +22,10 @@ interface BusinessParams {
   monthlyGoal: number;
   goalType: 'financial' | 'attendance';
   paymentMethods: PaymentMethod[];
-  // Novos campos dos parâmetros do negócio
   depreciacaoValorMobilizado: number;
   depreciacaoTotalMesDepreciado: number;
   depreciacaoMensal: number;
   equipeNumeroProfissionais: number;
-  // Campos para dias da semana trabalhados
   trabalhaSegunda: boolean;
   trabalhaTerca: boolean;
   trabalhaQuarta: boolean;
@@ -35,7 +33,6 @@ interface BusinessParams {
   trabalhaSexta: boolean;
   trabalhaSabado: boolean;
   trabalhaDomingo: boolean;
-  // Campo para feriados
   feriados: Array<{id: string, date: string, name: string}>;
 }
 
