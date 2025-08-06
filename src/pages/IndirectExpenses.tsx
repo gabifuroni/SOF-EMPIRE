@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
@@ -193,10 +194,30 @@ const IndirectExpenses = () => {
               valor_mensal: value,
             });
           }          // Integração com fluxo de caixa
-          if (value > 0) {
-            const category = categories.find(cat => cat.id === categoryId);
-            const isFixed = category?.is_fixed || false;
+          const category = categories.find(cat => cat.id === categoryId);
+          const isFixed = category?.is_fixed || false;
 
+          // Primeiro, remover TODAS as transações existentes desta categoria
+          try {
+            const { data: existingTransactions } = await supabase
+              .from('transacoes_financeiras')
+              .select('id')
+              .eq('user_id', user?.id)
+              .eq('category', 'Despesas Indiretas')
+              .ilike('description', `%Despesa Indireta: ${category?.nome_categoria_despesa || ''}%`);
+
+            if (existingTransactions && existingTransactions.length > 0) {
+              await supabase
+                .from('transacoes_financeiras')
+                .delete()
+                .in('id', existingTransactions.map(t => t.id));
+              console.log(`Removed ${existingTransactions.length} existing transactions for category ${category?.nome_categoria_despesa}`);
+            }
+          } catch (error) {
+            console.error('Error removing existing indirect expense transactions:', error);
+          }
+
+          if (value > 0) {
             if (isFixed) {
               // Se é despesa fixa, criar 12 transações (uma para cada mês)
               const cashFlowPromises = MONTHS.map(async (month, index) => {
@@ -213,6 +234,7 @@ const IndirectExpenses = () => {
                 });
               });
               await Promise.all(cashFlowPromises);
+              console.log(`Created 12 fixed transactions for category ${category?.nome_categoria_despesa} with value ${-value} each`);
             } else {
               // Se não é fixa, criar apenas uma transação no mês selecionado
               await addTransaction.mutateAsync({
@@ -224,6 +246,7 @@ const IndirectExpenses = () => {
                 payment_method: null,
                 is_recurring: false,
               });
+              console.log(`Created single transaction for category ${category?.nome_categoria_despesa} with value ${-value}`);
             }
           }
 
@@ -391,67 +414,66 @@ const IndirectExpenses = () => {
     }));
   };
   const saveDirectExpenseValues = async () => {
+    if (!user) return;
+
     try {
+      console.log('=== INICIANDO SALVAMENTO DE DESPESAS DIRETAS ===');
+      console.log('tempDirectExpenseValues:', tempDirectExpenseValues);
+      console.log('directCategories:', directCategories);
+      
       const monthNumber = MONTHS.findIndex((m) => m.key === selectedMonth) + 1;
       const dateString = `${selectedYear}-${monthNumber.toString().padStart(2, "0")}-01`;
-
-      console.log('Saving direct expense values for date:', dateString);
-      console.log('Temp values to save:', tempDirectExpenseValues);
+      console.log('dateString:', dateString);
 
       const savePromises = Object.entries(tempDirectExpenseValues).map(
         async ([categoryId, value]) => {
-          const existingExpense = directExpenses.find(
-            (exp) =>
-              exp.categoria_id === categoryId &&
-              exp.mes_referencia === dateString
-          );
-
-          console.log('Processing category:', categoryId, 'value:', value, 'existing:', existingExpense);
-
-          // 1. Primeiro, remover transação existente se houver
-          if (existingExpense && existingExpense.valor_mensal > 0) {
-            const category = directCategories.find(cat => cat.id === categoryId);
-            try {
-              // Buscar e deletar transação existente
-              const { data: existingTransactions } = await supabase
-                .from('transacoes_financeiras')
-                .select('id')
-                .eq('user_id', user?.id)
-                .eq('category', 'Despesas Diretas')
-                .ilike('description', `%Despesa Direta: ${category?.nome_categoria || ''}%`)
-                .eq('date', dateString);
-
-              if (existingTransactions && existingTransactions.length > 0) {
-                await supabase
-                  .from('transacoes_financeiras')
-                  .delete()
-                  .in('id', existingTransactions.map(t => t.id));
-              }
-            } catch (error) {
-              console.error('Error removing existing transaction:', error);
-            }
+          console.log(`Processing category ${categoryId} with value ${value}`);
+          const category = directCategories.find((cat) => cat.id === categoryId);
+          if (!category) {
+            console.log(`Category ${categoryId} not found!`);
+            return;
           }
 
-          // 2. Salvar/atualizar o valor da despesa usando upsert
+          console.log(`Found category: ${category.nome_categoria}`);
+
+          // 1. Remover transações existentes para esta categoria e mês
+          const deleteResult = await supabase
+            .from('transacoes_financeiras')
+            .delete()
+            .eq('user_id', user.id)
+            .eq('category', 'Despesas Diretas')
+            .eq('date', dateString)
+            .ilike('description', `%Despesa Direta: ${category?.nome_categoria}%`);
+
+          console.log(`Delete result for ${category?.nome_categoria}:`, deleteResult);
+
+          // 2. Upsert do valor da despesa direta
           const result = await upsertDirectExpenseValue.mutateAsync({
             categoria_id: categoryId,
             mes_referencia: dateString,
             valor_mensal: value,
           });
 
+          console.log(`Upsert result for ${category?.nome_categoria}:`, result);
+
           // 3. Criar nova transação se valor > 0
           if (value > 0) {
-            const category = directCategories.find(cat => cat.id === categoryId);
-            
-            await addTransaction.mutateAsync({
+            const transactionData = {
               description: `Despesa Direta: ${category?.nome_categoria || 'Categoria desconhecida'}`,
-              valor: value, // Valor positivo pois addTransaction já trata como saída
+              valor: -value, // Valor negativo para saída (consistente com despesas indiretas)
               tipo_transacao: 'SAIDA',
               date: dateString,
               category: 'Despesas Diretas',
               payment_method: 'Dinheiro',
               is_recurring: false,
-            });
+            };
+            
+            console.log(`Creating transaction for ${category?.nome_categoria}:`, transactionData);
+            
+            const transactionResult = await addTransaction.mutateAsync(transactionData);
+            console.log(`Transaction created:`, transactionResult);
+          } else {
+            console.log(`Skipping transaction creation for ${category?.nome_categoria} - value is ${value}`);
           }
 
           return result;
@@ -460,6 +482,7 @@ const IndirectExpenses = () => {
 
       await Promise.all(savePromises);
       setTempDirectExpenseValues({});
+      console.log('=== SALVAMENTO CONCLUÍDO ===');
       toast.success("Despesas diretas salvas e integradas ao fluxo de caixa com sucesso!");
     } catch (error) {
       console.error("Error saving direct expense values:", error);
@@ -591,6 +614,85 @@ const IndirectExpenses = () => {
     });
   };
 
+  // Função para limpar transações órfãs (sem despesas correspondentes)
+  const cleanOrphanTransactions = async () => {
+    if (!user) return;
+
+    try {
+      // Buscar todas as transações de despesas
+      const { data: allExpenseTransactions } = await supabase
+        .from('transacoes_financeiras')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('category', ['Despesas Diretas', 'Despesas Indiretas']);
+
+      if (!allExpenseTransactions) return;
+
+      const transactionsToDelete: string[] = [];
+
+      // Verificar transações de despesas diretas
+      const directTransactions = allExpenseTransactions.filter(t => t.category === 'Despesas Diretas');
+      for (const transaction of directTransactions) {
+        const categoryName = transaction.description?.replace('Despesa Direta: ', '');
+        const category = directCategories.find(cat => cat.nome_categoria === categoryName);
+        
+        if (!category) {
+          // Categoria não existe mais
+          transactionsToDelete.push(transaction.id);
+          continue;
+        }
+
+        // Verificar se existe valor para esta categoria e data
+        const hasValue = directExpenses.some(exp => 
+          exp.categoria_id === category.id && 
+          exp.mes_referencia === transaction.date &&
+          exp.valor_mensal > 0
+        );
+
+        if (!hasValue) {
+          transactionsToDelete.push(transaction.id);
+        }
+      }
+
+      // Verificar transações de despesas indiretas
+      const indirectTransactions = allExpenseTransactions.filter(t => t.category === 'Despesas Indiretas');
+      for (const transaction of indirectTransactions) {
+        const categoryName = transaction.description?.replace('Despesa Indireta: ', '');
+        const category = categories.find(cat => cat.nome_categoria_despesa === categoryName);
+        
+        if (!category) {
+          // Categoria não existe mais
+          transactionsToDelete.push(transaction.id);
+          continue;
+        }
+
+        // Verificar se existe valor para esta categoria e data
+        const hasValue = expenses.some(exp => 
+          exp.categoria_id === category.id && 
+          exp.mes_referencia === transaction.date &&
+          exp.valor_mensal > 0
+        );
+
+        if (!hasValue) {
+          transactionsToDelete.push(transaction.id);
+        }
+      }
+
+      // Deletar transações órfãs
+      if (transactionsToDelete.length > 0) {
+        await supabase
+          .from('transacoes_financeiras')
+          .delete()
+          .in('id', transactionsToDelete);
+        
+        console.log(`Cleaned ${transactionsToDelete.length} orphan transactions`);
+        toast.success(`${transactionsToDelete.length} transações órfãs foram removidas do fluxo de caixa`);
+      }
+    } catch (error) {
+      console.error('Error cleaning orphan transactions:', error);
+    }
+  };
+
   // Calculate summary metrics
   const hasUnsavedChanges = calculateHasUnsavedChanges();
   const hasUnsavedDirectChanges = calculateHasUnsavedDirectChanges();
@@ -625,6 +727,72 @@ const IndirectExpenses = () => {
         onYearChange={setSelectedYear}
         onMonthChange={setSelectedMonth}
       />
+
+      {/* Botões de ação */}
+      <div className="flex justify-end gap-2">
+        <Button
+          onClick={async () => {
+            if (!user) return;
+            
+            try {
+              // Criar uma transação de teste
+              const { data, error } = await supabase
+                .from('transacoes_financeiras')
+                .insert({
+                  user_id: user.id,
+                  description: 'Teste de Despesa Direta',
+                  valor: -50.00,
+                  tipo_transacao: 'SAIDA',
+                  date: new Date().toISOString().split('T')[0],
+                  category: 'Despesas Diretas',
+                  payment_method: 'Dinheiro',
+                  is_recurring: false,
+                })
+                .select()
+                .single();
+              
+              if (error) throw error;
+              
+              console.log('Transação de teste criada:', data);
+              toast.success('Transação de teste criada! Verifique o fluxo de caixa.');
+            } catch (error) {
+              console.error('Erro ao criar transação de teste:', error);
+              toast.error('Erro ao criar transação de teste');
+            }
+          }}
+          variant="outline"
+          size="sm"
+          className="text-green-600 border-green-300 hover:bg-green-50"
+        >
+          ➕ Criar Transação Teste
+        </Button>
+        <Button
+          onClick={async () => {
+            // Teste: verificar transações existentes
+            const { data: transactions } = await supabase
+              .from('transacoes_financeiras')
+              .select('*')
+              .eq('user_id', user?.id)
+              .in('category', ['Despesas Diretas', 'Despesas Indiretas']);
+            
+            console.log('Transações de despesas encontradas:', transactions);
+            toast.success(`Encontradas ${transactions?.length || 0} transações de despesas`);
+          }}
+          variant="outline"
+          size="sm"
+          className="text-blue-600 border-blue-300 hover:bg-blue-50"
+        >
+          🔍 Verificar Transações
+        </Button>
+        <Button
+          onClick={cleanOrphanTransactions}
+          variant="outline"
+          size="sm"
+          className="text-symbol-gray-600 border-symbol-gray-300 hover:bg-symbol-gray-50"
+        >
+          🧹 Limpar Transações Órfãs
+        </Button>
+      </div>
 
       <ExpensesSummaryCards
         totalCategories={convertedCategories.length + directCategories.length}

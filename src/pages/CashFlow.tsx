@@ -59,6 +59,13 @@ const CashFlow = () => {
     commission: t.commission || undefined,
   }));
 
+  // Log temporário para debug
+  console.log('Total de transações carregadas:', transactions.length);
+  console.log('Transações de despesas:', transactions.filter(t => 
+    t.category === 'Despesas Diretas' || t.category === 'Despesas Indiretas'
+  ));
+  console.log('Todas as transações:', transactions);
+
   // Filter entries based on current filters
   const filteredEntries = convertedEntries.filter(entry => {
     if (filterType !== 'todos') {
