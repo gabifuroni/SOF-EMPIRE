@@ -164,12 +164,20 @@ const IndirectExpenses = () => {
     }));
   };
   const saveExpenseValues = async () => {
+    if (!user) {
+      console.error('No user found!');
+      return;
+    }
+
     try {
+      console.log('=== INICIANDO SALVAMENTO DE DESPESAS INDIRETAS ===');
       const monthNumber = MONTHS.findIndex((m) => m.key === selectedMonth) + 1;
       const dateString = `${selectedYear}-${monthNumber.toString().padStart(2, "0")}-01`;
 
       console.log('Saving indirect expense values for date:', dateString);
       console.log('Temp values to save:', tempExpenseValues);
+      console.log('User ID:', user.id);
+      console.log('Categories available:', categories);
 
       const savePromises = Object.entries(tempExpenseValues).map(
         async ([categoryId, value]) => {
@@ -217,37 +225,58 @@ const IndirectExpenses = () => {
             console.error('Error removing existing indirect expense transactions:', error);
           }
 
+          // Criar novas transações apenas se valor > 0
+          console.log(`Checking if should create transactions: value=${value}, isFixed=${isFixed}`);
           if (value > 0) {
+            console.log(`Creating transactions for category ${category?.nome_categoria_despesa}`);
             if (isFixed) {
+              console.log('Creating 12 fixed transactions...');
               // Se é despesa fixa, criar 12 transações (uma para cada mês)
               const cashFlowPromises = MONTHS.map(async (month, index) => {
                 const monthDate = `${selectedYear}-${(index + 1).toString().padStart(2, "0")}-01`;
-                return addTransaction.mutateAsync({
-                  description: `Despesa Indireta: ${category?.nome_categoria_despesa || 'Categoria desconhecida'}`,
-                  valor: -value, // Valor negativo para saída
-                  tipo_transacao: 'SAIDA',
-                  date: monthDate,
-                  category: 'Despesas Indiretas',
-                  payment_method: null,
-                  is_recurring: true,
-                  recurring_frequency: 'monthly',
-                });
+                console.log(`Creating fixed transaction for month ${monthDate}`);
+                try {
+                  const result = await addTransaction.mutateAsync({
+                    description: `Despesa Indireta: ${category?.nome_categoria_despesa || 'Categoria desconhecida'}`,
+                    valor: -value, // Valor negativo para saída
+                    tipo_transacao: 'SAIDA' as const,
+                    date: monthDate,
+                    category: 'Despesas Indiretas',
+                    payment_method: null,
+                    is_recurring: true,
+                    recurring_frequency: 'monthly',
+                  });
+                  console.log(`Fixed transaction created successfully:`, result);
+                  return result;
+                } catch (error) {
+                  console.error(`Error creating fixed transaction for month ${monthDate}:`, error);
+                  throw error;
+                }
               });
               await Promise.all(cashFlowPromises);
               console.log(`Created 12 fixed transactions for category ${category?.nome_categoria_despesa} with value ${-value} each`);
             } else {
+              console.log('Creating single transaction...');
               // Se não é fixa, criar apenas uma transação no mês selecionado
-              await addTransaction.mutateAsync({
-                description: `Despesa Indireta: ${category?.nome_categoria_despesa || 'Categoria desconhecida'}`,
-                valor: -value, // Valor negativo para saída
-                tipo_transacao: 'SAIDA',
-                date: dateString,
-                category: 'Despesas Indiretas',
-                payment_method: null,
-                is_recurring: false,
-              });
+              try {
+                const result = await addTransaction.mutateAsync({
+                  description: `Despesa Indireta: ${category?.nome_categoria_despesa || 'Categoria desconhecida'}`,
+                  valor: -value, // Valor negativo para saída
+                  tipo_transacao: 'SAIDA' as const,
+                  date: dateString,
+                  category: 'Despesas Indiretas',
+                  payment_method: null,
+                  is_recurring: false,
+                });
+                console.log(`Single transaction created successfully:`, result);
+              } catch (error) {
+                console.error('Error creating single transaction:', error);
+                throw error;
+              }
               console.log(`Created single transaction for category ${category?.nome_categoria_despesa} with value ${-value}`);
             }
+          } else {
+            console.log(`No transactions created for category ${category?.nome_categoria_despesa} - value is ${value} (removed/zero)`);
           }
 
           return result;
@@ -256,6 +285,10 @@ const IndirectExpenses = () => {
 
       await Promise.all(savePromises);
       setTempExpenseValues({});
+      
+      // Limpar transações órfãs após salvar
+      await cleanOrphanTransactions();
+      
       toast.success("Despesas indiretas salvas e integradas ao fluxo de caixa com sucesso!");
     } catch (error) {
       console.error("Error saving indirect expense values:", error);
@@ -336,26 +369,69 @@ const IndirectExpenses = () => {
       },
     });
   };
-  const removeCategory = (categoryId: string) => {
-    deleteCategory.mutate(categoryId, {
-      onSuccess: () => {
-        toast.success("Categoria removida com sucesso!");
-      },
-      onError: () => {
-        toast.error("Erro ao remover categoria");
-      },
-    });
+  const removeCategory = async (categoryId: string) => {
+    if (!user) return;
+
+    try {
+      const categoryName = categories.find(cat => cat.id === categoryId)?.nome_categoria_despesa;
+      
+      // Remove related transactions first
+      await supabase
+        .from('transacoes_financeiras')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('category', 'Despesas Indiretas')
+        .ilike('description', `%Despesa Indireta: ${categoryName}%`);
+
+      // Remove the category using the hook
+      await deleteCategory.mutateAsync(categoryId);
+
+      toast.success("Categoria removida com sucesso!");
+    } catch (error) {
+      console.error("Error removing indirect category:", error);
+      toast.error("Erro ao remover categoria");
+    }
   };
 
-  const editCategory = (categoryId: string, newName: string) => {
-    updateCategory.mutate({ id: categoryId, categoryName: newName }, {
-      onSuccess: () => {
-        toast.success("Categoria atualizada com sucesso!");
-      },
-      onError: () => {
-        toast.error("Erro ao atualizar categoria");
-      },
-    });
+  const editCategory = async (categoryId: string, newName: string) => {
+    if (!user) return;
+
+    try {
+      const oldName = categories.find(cat => cat.id === categoryId)?.nome_categoria_despesa;
+      
+      await updateCategory.mutateAsync({ 
+        id: categoryId, 
+        categoryName: newName 
+      });
+
+      // Update related transaction descriptions
+      if (oldName && oldName !== newName) {
+        try {
+          const { data: relatedTransactions } = await supabase
+            .from('transacoes_financeiras')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('category', 'Despesas Indiretas')
+            .ilike('description', `%Despesa Indireta: ${oldName}%`);
+
+          if (relatedTransactions && relatedTransactions.length > 0) {
+            await supabase
+              .from('transacoes_financeiras')
+              .update({
+                description: `Despesa Indireta: ${newName}`
+              })
+              .in('id', relatedTransactions.map(t => t.id));
+          }
+        } catch (error) {
+          console.error("Error updating transaction descriptions:", error);
+        }
+      }
+      
+      toast.success("Categoria atualizada com sucesso!");
+    } catch (error) {
+      console.error("Error editing indirect category:", error);
+      toast.error("Erro ao atualizar categoria");
+    }
   };
 
   const calculateHasUnsavedChanges = () => {
@@ -456,12 +532,12 @@ const IndirectExpenses = () => {
 
           console.log(`Upsert result for ${category?.nome_categoria}:`, result);
 
-          // 3. Criar nova transação se valor > 0
+          // 3. Criar nova transação apenas se valor > 0
           if (value > 0) {
             const transactionData = {
               description: `Despesa Direta: ${category?.nome_categoria || 'Categoria desconhecida'}`,
               valor: -value, // Valor negativo para saída (consistente com despesas indiretas)
-              tipo_transacao: 'SAIDA',
+              tipo_transacao: 'SAIDA' as const,
               date: dateString,
               category: 'Despesas Diretas',
               payment_method: 'Dinheiro',
@@ -473,7 +549,7 @@ const IndirectExpenses = () => {
             const transactionResult = await addTransaction.mutateAsync(transactionData);
             console.log(`Transaction created:`, transactionResult);
           } else {
-            console.log(`Skipping transaction creation for ${category?.nome_categoria} - value is ${value}`);
+            console.log(`No transaction created for ${category?.nome_categoria} - value is ${value} (removed/zero)`);
           }
 
           return result;
@@ -482,6 +558,10 @@ const IndirectExpenses = () => {
 
       await Promise.all(savePromises);
       setTempDirectExpenseValues({});
+      
+      // Limpar transações órfãs após salvar
+      await cleanOrphanTransactions();
+      
       console.log('=== SALVAMENTO CONCLUÍDO ===');
       toast.success("Despesas diretas salvas e integradas ao fluxo de caixa com sucesso!");
     } catch (error) {
@@ -735,30 +815,54 @@ const IndirectExpenses = () => {
             if (!user) return;
             
             try {
-              // Criar uma transação de teste
-              const { data, error } = await supabase
-                .from('transacoes_financeiras')
-                .insert({
-                  user_id: user.id,
-                  description: 'Teste de Despesa Direta',
-                  valor: -50.00,
-                  tipo_transacao: 'SAIDA',
+                console.log('=== TESTE DE CRIAÇÃO DE TRANSAÇÃO ===');
+                console.log('User:', user);
+                
+                // Teste direto com Supabase primeiro
+                const { data: testData, error: testError } = await supabase
+                  .from('transacoes_financeiras')
+                  .insert({
+                    user_id: user.id,
+                    description: "Teste Direto Supabase",
+                    valor: -50,
+                    tipo_transacao: 'SAIDA',
+                    date: new Date().toISOString().split('T')[0],
+                    category: "Despesas Diretas",
+                    payment_method: "Dinheiro",
+                    is_recurring: false,
+                  })
+                  .select()
+                  .single();
+
+                if (testError) {
+                  console.error('Erro no teste direto Supabase:', testError);
+                  throw testError;
+                }
+
+                console.log('Teste direto Supabase funcionou:', testData);
+                
+                // Agora teste com o hook
+                const transactionData = {
+                  description: "Teste Hook addTransaction",
+                  valor: -50,
+                  tipo_transacao: "SAIDA" as const,
                   date: new Date().toISOString().split('T')[0],
-                  category: 'Despesas Diretas',
-                  payment_method: 'Dinheiro',
+                  category: "Despesas Diretas",
+                  payment_method: "Dinheiro",
                   is_recurring: false,
-                })
-                .select()
-                .single();
-              
-              if (error) throw error;
-              
-              console.log('Transação de teste criada:', data);
-              toast.success('Transação de teste criada! Verifique o fluxo de caixa.');
-            } catch (error) {
-              console.error('Erro ao criar transação de teste:', error);
-              toast.error('Erro ao criar transação de teste');
-            }
+                };
+                
+                console.log('Transaction data para hook:', transactionData);
+                
+                const result = await addTransaction.mutateAsync(transactionData);
+                console.log('Transaction result do hook:', result);
+                
+                toast.success("Ambos os testes funcionaram!");
+               } catch (error) {
+                console.error("Error creating test transaction:", error);
+                console.error("Error details:", JSON.stringify(error, null, 2));
+                toast.error(`Erro ao criar transação de teste: ${error.message || 'Erro desconhecido'}`);
+               }
           }}
           variant="outline"
           size="sm"
