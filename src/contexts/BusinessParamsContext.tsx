@@ -50,7 +50,7 @@ export { BusinessParamsContext };
 export const BusinessParamsProvider = ({ children }: { children: ReactNode }) => {
   const { paymentMethods: dbPaymentMethods, isLoading: paymentMethodsLoading, calculateWeightedAverageRate: dbCalculateWeightedAverageRate } = usePaymentMethods();
   const { settings: businessSettings, isLoading: settingsLoading } = useBusinessSettings();
-  const { goals: userGoals, isLoading: goalsLoading } = useUserGoals();
+  const { userGoals, isLoading: goalsLoading } = useUserGoals();
   
   const isLoading = paymentMethodsLoading || settingsLoading || goalsLoading;
 

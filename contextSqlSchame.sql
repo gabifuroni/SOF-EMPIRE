@@ -84,15 +84,23 @@ CREATE TABLE public.materias_primas (
 );
 CREATE TABLE public.metas_usuario (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL UNIQUE,
-  tipo_meta text NOT NULL CHECK (tipo_meta = ANY (ARRAY['financeira'::text, 'atendimentos'::text])),
+  user_id uuid NOT NULL,
+  tipo_meta text NOT NULL,
   valor_meta_mensal numeric NOT NULL DEFAULT 10000,
-  meta_atendimentos_mensal integer,
+  meta_atendimentos_mensal integer NULL,
   created_at timestamp with time zone NOT NULL DEFAULT now(),
   updated_at timestamp with time zone NOT NULL DEFAULT now(),
   CONSTRAINT metas_usuario_pkey PRIMARY KEY (id),
-  CONSTRAINT metas_usuario_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id)
-);
+  CONSTRAINT metas_usuario_user_id_unique UNIQUE (user_id),
+  CONSTRAINT metas_usuario_user_id_fkey FOREIGN KEY (user_id) REFERENCES auth.users(id),
+  CONSTRAINT metas_usuario_tipo_meta_check CHECK (
+    (
+      tipo_meta = ANY (ARRAY['financeira'::text, 'atendimentos'::text])
+    )
+  )
+) TABLESPACE pg_default;
+
+CREATE INDEX IF NOT EXISTS idx_metas_usuario_user_id ON public.metas_usuario USING btree (user_id) TABLESPACE pg_default;
 CREATE TABLE public.parametros_negocio (
   id uuid NOT NULL DEFAULT gen_random_uuid(),
   user_id uuid NOT NULL UNIQUE,

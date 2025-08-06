@@ -14,6 +14,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
 import { usePatentes } from '@/hooks/usePatentes';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import { useUserGoals } from '@/hooks/useUserGoals';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -35,6 +36,7 @@ const Dashboard = () => {
   const { transactions, isLoading: transactionsLoading } = useTransactions();
   const { params: businessParams, updateParams, isLoading: businessParamsLoading } = useBusinessParams();
   const { patentes, getCurrentPatente, getNextPatente, isLoading: patentesLoading } = usePatentes();
+  const { goals: userGoals, saveGoals, isLoading: goalsLoading } = useUserGoals();
 
   // Calculate current month revenue
   const currentMonth = new Date();
@@ -102,69 +104,119 @@ const Dashboard = () => {
   };
 
   const goalProgress = (getCurrentValue() / getCurrentGoal()) * 100;
-  const remainingToGoal = Math.max(0, getCurrentGoal() - getCurrentValue());  const handleSaveGoal = () => {
-    if (goalType === 'financial') {
-      const newGoal = parseFloat(goalInput) || 0;
-      setMonthlyGoal(newGoal);
-      localStorage.setItem('monthlyGoal', newGoal.toString());
+  const remainingToGoal = Math.max(0, getCurrentGoal() - getCurrentValue());  const handleSaveGoal = async () => {
+    console.log('🚀 handleSaveGoal chamado - goalType:', goalType);
+    try {
+      let goalData;
+      
+      if (goalType === 'financial') {
+        const newGoal = parseFloat(goalInput) || 0;
+        console.log('💰 Salvando meta financeira:', newGoal);
+        setMonthlyGoal(newGoal);
+        
+        goalData = {
+          tipoMeta: 'financeira' as const,
+          valorMetaMensal: newGoal,
+          metaAtendimentosMensal: attendanceGoal || null
+        };
+      } else {
+        const newGoal = parseInt(attendanceGoalInput) || 0;
+        console.log('👥 Salvando meta de atendimentos:', newGoal);
+        setAttendanceGoal(newGoal);
+        
+        goalData = {
+          tipoMeta: 'atendimentos' as const,
+          valorMetaMensal: monthlyGoal,
+          metaAtendimentosMensal: newGoal
+        };
+      }
+      
+      // Salvar na tabela metas_usuario
+      console.log('📊 Salvando dados na tabela metas_usuario:', goalData);
+      await saveGoals.mutateAsync(goalData);
+      
+      // Atualizar contexto de negócio
       updateParams({
-        monthlyGoal: newGoal,
+        monthlyGoal: goalType === 'financial' ? goalData.valorMetaMensal : monthlyGoal,
+        attendanceGoal: goalType === 'attendance' ? goalData.metaAtendimentosMensal : attendanceGoal,
         goalType: goalType
       });
-    } else {
-      const newGoal = parseInt(attendanceGoalInput) || 0;
-      setAttendanceGoal(newGoal);
-      localStorage.setItem('attendanceGoal', newGoal.toString());
-      updateParams({
-        attendanceGoal: newGoal,
-        goalType: goalType
-      });
+      
+      setIsEditingGoal(false);
+      console.log('✅ handleSaveGoal concluído com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao salvar meta no Dashboard:', error);
+      alert('Erro ao salvar meta. Tente novamente.');
     }
-    localStorage.setItem('goalType', goalType);
-    setIsEditingGoal(false);
   };
 
-  const handleGoalTypeChange = (newGoalType: 'financial' | 'attendance') => {
-    setGoalType(newGoalType);
-    localStorage.setItem('goalType', newGoalType);
-    updateParams({
-      goalType: newGoalType
-    });
-  };  useEffect(() => {
-    // Initialize from business params only once
-    if (businessParams.monthlyGoal && businessParams.monthlyGoal !== monthlyGoal) {
+  const handleGoalTypeChange = async (newGoalType: 'financial' | 'attendance') => {
+    try {
+      console.log('🔄 Alterando tipo de meta para:', newGoalType);
+      setGoalType(newGoalType);
+      
+      // Salvar na tabela metas_usuario
+      const goalData = {
+        tipoMeta: newGoalType === 'financial' ? 'financeira' as const : 'atendimentos' as const,
+        valorMetaMensal: monthlyGoal,
+        metaAtendimentosMensal: attendanceGoal || null
+      };
+      
+      console.log('📊 Salvando alteração de tipo na tabela metas_usuario:', goalData);
+      await saveGoals.mutateAsync(goalData);
+      
+      updateParams({
+        goalType: newGoalType
+      });
+      
+      console.log('✅ Tipo de meta alterado com sucesso');
+    } catch (error) {
+      console.error('❌ Erro ao alterar tipo de meta:', error);
+      alert('Erro ao alterar tipo de meta. Tente novamente.');
+    }
+  };  // Initialize from userGoals (database) - prioridade máxima
+  useEffect(() => {
+    if (userGoals && !goalsLoading) {
+      console.log('🔄 Inicializando metas a partir da tabela metas_usuario:', userGoals);
+      
+      const goalTypeFromDb = userGoals.tipoMeta === 'financeira' ? 'financial' : 'attendance';
+      setGoalType(goalTypeFromDb);
+      setMonthlyGoal(userGoals.valorMetaMensal);
+      setGoalInput(userGoals.valorMetaMensal.toString());
+      
+      if (userGoals.metaAtendimentosMensal) {
+        setAttendanceGoal(userGoals.metaAtendimentosMensal);
+        setAttendanceGoalInput(userGoals.metaAtendimentosMensal.toString());
+      } else {
+        // Valores padrão se não houver meta de atendimentos
+        setAttendanceGoal(30);
+        setAttendanceGoalInput('30');
+      }
+    } else if (!goalsLoading && !userGoals) {
+      // Se não há dados no banco, usar valores padrão
+      console.log('📝 Nenhuma meta encontrada no banco, usando valores padrão');
+      setGoalType('financial');
+      setMonthlyGoal(15000);
+      setGoalInput('15000');
+      setAttendanceGoal(30);
+      setAttendanceGoalInput('30');
+    }
+  }, [userGoals, goalsLoading]);
+
+  // Sincronizar com businessParams quando necessário
+  useEffect(() => {
+    if (businessParams.monthlyGoal && businessParams.monthlyGoal !== monthlyGoal && !userGoals) {
       setMonthlyGoal(businessParams.monthlyGoal);
       setGoalInput(businessParams.monthlyGoal.toString());
     }
-    if (businessParams.attendanceGoal && businessParams.attendanceGoal !== attendanceGoal) {
+    if (businessParams.attendanceGoal && businessParams.attendanceGoal !== attendanceGoal && !userGoals) {
       setAttendanceGoal(businessParams.attendanceGoal);
       setAttendanceGoalInput(businessParams.attendanceGoal.toString());
     }
-    if (businessParams.goalType && businessParams.goalType !== goalType) {
+    if (businessParams.goalType && businessParams.goalType !== goalType && !userGoals) {
       setGoalType(businessParams.goalType);
     }
-  }, [businessParams.monthlyGoal, businessParams.attendanceGoal, businessParams.goalType, monthlyGoal, attendanceGoal, goalType]);
-
-  // Initialize from localStorage on component mount
-  useEffect(() => {
-    const savedGoal = localStorage.getItem('monthlyGoal');
-    const savedAttendanceGoal = localStorage.getItem('attendanceGoal');
-    const savedGoalType = localStorage.getItem('goalType') as 'financial' | 'attendance';
-    
-    if (savedGoal && !businessParams.monthlyGoal) {
-      const goal = parseFloat(savedGoal);
-      setMonthlyGoal(goal);
-      setGoalInput(goal.toString());
-    }
-    if (savedAttendanceGoal && !businessParams.attendanceGoal) {
-      const goal = parseInt(savedAttendanceGoal);
-      setAttendanceGoal(goal);
-      setAttendanceGoalInput(goal.toString());
-    }
-    if (savedGoalType && !businessParams.goalType) {
-      setGoalType(savedGoalType);
-    }
-  }, [businessParams.monthlyGoal, businessParams.attendanceGoal, businessParams.goalType]); // Initialize on business params change
+  }, [businessParams, userGoals, monthlyGoal, attendanceGoal, goalType]);
 
   if (profileLoading || transactionsLoading || businessParamsLoading || patentesLoading) {
     return (
