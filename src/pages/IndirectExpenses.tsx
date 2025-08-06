@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import ExpensesHeader from "@/components/expenses/ExpensesHeader";
 import ExpensesSummaryCards from "@/components/expenses/ExpensesSummaryCards";
 import IndirectExpensesTable from "@/components/expenses/IndirectExpensesTable";
@@ -47,6 +49,7 @@ const MONTHS = [
 ];
 
 const IndirectExpenses = () => {
+  const { user } = useSupabaseAuth();
   const [selectedYear, setSelectedYear] = useState(
     new Date().getFullYear().toString()
   );
@@ -76,7 +79,8 @@ const IndirectExpenses = () => {
   // Direct expenses hooks
   const {
     categories: directCategories,
-    isLoading: directCategoriesLoading,    addCategory: addDirectCategory,
+    isLoading: directCategoriesLoading,
+    addCategory: addDirectCategory,
     updateCategory: updateDirectCategory,
     deleteCategory: deleteDirectCategory,
   } = useDirectExpenseCategories();
@@ -86,8 +90,10 @@ const IndirectExpenses = () => {
     isLoading: directExpensesLoading,
     addExpenseValue: addDirectExpenseValue,
     updateExpenseValue: updateDirectExpenseValue,
+    upsertExpenseValue: upsertDirectExpenseValue,
     deleteExpenseValue: deleteDirectExpenseValue,
     getTotalByMonth: getDirectTotalByMonth,
+    getTotalByMonthAndYear: getDirectTotalByMonthAndYear,
   } = useDirectExpenseValues();
 
   // Hook para transações (fluxo de caixa)
@@ -402,30 +408,48 @@ const IndirectExpenses = () => {
 
           console.log('Processing category:', categoryId, 'value:', value, 'existing:', existingExpense);
 
-          let result;
-          if (existingExpense) {
-            result = await updateDirectExpenseValue.mutateAsync({
-              id: existingExpense.id,
-              valor_mensal: value,
-            });
-          } else {
-            result = await addDirectExpenseValue.mutateAsync({
-              categoria_id: categoryId,
-              mes_referencia: dateString,
-              valor_mensal: value,
-            });
-          }          // Integração com fluxo de caixa
+          // 1. Primeiro, remover transação existente se houver
+          if (existingExpense && existingExpense.valor_mensal > 0) {
+            const category = directCategories.find(cat => cat.id === categoryId);
+            try {
+              // Buscar e deletar transação existente
+              const { data: existingTransactions } = await supabase
+                .from('transacoes_financeiras')
+                .select('id')
+                .eq('user_id', user?.id)
+                .eq('category', 'Despesas Diretas')
+                .ilike('description', `%Despesa Direta: ${category?.nome_categoria || ''}%`)
+                .eq('date', dateString);
+
+              if (existingTransactions && existingTransactions.length > 0) {
+                await supabase
+                  .from('transacoes_financeiras')
+                  .delete()
+                  .in('id', existingTransactions.map(t => t.id));
+              }
+            } catch (error) {
+              console.error('Error removing existing transaction:', error);
+            }
+          }
+
+          // 2. Salvar/atualizar o valor da despesa usando upsert
+          const result = await upsertDirectExpenseValue.mutateAsync({
+            categoria_id: categoryId,
+            mes_referencia: dateString,
+            valor_mensal: value,
+          });
+
+          // 3. Criar nova transação se valor > 0
           if (value > 0) {
             const category = directCategories.find(cat => cat.id === categoryId);
             
-            // Despesas diretas não são fixas, criar apenas uma transação no mês selecionado
             await addTransaction.mutateAsync({
               description: `Despesa Direta: ${category?.nome_categoria || 'Categoria desconhecida'}`,
-              valor: -value, // Valor negativo para saída
+              valor: value, // Valor positivo pois addTransaction já trata como saída
               tipo_transacao: 'SAIDA',
               date: dateString,
               category: 'Despesas Diretas',
-              payment_method: null,
+              payment_method: 'Dinheiro',
               is_recurring: false,
             });
           }
@@ -443,46 +467,84 @@ const IndirectExpenses = () => {
     }
   };
 
-  const addNewDirectCategory = () => {
+  const addNewDirectCategory = async () => {
     if (!newDirectCategoryName.trim()) return;
 
-    addDirectCategory.mutate(newDirectCategoryName.trim(), {
-      onSuccess: () => {
-        setNewDirectCategoryName("");
-        setShowAddDirectCategory(false);
-        toast.success("Nova categoria de despesa direta adicionada com sucesso!");
-      },
-      onError: () => {
-        toast.error("Erro ao adicionar categoria de despesa direta");
-      },
-    });
+    try {
+      await addDirectCategory.mutateAsync(newDirectCategoryName.trim());
+
+      setNewDirectCategoryName("");
+      setShowAddDirectCategory(false);
+      toast.success("Nova categoria de despesa direta adicionada!");
+    } catch (error) {
+      console.error("Error adding direct category:", error);
+      toast.error("Erro ao adicionar categoria de despesa direta");
+    }
   };
 
-  const removeDirectCategory = (categoryId: string) => {
-    deleteDirectCategory.mutate(categoryId, {
-      onSuccess: () => {
-        setTempDirectExpenseValues((prev) => {
-          const updated = { ...prev };
-          delete updated[categoryId];
-          return updated;
-        });
-        toast.success("Categoria de despesa direta removida com sucesso!");
-      },
-      onError: () => {
-        toast.error("Erro ao remover categoria de despesa direta");
-      },
-    });
+  const removeDirectCategory = async (categoryId: string) => {
+    if (!user) return;
+
+    try {
+      const categoryName = directCategories.find(cat => cat.id === categoryId)?.nome_categoria;
+      
+      // Remove related transactions first
+      await supabase
+        .from('transacoes_financeiras')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('category', 'Despesas Diretas')
+        .ilike('description', `%Despesa Direta: ${categoryName}%`);
+
+      // Remove the category using the hook
+      await deleteDirectCategory.mutateAsync(categoryId);
+
+      toast.success("Categoria de despesa direta removida com sucesso!");
+    } catch (error) {
+      console.error("Error removing direct category:", error);
+      toast.error("Erro ao remover categoria de despesa direta");
+    }
   };
 
-  const editDirectCategory = (categoryId: string, newName: string) => {
-    updateDirectCategory.mutate({ id: categoryId, categoryName: newName }, {
-      onSuccess: () => {
-        toast.success("Categoria de despesa direta atualizada com sucesso!");
-      },
-      onError: () => {
-        toast.error("Erro ao atualizar categoria de despesa direta");
-      },
-    });
+  const editDirectCategory = async (categoryId: string, newName: string) => {
+    if (!user) return;
+
+    try {
+      const oldName = directCategories.find(cat => cat.id === categoryId)?.nome_categoria;
+      
+      await updateDirectCategory.mutateAsync({ 
+        id: categoryId, 
+        categoryName: newName 
+      });
+
+      // Update related transaction descriptions
+      if (oldName && oldName !== newName) {
+        try {
+          const { data: relatedTransactions } = await supabase
+            .from('transacoes_financeiras')
+            .select('id')
+            .eq('user_id', user.id)
+            .eq('category', 'Despesas Diretas')
+            .ilike('description', `%Despesa Direta: ${oldName}%`);
+
+          if (relatedTransactions && relatedTransactions.length > 0) {
+            await supabase
+              .from('transacoes_financeiras')
+              .update({
+                description: `Despesa Direta: ${newName}`
+              })
+              .in('id', relatedTransactions.map(t => t.id));
+          }
+        } catch (error) {
+          console.error("Error updating transaction descriptions:", error);
+        }
+      }
+      
+      toast.success("Categoria de despesa direta atualizada com sucesso!");
+    } catch (error) {
+      console.error("Error editing direct category:", error);
+      toast.error("Erro ao atualizar categoria de despesa direta");
+    }
   };
 
   const getTempDirectExpenseValue = (categoryId: string): number => {
@@ -553,7 +615,7 @@ const IndirectExpenses = () => {
       return sum + (expenseValue?.valor_mensal || 0);
     }, 0);
   
-  const variableExpenses = totalMonthExpenses - fixedExpensesTotal;
+  const variableExpenses = (totalMonthExpenses - fixedExpensesTotal);
 
   return (
     <div className="space-y-8 p-6 animate-minimal-fade">

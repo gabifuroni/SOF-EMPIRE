@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from './useSupabaseAuth';
 
-interface DirectExpenseCategory {
+export interface DirectExpenseCategory {
   id: string;
   user_id: string;
   nome_categoria: string;
@@ -10,7 +11,7 @@ interface DirectExpenseCategory {
   updated_at: string;
 }
 
-interface DirectExpenseValue {
+export interface DirectExpenseValue {
   id: string;
   user_id: string;
   categoria_id: string;
@@ -26,37 +27,38 @@ export interface DirectExpenseWithCategory extends DirectExpenseValue {
 
 export const useDirectExpenseCategories = () => {
   const queryClient = useQueryClient();
+  const { user } = useSupabaseAuth();
 
   const { data: categories = [], isLoading } = useQuery({
-    queryKey: ['direct-expense-categories'],
+    queryKey: ['direct-expense-categories', user?.id],
     queryFn: async (): Promise<DirectExpenseCategory[]> => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user?.id) return [];
 
       const { data, error } = await supabase
-        .from('categorias_despesas')
+        .from('despesas_diretas_categorias')
         .select('*')
         .eq('user_id', user.id)
-        .order('nome_categoria', { ascending: true });
-      
-      if (error) throw error;
-      return data.map(item => ({
-        ...item,
-        nome_categoria: item.nome_categoria
-      }));
+        .order('nome_categoria');
+
+      if (error) {
+        console.error('Error fetching direct expense categories:', error);
+        throw error;
+      }
+
+      return data || [];
     },
+    enabled: !!user?.id,
   });
 
   const addCategory = useMutation({
     mutationFn: async (categoryName: string) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user?.id) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
-        .from('categorias_despesas')
+        .from('despesas_diretas_categorias')
         .insert({
-          nome_categoria: categoryName,
           user_id: user.id,
+          nome_categoria: categoryName,
           is_predefinida: false,
         })
         .select()
@@ -72,10 +74,13 @@ export const useDirectExpenseCategories = () => {
 
   const updateCategory = useMutation({
     mutationFn: async ({ id, categoryName }: { id: string; categoryName: string }) => {
+      if (!user?.id) throw new Error('User not authenticated');
+
       const { data, error } = await supabase
-        .from('categorias_despesas')
+        .from('despesas_diretas_categorias')
         .update({ nome_categoria: categoryName })
         .eq('id', id)
+        .eq('user_id', user.id)
         .select()
         .single();
 
@@ -89,19 +94,13 @@ export const useDirectExpenseCategories = () => {
 
   const deleteCategory = useMutation({
     mutationFn: async (id: string) => {
-      // Primeiro, deletar todos os valores relacionados à categoria
-      const { error: valuesError } = await supabase
-        .from('despesas_diretas_valores')
-        .delete()
-        .eq('categoria_id', id);
+      if (!user?.id) throw new Error('User not authenticated');
 
-      if (valuesError) throw valuesError;
-
-      // Depois, deletar a categoria
       const { error } = await supabase
-        .from('categorias_despesas')
+        .from('despesas_diretas_categorias')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
       if (error) throw error;
     },
@@ -122,27 +121,33 @@ export const useDirectExpenseCategories = () => {
 
 export const useDirectExpenseValues = () => {
   const queryClient = useQueryClient();
+  const { user } = useSupabaseAuth();
+  
   const { data: expenses = [], isLoading } = useQuery({
-    queryKey: ['direct-expense-values'],
+    queryKey: ['direct-expense-values', user?.id],
     queryFn: async (): Promise<DirectExpenseWithCategory[]> => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user?.id) return [];
 
       const { data, error } = await supabase
         .from('despesas_diretas_valores')
         .select(`
           *,
-          categorias_despesas(nome_categoria)
+          despesas_diretas_categorias!inner(nome_categoria)
         `)
         .eq('user_id', user.id)
-        .order('mes_referencia', { ascending: true });
-      
-      if (error) throw error;
+        .order('mes_referencia', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching direct expense values:', error);
+        throw error;
+      }
+
       return (data || []).map(item => ({
         ...item,
-        category_name: item.categorias_despesas?.nome_categoria || 'Unknown',
+        category_name: item.despesas_diretas_categorias?.nome_categoria || 'Categoria desconhecida'
       }));
     },
+    enabled: !!user?.id,
   });
 
   const addExpenseValue = useMutation({
@@ -155,16 +160,15 @@ export const useDirectExpenseValues = () => {
       mes_referencia: string;
       valor_mensal: number;
     }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user?.id) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
         .from('despesas_diretas_valores')
         .insert({
+          user_id: user.id,
           categoria_id,
           mes_referencia,
           valor_mensal,
-          user_id: user.id,
         })
         .select()
         .single();
@@ -185,10 +189,46 @@ export const useDirectExpenseValues = () => {
       id: string;
       valor_mensal: number;
     }) => {
+      if (!user?.id) throw new Error('User not authenticated');
+
       const { data, error } = await supabase
         .from('despesas_diretas_valores')
         .update({ valor_mensal })
         .eq('id', id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['direct-expense-values'] });
+    },
+  });
+
+  const upsertExpenseValue = useMutation({
+    mutationFn: async ({ 
+      categoria_id, 
+      mes_referencia, 
+      valor_mensal 
+    }: {
+      categoria_id: string;
+      mes_referencia: string;
+      valor_mensal: number;
+    }) => {
+      if (!user?.id) throw new Error('User not authenticated');
+
+      const { data, error } = await supabase
+        .from('despesas_diretas_valores')
+        .upsert({
+          user_id: user.id,
+          categoria_id,
+          mes_referencia,
+          valor_mensal,
+        }, {
+          onConflict: 'user_id,categoria_id,mes_referencia'
+        })
         .select()
         .single();
 
@@ -202,10 +242,13 @@ export const useDirectExpenseValues = () => {
 
   const deleteExpenseValue = useMutation({
     mutationFn: async (id: string) => {
+      if (!user?.id) throw new Error('User not authenticated');
+
       const { error } = await supabase
         .from('despesas_diretas_valores')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('user_id', user.id);
 
       if (error) throw error;
     },
@@ -222,13 +265,22 @@ export const useDirectExpenseValues = () => {
     return getExpensesByMonth(month).reduce((total, expense) => total + expense.valor_mensal, 0);
   };
 
+  const getTotalByMonthAndYear = (month: number, year: number) => {
+    const dateString = `${year}-${month.toString().padStart(2, '0')}-01`;
+    return expenses
+      .filter(expense => expense.mes_referencia === dateString)
+      .reduce((total, expense) => total + expense.valor_mensal, 0);
+  };
+
   return {
     expenses,
     isLoading,
     addExpenseValue,
     updateExpenseValue,
+    upsertExpenseValue,
     deleteExpenseValue,
     getExpensesByMonth,
     getTotalByMonth,
+    getTotalByMonthAndYear,
   };
 };
