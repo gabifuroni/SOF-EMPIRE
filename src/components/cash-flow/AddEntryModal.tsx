@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CashFlowEntry } from '@/types';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 
 interface AddEntryModalProps {
@@ -78,7 +78,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
         client: entry.client || '',
         commission: entry.commission && entry.amount > 0 ? ((entry.commission / entry.amount) * 100).toString() : ''
       });
-    } else {
+  } else {
       setFormData({
         date: format(defaultDate || new Date(), 'yyyy-MM-dd'),
         description: '',
@@ -138,8 +138,13 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
-    }    const entryData: Omit<CashFlowEntry, 'id'> = {
-      date: new Date(formData.date),
+    }
+
+    // Parse the date as local to avoid timezone shifts (e.g., -1 day)
+    const parsedDate = parse(formData.date, 'yyyy-MM-dd', new Date());
+
+    const entryData: Omit<CashFlowEntry, 'id'> = {
+      date: parsedDate,
       description: formData.description.trim(),
       type: 'entrada',
       amount: parseFloat(formData.amount),
@@ -178,14 +183,9 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
               value={formData.date}
               onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
               className="mt-1 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-              readOnly={!!defaultDate}
-              title={defaultDate ? "Data fixada para o dia atual" : "Selecione a data"}
+              title={"Selecione a data"}
             />
-            {defaultDate && (
-              <p className="text-xs text-symbol-gray-600 mt-1">
-                Data fixada para hoje - {format(defaultDate, 'dd/MM/yyyy')}
-              </p>
-            )}
+            {/* Mantém a data sugerida, mas permite alteração */}
           </div>
 
           {/* Services Selection */}
