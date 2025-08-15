@@ -3,7 +3,7 @@ import AddEntryModal from '@/components/cash-flow/AddEntryModal';
 import DailyCashFlowHeader from '@/components/cash-flow/DailyCashFlowHeader';
 import DailyCashFlowMetrics from '@/components/cash-flow/DailyCashFlowMetrics';
 import DailyCashFlowTable from '@/components/cash-flow/DailyCashFlowTable';
-import { format, isToday, parseISO } from 'date-fns';
+import { format, isToday, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
@@ -20,18 +20,11 @@ const DailyCashFlow = () => {
     if (!transactions) return [];
     
     return transactions.filter(entry => {
-      try {
-        // Verifica se é uma data válida e se é hoje
-        const entryDate = entry.date ? parseISO(entry.date) : null;
-        return entryDate && isToday(entryDate);
-      } catch {
-        // Se houver erro na conversão da data, verifica por string
-        const entryDateStr = format(new Date(entry.date), 'yyyy-MM-dd');
-        const todayDateStr = format(today, 'yyyy-MM-dd');
-        return entryDateStr === todayDateStr;
-      }
+      // Parse como data local para evitar deslocamentos de fuso
+      const entryDate = entry.date ? parse(entry.date, 'yyyy-MM-dd', new Date()) : null;
+      return !!entryDate && isToday(entryDate);
     });
-  }, [transactions, today]);
+  }, [transactions]);
 
   const dailyTotals = useMemo(() => {
     const totalEntradas = todayEntries
@@ -98,7 +91,8 @@ const DailyCashFlow = () => {
         description: entryData.description,
         valor: entryData.amount,
         tipo_transacao: 'ENTRADA',
-        date: format(currentDate, 'yyyy-MM-dd'), // Always use current date for daily cash flow
+        // Usa exatamente a data escolhida no modal
+        date: format(entryData.date, 'yyyy-MM-dd'),
         payment_method: entryData.paymentMethod,
         commission: entryData.commission ? (entryData.amount * entryData.commission) / 100 : null,
       });

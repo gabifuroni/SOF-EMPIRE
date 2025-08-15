@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import PatenteCard from '@/components/dashboard/PatenteCard';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link, useNavigate } from 'react-router-dom';
-import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
+import { startOfMonth, endOfMonth, subMonths, format, parse } from 'date-fns';
 import { useProfile } from '@/hooks/useProfile';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
@@ -44,7 +44,7 @@ const Dashboard = () => {
   const monthEnd = endOfMonth(currentMonth);
   
   const currentMonthEntries = transactions.filter(entry => {
-    const entryDate = new Date(entry.date);
+    const entryDate = parse(entry.date, 'yyyy-MM-dd', new Date());
     return entryDate >= monthStart && entryDate <= monthEnd;
   });
 
@@ -81,7 +81,7 @@ const Dashboard = () => {
     const end = endOfMonth(date);
     
     const monthTransactions = transactions.filter(entry => {
-      const entryDate = new Date(entry.date);
+      const entryDate = parse(entry.date, 'yyyy-MM-dd', new Date());
       return entryDate >= start && entryDate <= end;
     });
     

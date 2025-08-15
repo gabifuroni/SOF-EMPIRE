@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import CashFlowTable from '@/components/cash-flow/CashFlowTable';
 import AddEntryModal from '@/components/cash-flow/AddEntryModal';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { useTransactions } from '@/hooks/useTransactions';
 import { CashFlowEntry } from '@/types';
 import { useNavigate } from 'react-router-dom';
@@ -50,7 +50,8 @@ const CashFlow = () => {
   // Convert Supabase transactions to CashFlowEntry format for compatibility
   const convertedEntries: CashFlowEntry[] = transactions.map((t: Transaction) => ({
     id: t.id,
-    date: new Date(t.date),
+    // Parse como data local no formato esperado (yyyy-MM-dd)
+    date: parse(t.date, 'yyyy-MM-dd', new Date()),
     description: t.description,
     type: t.tipo_transacao === 'ENTRADA' ? 'entrada' as const : 'saida' as const,
     amount: Number(t.valor),
