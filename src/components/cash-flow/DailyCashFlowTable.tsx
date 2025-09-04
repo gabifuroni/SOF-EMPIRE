@@ -47,7 +47,8 @@ const DailyCashFlowTable = ({ todayEntries, today, onDeleteEntry }: DailyCashFlo
         <TableBody>
           {todayEntries
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .map((entry, index) => (            <TableRow key={entry.id} className={index % 2 === 0 ? 'bg-symbol-gray-50/30' : ''}>
+            .map((entry, index) => (            
+            <TableRow key={entry.id} className={index % 2 === 0 ? 'bg-symbol-gray-50/30' : ''}>
               <TableCell className="font-medium brand-body text-symbol-black">{entry.description}</TableCell>
               <TableCell>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -67,9 +68,12 @@ const DailyCashFlowTable = ({ todayEntries, today, onDeleteEntry }: DailyCashFlo
                   R$ {Number(entry.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </span>
               </TableCell>              <TableCell className="text-right">
-                {entry.tipo_transacao === 'ENTRADA' && entry.commission && Number(entry.valor) > 0 ? (
+                {entry.tipo_transacao === 'ENTRADA' && entry.commission ? (
                   <span className="text-blue-600 font-semibold">
                     {((Number(entry.commission) / Number(entry.valor)) * 100).toFixed(1)}%
+                    <span className="block text-xs text-symbol-gray-500">
+                      (R$ {Number(entry.commission).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
+                    </span>
                   </span>
                 ) : '-'}
               </TableCell>

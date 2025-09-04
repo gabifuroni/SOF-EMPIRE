@@ -150,7 +150,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
       amount: parseFloat(formData.amount),
       paymentMethod: formData.paymentMethod,
       client: formData.client.trim() || undefined,
-      commission: formData.commission ? (parseFloat(formData.amount) * parseFloat(formData.commission)) / 100 : undefined
+      commission: formData.commission ? parseFloat(formData.commission) : undefined
     };
 
     onSave(entryData);

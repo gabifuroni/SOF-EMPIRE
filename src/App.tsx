@@ -20,7 +20,6 @@ import IndirectExpenses from "./pages/IndirectExpenses";
 import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
 import PaymentSettings from "./pages/PaymentSettings";
-import NotFound from "./pages/NotFound";
 import Index from "./pages/Index";
 import AdminRoute from "./components/layout/AdminRoute";
 import AdminRedirect from "./components/layout/AdminRedirect";

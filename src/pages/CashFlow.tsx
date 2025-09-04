@@ -54,7 +54,7 @@ const CashFlow = () => {
     date: parse(t.date, 'yyyy-MM-dd', new Date()),
     description: t.description,
     type: t.tipo_transacao === 'ENTRADA' ? 'entrada' as const : 'saida' as const,
-    amount: Number(t.valor),
+    amount: t.tipo_transacao === 'ENTRADA' ? Number(t.valor) : -Math.abs(Number(t.valor)),
     paymentMethod: t.payment_method || undefined,
     category: t.category || undefined,
     commission: t.commission || undefined,
@@ -91,8 +91,10 @@ const CashFlow = () => {
 
   const totalSaidas = filteredEntries
     .filter(entry => entry.type === 'saida')
-    .reduce((sum, entry) => sum + entry.amount, 0);
+    .reduce((sum, entry) => sum + Math.abs(entry.amount), 0);
 
+  // Cálculo do saldo como a diferença entre entradas e saídas
+  // totalSaidas já é um valor positivo no cálculo, então precisamos subtrair
   const saldoPeriodo = totalEntradas - totalSaidas;
 
   const handleAddEntry = async (entryData: EntryData) => {
@@ -224,7 +226,7 @@ const CashFlow = () => {
             </h3>
           </div>
           <div className="brand-heading text-2xl text-symbol-black">
-            R$ {totalSaidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            R$ {Math.abs(totalSaidas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </div>
         </div>
         
@@ -271,7 +273,7 @@ const CashFlow = () => {
                       ? 'text-green-600' 
                       : 'text-red-600'
                   }`}>
-                    {entry.type === 'entrada' ? '+' : '-'} R$ {entry.amount.toFixed(2)}
+                    {entry.type === 'entrada' ? '+' : '-'} R$ {Math.abs(entry.amount).toFixed(2)}
                   </span>
                   <div className="flex gap-1">
                     {entry.type === 'entrada' && (
