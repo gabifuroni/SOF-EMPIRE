@@ -60,7 +60,7 @@ const CashFlowTable = ({ entries, onEdit, onDelete }: CashFlowTableProps) => {
             <TableHead className='text-gray-700'>Forma de Pagamento</TableHead>
             <TableHead className='text-gray-700'>Categoria</TableHead>
             <TableHead className="text-right text-gray-700">Entrada (R$)</TableHead>
-            <TableHead className="text-right text-gray-700">Comissão (%)</TableHead>
+            <TableHead className="text-right text-gray-700">Comissão (R$)</TableHead>
             <TableHead className="text-right text-gray-700">Saída (R$)</TableHead>
             <TableHead className="text-right text-gray-700">Saldo Acumulado (R$)</TableHead>
             <TableHead className="text-center text-gray-700">Ações</TableHead>
@@ -89,7 +89,7 @@ const CashFlowTable = ({ entries, onEdit, onDelete }: CashFlowTableProps) => {
               <TableCell className="text-right">
                 {entry.type === 'entrada' && entry.commission && entry.amount > 0 ? (
                   <span className="text-blue-600 font-semibold">
-                    {((entry.commission / entry.amount) * 100).toFixed(1)}%
+                    R$ {((entry.commission / entry.amount) * 100).toFixed(2)}
                   </span>
                 ) : '-'}
               </TableCell>

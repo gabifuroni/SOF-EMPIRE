@@ -39,10 +39,11 @@ const Reports = () => {
     // Custos Diretos
     custosDirectos: financialSummary.custos_diretos,
     percentualCustosDirectos: financialSummary.percentuais.custos_diretos_pct,
-    // Custos Indiretos (despesas indiretas + impostos + comissão + depreciação mensal)
-    custosIndiretos: Number(financialSummary.custos_indiretos ?? 0),
-    // Propriedades obrigatórias para compatibilidade
+    // Custos Indiretos (despesas indiretas + depreciação mensal)
+    custosIndiretos: Number(financialSummary.custos_indiretos ?? 0) + Number(financialSummary.depreciacao_mensal ?? 0),
+    // Comissões (campo separado dos custos indiretos)
     comissoes: Number(financialSummary.comissoes ?? 0),
+    // Impostos (campo separado dos custos indiretos)
     impostos: Number(financialSummary.impostos_taxas ?? 0),
     percentualImpostos: Number(financialSummary.percentuais.impostos_pct ?? 0),
     custoOperacional: 0, // Não será exibido
@@ -53,6 +54,7 @@ const Reports = () => {
     // Serviços realizados e ticket médio
     ticketMedio: financialSummary.ticket_medio,
     servicosRealizados: financialSummary.servicos_realizados,
+    // Transações de entrada (mesmo valor que serviços realizados para compatibilidade)
     transacoesEntrada: financialSummary.servicos_realizados,
   } : null;
 

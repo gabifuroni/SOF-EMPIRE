@@ -2,10 +2,10 @@
 import { useState } from 'react';
 import { Plus, Filter, TrendingUp, TrendingDown, DollarSign, Edit, Trash2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import CashFlowTable from '@/components/cash-flow/CashFlowTable';
+import CashFlowHeader from '@/components/cash-flow/CashFlowHeader';
 import AddEntryModal from '@/components/cash-flow/AddEntryModal';
 import { format, parse } from 'date-fns';
 import { useTransactions } from '@/hooks/useTransactions';
@@ -42,8 +42,8 @@ const CashFlow = () => {
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<CashFlowEntry | null>(null);
   const [filterType, setFilterType] = useState<FilterType>('todos');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
 
   const { transactions, isLoading, addTransaction, updateTransaction, deleteTransaction } = useTransactions();
 
@@ -74,14 +74,12 @@ const CashFlow = () => {
       if (entry.type !== typeFilter) return false;
     }
     
-    if (startDate) {
-      const entryDate = format(entry.date, 'yyyy-MM-dd');
-      if (entryDate < startDate) return false;
-    }
+    // Filter by selected month and year
+    const entryYear = entry.date.getFullYear().toString();
+    const entryMonth = (entry.date.getMonth() + 1).toString().padStart(2, '0');
     
-    if (endDate) {
-      const entryDate = format(entry.date, 'yyyy-MM-dd');
-      if (entryDate > endDate) return false;
+    if (entryYear !== selectedYear || entryMonth !== selectedMonth) {
+      return false;
     }
     
     return true;
@@ -166,35 +164,30 @@ const CashFlow = () => {
   return (
     <div className="space-y-8 p-6 animate-minimal-fade">
       {/* Header Section */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-        <div>
-          <h1 className="brand-heading text-3xl text-symbol-black mb-2">
-            Fluxo de Caixa
-          </h1>
-          <div className="w-12 h-px bg-symbol-gold mb-4"></div>
-          <p className="brand-body text-symbol-gray-600">
-            Controle suas entradas financeiras diárias
-          </p>
-        </div>
+      <CashFlowHeader 
+        selectedYear={selectedYear}
+        selectedMonth={selectedMonth}
+        onYearChange={setSelectedYear}
+        onMonthChange={setSelectedMonth}
+      />
+      
+      <div className="flex flex-col sm:flex-row gap-3 justify-end">
+        <Button 
+          onClick={() => setIsAddEntryModalOpen(true)}
+          className="bg-emerald-600 hover:bg-emerald-700 text-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Adicionar Entrada
+        </Button>
         
-        <div className="flex flex-col sm:flex-row gap-3">
-          <Button 
-            onClick={() => setIsAddEntryModalOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Adicionar Entrada
-          </Button>
-          
-          <Button 
-            onClick={() => navigate('/expenses')}
-            variant="outline"
-            className="bg-transparent border-symbol-gray-300 text-symbol-gray-700 hover:bg-symbol-gray-50 font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
-          >
-            <ExternalLink className="w-4 h-4 mr-2" />
-            Gerenciar Despesas
-          </Button>
-        </div>
+        <Button 
+          onClick={() => navigate('/expenses')}
+          variant="outline"
+          className="bg-transparent border-symbol-gray-300 text-symbol-gray-700 hover:bg-symbol-gray-50 font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
+        >
+          <ExternalLink className="w-4 h-4 mr-2" />
+          Gerenciar Despesas
+        </Button>
       </div>
 
       {/* Summary Cards */}
@@ -246,73 +239,6 @@ const CashFlow = () => {
           </div>
           <div className={`brand-heading text-2xl ${saldoPeriodo >= 0 ? 'text-symbol-black' : 'text-red-600'}`}>
             R$ {saldoPeriodo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
-        <div className="mb-6">
-          <h3 className="brand-heading text-xl text-symbol-black mb-2 flex items-center gap-2">
-            <Filter className="w-5 h-5 text-symbol-gray-600" />
-            Filtros
-          </h3>
-          <div className="w-8 h-px bg-symbol-beige"></div>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div>
-            <Label htmlFor="start-date" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
-              Data Início
-            </Label>
-            <Input
-              id="start-date"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-symbol-black"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="end-date" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
-              Data Fim
-            </Label>
-            <Input
-              id="end-date"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold text-symbol-black"
-            />
-          </div>
-          
-          <div>
-            <Label className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
-              Tipo
-            </Label>
-            <Select value={filterType} onValueChange={(value: string) => setFilterType(value as FilterType)}>
-              <SelectTrigger className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-gold">
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="entradas">Entradas</SelectItem>
-                <SelectItem value="saidas">Saídas</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex items-end">
-            <Button 
-              variant="outline" 
-              className="w-full mt-2 border-symbol-gray-300 text-symbol-gray-700 hover:bg-symbol-gray-50 font-light"
-              onClick={() => {
-                // Filter logic is already applied in real-time
-              }}
-            >
-              Aplicar Filtros
-            </Button>
           </div>
         </div>
       </div>
