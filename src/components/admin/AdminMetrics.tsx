@@ -19,6 +19,7 @@ const AdminMetrics = ({ users }: AdminMetricsProps) => {
   const citiesCount = new Set(users.filter(u => u.cidade).map(u => u.cidade)).size;
   const statesCount = new Set(users.filter(u => u.estado).map(u => u.estado)).size;
   
+  
   // Get top cities
   const citiesStats = users
     .filter(u => u.cidade)
