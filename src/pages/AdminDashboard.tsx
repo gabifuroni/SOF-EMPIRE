@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { User as UserType } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Plus, Users, TrendingUp, Building, MapPin, Calendar, Eye, Edit, MoreVertical, Settings, User, ChevronDown } from 'lucide-react';
+import { LogOut, Plus, Users, TrendingUp, MapPin, Calendar, Eye, Edit, MoreVertical, Settings, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -63,9 +63,61 @@ const AdminDashboard = () => {
         .select('*');
 
       if (error) throw error;
+      
+      // Calcular o início e fim do período selecionado para filtrar transações
+      let startDate, endDate;
+      
+      if (viewType === 'monthly') {
+        // Para visualização mensal, filtrar pelo mês específico
+        startDate = new Date(selectedYear, selectedMonth - 1, 1);
+        endDate = new Date(selectedYear, selectedMonth, 0);
+      } else {
+        // Para visualização anual, filtrar pelo ano inteiro
+        startDate = new Date(selectedYear, 0, 1);
+        endDate = new Date(selectedYear, 11, 31);
+      }
+      
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+      
+      console.log(`Filtrando transações de ${startDateStr} até ${endDateStr}`);
+      console.log(`Período: ${viewType === 'monthly' ? `Mês ${selectedMonth}` : 'Ano'}, Ano: ${selectedYear}`);
 
+      // Array para armazenar as promessas de busca de transações para cada usuário
+      const userRevenuePromises = profiles?.map(async (profile) => {
+        // Buscar transações do usuário para o mês/ano selecionado
+        console.log(`Buscando transações para usuário ${profile.id} de ${startDateStr} até ${endDateStr}`);
+        const { data: transactions, error: transError } = await supabase
+          .from('transacoes_financeiras')
+          .select('valor, date')
+          .eq('user_id', profile.id)
+          .eq('tipo_transacao', 'ENTRADA')
+          .gte('date', startDateStr)
+          .lte('date', endDateStr);
+        
+        if (transError) {
+          console.error('Erro ao buscar transações:', transError);
+          return {
+            profile,
+            monthlyRevenue: 0
+          };
+        }
+        
+        // Calcular o faturamento mensal somando os valores das transações
+        const monthlyRevenue = transactions?.reduce((sum, t) => sum + Number(t.valor), 0) || 0;
+        console.log(`Usuário ${profile.id} - Transações encontradas: ${transactions?.length || 0}, Faturamento: ${monthlyRevenue}`);
+        
+        return {
+          profile,
+          monthlyRevenue
+        };
+      }) || [];
+      
+      // Aguardar todas as promessas de busca de transações
+      const userRevenueResults = await Promise.all(userRevenuePromises);
+      
       // Converter dados do Supabase para o formato esperado
-      const usersData: UserType[] = profiles?.map(profile => ({
+      const usersData: UserType[] = userRevenueResults.map(({ profile, monthlyRevenue }) => ({
         id: profile.id,
         name: profile.nome_profissional_ou_salao || 'Usuário',
         email: profile.email || '',
@@ -74,7 +126,7 @@ const AdminDashboard = () => {
         phone: profile.telefone || '',
         status: (profile.status as 'active' | 'inactive') || 'active',
         createdAt: new Date(profile.created_at),
-        monthlyRevenue: Number(profile.faturamento_total_acumulado) || 0,
+        monthlyRevenue: monthlyRevenue, // Usar o faturamento mensal calculado
         nomeSalao: profile.nome_salao || '',
         descricaoSalao: profile.descricao_salao || '',
         endereco: profile.endereco || '',
@@ -82,7 +134,7 @@ const AdminDashboard = () => {
         estado: profile.estado || '',
         fotoPerfil: profile.foto_perfil || '',
         currentPatenteId: profile.current_patente_id || ''
-      })) || [];
+      }));
 
       setUsers(usersData);
     } catch (error: unknown) {
@@ -95,7 +147,7 @@ const AdminDashboard = () => {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, [toast, viewType, selectedMonth, selectedYear]);
 
   // Calcular métricas
   const activeUsers = users.filter(u => u.status === 'active').length;
@@ -125,9 +177,10 @@ const AdminDashboard = () => {
     .sort(([,a], [,b]) => b - a)
     .slice(0, 5);
 
+  // Efeito para carregar usuários quando o componente montar ou quando os filtros mudarem
   useEffect(() => {
     loadUsers();
-  }, [loadUsers]);
+  }, [selectedMonth, selectedYear, viewType, loadUsers]);
 
   const handleAddUser = async (userData: Omit<UserType, 'id'>) => {
     // Recarregar a lista de usuários para mostrar o novo usuário
@@ -305,7 +358,11 @@ const AdminDashboard = () => {
                   {viewType === 'monthly' && (
                     <Select 
                       value={selectedMonth.toString()} 
-                      onValueChange={(value) => setSelectedMonth(parseInt(value))}
+                      onValueChange={(value) => {
+                        const newMonth = parseInt(value);
+                        setSelectedMonth(newMonth);
+                        console.log(`Mês alterado para: ${newMonth}`);
+                      }}
                     >
                       <SelectTrigger className="h-6 text-xs flex-1">
                         <SelectValue />
@@ -322,7 +379,11 @@ const AdminDashboard = () => {
                   
                   <Select 
                     value={selectedYear.toString()} 
-                    onValueChange={(value) => setSelectedYear(parseInt(value))}
+                    onValueChange={(value) => {
+                      const newYear = parseInt(value);
+                      setSelectedYear(newYear);
+                      console.log(`Ano alterado para: ${newYear}`);
+                    }}
                   >
                     <SelectTrigger className="h-6 text-xs flex-1">
                       <SelectValue />
@@ -469,7 +530,9 @@ const AdminDashboard = () => {
                         <p className="font-semibold text-symbol-black">
                           {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(user.monthlyRevenue || 0)}
                         </p>
-                        <p className="text-xs text-symbol-gray-500">Faturamento</p>
+                        <p className="text-xs text-symbol-gray-500">
+                          Faturamento {viewType === 'monthly' ? `${months[selectedMonth-1]}` : 'Anual'} {selectedYear}
+                        </p>
                       </div>
 
                       <DropdownMenu>

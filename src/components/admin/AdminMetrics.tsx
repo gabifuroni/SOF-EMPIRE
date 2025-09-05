@@ -10,6 +10,7 @@ interface AdminMetricsProps {
 
 const AdminMetrics = ({ users }: AdminMetricsProps) => {
   const activeUsers = users.filter(u => u.status === 'active').length;
+  // Calcular o faturamento total com base nos dados filtrados
   const totalRevenue = users.reduce((sum, u) => sum + (u.monthlyRevenue || 0), 0);
   const avgRevenue = users.length > 0 ? totalRevenue / users.length : 0;
   
