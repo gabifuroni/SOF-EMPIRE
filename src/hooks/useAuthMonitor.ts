@@ -37,8 +37,8 @@ export const useAuthMonitor = () => {
           return;
         }
 
-        // Try to refresh token 5 minutes before expiry
-        const refreshTime = timeUntilExpiry - (5 * 60 * 1000); // 5 minutes in milliseconds
+        // Try to refresh token 30 minutes before expiry
+        const refreshTime = timeUntilExpiry - (30 * 60 * 1000); // 30 minutes in milliseconds
         
         if (refreshTime > 0) {
           timeoutId = setTimeout(async () => {
@@ -59,16 +59,16 @@ export const useAuthMonitor = () => {
           }, refreshTime);
         }
 
-        // Show warning 2 minutes before expiry
-        const warningTime = timeUntilExpiry - (2 * 60 * 1000); // 2 minutes in milliseconds
+        // Show warning 15 minutes before expiry
+        const warningTime = timeUntilExpiry - (15 * 60 * 1000); // 15 minutes in milliseconds
         
         if (warningTime > 0) {
           warningTimeoutId = setTimeout(() => {
             setIsTokenExpiring(true);
             toast.warning(
-              'Sua sessão expirará em 2 minutos. Por favor, salve seu trabalho.',
+              'Sua sessão expirará em 15 minutos. Por favor, salve seu trabalho.',
               {
-                duration: 10000,
+                duration: 15000,
                 position: 'top-center'
               }
             );

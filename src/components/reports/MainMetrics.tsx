@@ -80,7 +80,7 @@ export const MainMetrics = ({ reportData, formatCurrency }: MainMetricsProps) =>
             </button>
           }
         >
-          <span>Inclui despesas indiretas, impostos, comissão e depreciação mensal.</span>
+          <span>Inclui apenas as despesas indiretas mensais.</span>
         </InfoModal>
       </div>
       <div className="mb-2">
@@ -89,7 +89,7 @@ export const MainMetrics = ({ reportData, formatCurrency }: MainMetricsProps) =>
         </h3>
       </div>
       <div className="brand-heading text-lg lg:text-2xl text-symbol-black">
-        {formatCurrency(reportData.custosIndiretos)}
+        {formatCurrency(reportData.despesasIndiretas || 0)}
       </div>
       {/* Não exibe percentual, pois é soma composta */}
     </div>
