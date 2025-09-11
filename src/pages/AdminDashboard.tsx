@@ -22,7 +22,7 @@ import AdminProfile from '@/components/admin/AdminProfile';
 import { useAdminFinancialSummary, useAdminAnnualSummary } from '@/hooks/useAdminFinancialSummary';
 
 const AdminDashboard = () => {
-  const [users, setUsers] = useState<UserType[]>([]);
+  const [users, setUsers] = useState<UserType[]>([]); 
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddUser, setShowAddUser] = useState(false);
   const [showEditUser, setShowEditUser] = useState(false);
