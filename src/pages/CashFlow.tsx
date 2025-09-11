@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, Filter, TrendingUp, TrendingDown, DollarSign, Edit, Trash2, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -9,8 +9,10 @@ import CashFlowHeader from '@/components/cash-flow/CashFlowHeader';
 import AddEntryModal from '@/components/cash-flow/AddEntryModal';
 import { format, parse } from 'date-fns';
 import { useTransactions } from '@/hooks/useTransactions';
+import { usePaymentMethods } from '@/hooks/usePaymentMethods';
 import { CashFlowEntry } from '@/types';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/hooks/use-toast';
 
 interface Transaction {
   id: string;
@@ -39,6 +41,7 @@ type FilterType = 'todos' | 'entradas' | 'saidas';
 
 const CashFlow = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
   const [editingEntry, setEditingEntry] = useState<CashFlowEntry | null>(null);
   const [filterType, setFilterType] = useState<FilterType>('todos');
@@ -46,6 +49,7 @@ const CashFlow = () => {
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
 
   const { transactions, isLoading, addTransaction, updateTransaction, deleteTransaction } = useTransactions();
+  const { paymentMethods, isLoading: isLoadingPaymentMethods } = usePaymentMethods();
 
   // Convert Supabase transactions to CashFlowEntry format for compatibility
   const convertedEntries: CashFlowEntry[] = transactions.map((t: Transaction) => ({
@@ -99,17 +103,49 @@ const CashFlow = () => {
 
   const handleAddEntry = async (entryData: EntryData) => {
     try {
+      let amount = entryData.amount;
+      let taxaAplicada = 0;
+      
+      // Verifica se o método de pagamento é cartão de crédito ou débito
+      if (entryData.paymentMethod === 'Cartão de Crédito' || entryData.paymentMethod === 'Cartão de Débito') {
+        // Busca a taxa correspondente nas configurações de pagamento
+        const paymentMethod = paymentMethods.find(method => {
+          if (entryData.paymentMethod === 'Cartão de Crédito') {
+            return method.nome_metodo === 'Crédito';
+          } else if (entryData.paymentMethod === 'Cartão de Débito') {
+            return method.nome_metodo === 'Débito';
+          }
+          return false;
+        });
+        
+        if (paymentMethod) {
+          taxaAplicada = paymentMethod.taxa_percentual;
+          // Ajusta o valor considerando a taxa
+          amount = amount - (amount * (taxaAplicada / 100));
+          
+          toast({
+            title: 'Taxa aplicada',
+            description: `Taxa de ${taxaAplicada.toFixed(2)}% aplicada ao valor da transação.`,
+          });
+        }
+      }
+      
       await addTransaction.mutateAsync({
         description: entryData.description,
-        valor: entryData.amount,
+        valor: amount,
         tipo_transacao: 'ENTRADA',
         date: format(entryData.date, 'yyyy-MM-dd'),
         payment_method: entryData.paymentMethod,
-        commission: entryData.commission ? (entryData.amount * entryData.commission) / 100 : null,
+        commission: entryData.commission ? (amount * entryData.commission) / 100 : null,
       });
       setIsAddEntryModalOpen(false);
     } catch (error) {
       console.error('Error adding entry:', error);
+      toast({
+        title: 'Erro',
+        description: 'Ocorreu um erro ao adicionar a entrada.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -117,17 +153,49 @@ const CashFlow = () => {
     if (!editingEntry) return;
     
     try {
+      let amount = entryData.amount;
+      let taxaAplicada = 0;
+      
+      // Verifica se o método de pagamento é cartão de crédito ou débito
+      if (entryData.paymentMethod === 'Cartão de Crédito' || entryData.paymentMethod === 'Cartão de Débito') {
+        // Busca a taxa correspondente nas configurações de pagamento
+        const paymentMethod = paymentMethods.find(method => {
+          if (entryData.paymentMethod === 'Cartão de Crédito') {
+            return method.nome_metodo === 'Crédito';
+          } else if (entryData.paymentMethod === 'Cartão de Débito') {
+            return method.nome_metodo === 'Débito';
+          }
+          return false;
+        });
+        
+        if (paymentMethod) {
+          taxaAplicada = paymentMethod.taxa_percentual;
+          // Ajusta o valor considerando a taxa
+          amount = amount - (amount * (taxaAplicada / 100));
+          
+          toast({
+            title: 'Taxa aplicada',
+            description: `Taxa de ${taxaAplicada.toFixed(2)}% aplicada ao valor da transação.`,
+          });
+        }
+      }
+      
       await updateTransaction.mutateAsync({
         id: editingEntry.id,
         description: entryData.description,
-        valor: entryData.amount,
+        valor: amount,
         date: format(entryData.date, 'yyyy-MM-dd'),
         payment_method: entryData.paymentMethod,
-        commission: entryData.commission ? (entryData.amount * entryData.commission) / 100 : null,
+        commission: entryData.commission ? (amount * entryData.commission) / 100 : null,
       });
       setEditingEntry(null);
     } catch (error) {
       console.error('Error updating entry:', error);
+      toast({
+        title: 'Erro',
+        description: 'Ocorreu um erro ao atualizar a entrada.',
+        variant: 'destructive',
+      });
     }
   };
 

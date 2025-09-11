@@ -156,6 +156,9 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
     onSave(entryData);
     onClose();
   };
+  // Lista de métodos de pagamento disponíveis
+  // Importante: Os nomes 'Cartão de Crédito' e 'Cartão de Débito' devem corresponder exatamente
+  // aos nomes usados na lógica de ajuste de taxas no componente CashFlow
   const paymentMethods = [
     'Dinheiro',
     'Pix',

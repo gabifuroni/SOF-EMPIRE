@@ -61,7 +61,7 @@ export const MainMetrics = ({ reportData, formatCurrency }: MainMetricsProps) =>
         </h3>
       </div>
       <div className="brand-heading text-lg lg:text-2xl text-symbol-black">
-        {formatCurrency(reportData.custosDirectos)}
+        {formatCurrency(Number((reportData.custosDirectos)))}
       </div>
       <div className="text-xs text-red-600 font-medium mt-1">
         {reportData.percentualCustosDirectos.toFixed(1)}% do faturamento
