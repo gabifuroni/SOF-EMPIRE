@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { User as UserType } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { LogOut, Plus, Users, TrendingUp, MapPin, Calendar, Eye, Edit, MoreVertical, Settings, ChevronDown } from 'lucide-react';
+import { LogOut, Plus, Users, TrendingUp, MapPin, Calendar, Eye, Edit, MoreVertical, Settings, ChevronDown, Search } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,6 +23,7 @@ import { useAdminFinancialSummary, useAdminAnnualSummary } from '@/hooks/useAdmi
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState<UserType[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [showAddUser, setShowAddUser] = useState(false);
   const [showEditUser, setShowEditUser] = useState(false);
   const [editingUser, setEditingUser] = useState<UserType | null>(null);
@@ -466,13 +468,26 @@ const AdminDashboard = () => {
         {/* Lista de Usuários */}
         <Card className="bg-white border-symbol-gray-200 shadow-sm">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-symbol-black">
-              <Users className="h-5 w-5" />
-              Usuários Cadastrados
-            </CardTitle>
-            <CardDescription className="text-symbol-gray-600">
-              Gerencie todos os usuários do sistema
-            </CardDescription>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-symbol-black">
+                  <Users className="h-5 w-5" />
+                  Usuários Cadastrados
+                </CardTitle>
+                <CardDescription className="text-symbol-gray-600">
+                  Gerencie todos os usuários do sistema
+                </CardDescription>
+              </div>
+              <div className="relative w-full md:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-symbol-gray-500" />
+                <Input
+                  placeholder="Pesquisar usuários..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
+                />
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -484,78 +499,98 @@ const AdminDashboard = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {users.map((user) => (
-                  <div
-                    key={user.id}
-                    className="flex items-center justify-between p-4 border border-symbol-gray-200 rounded-lg hover:bg-symbol-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={user.fotoPerfil} alt={user.name} />
-                        <AvatarFallback className="bg-symbol-gray-200 text-symbol-black">
-                          {user.name.slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-symbol-black truncate">{user.name}</h3>
-                          <Badge 
-                            variant={user.role === 'admin' ? 'default' : 'secondary'}
-                            className={user.role === 'admin' ? 'bg-symbol-black text-white' : ''}
-                          >
-                            {user.role === 'admin' ? 'Admin' : 'Profissional'}
-                          </Badge>
-                          <Badge 
-                            variant={user.status === 'active' ? 'default' : 'destructive'}
-                            className={user.status === 'active' ? 'bg-green-600' : ''}
-                          >
-                            {user.status === 'active' ? 'Ativo' : 'Inativo'}
-                          </Badge>
+                {(() => {
+                  const filteredUsers = users.filter(user => 
+                    searchTerm === '' || 
+                    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (user.nomeSalao && user.nomeSalao.toLowerCase().includes(searchTerm.toLowerCase()))
+                  );
+                  
+                  if (filteredUsers.length === 0 && searchTerm !== '') {
+                    return (
+                      <div className="flex flex-col items-center justify-center py-8 text-center">
+                        <Users className="h-12 w-12 text-symbol-gray-300 mb-2" />
+                        <p className="text-symbol-gray-600 font-medium">Nenhum usuário encontrado</p>
+                        <p className="text-symbol-gray-500 text-sm">Tente outro termo de pesquisa</p>
+                      </div>
+                    );
+                  }
+                  
+                  return filteredUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between p-4 border border-symbol-gray-200 rounded-lg hover:bg-symbol-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={user.fotoPerfil} alt={user.name} />
+                          <AvatarFallback className="bg-symbol-gray-200 text-symbol-black">
+                            {user.name.slice(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-symbol-black truncate">{user.name}</h3>
+                            <Badge 
+                              variant={user.role === 'admin' ? 'default' : 'secondary'}
+                              className={user.role === 'admin' ? 'bg-symbol-black text-white' : ''}
+                            >
+                              {user.role === 'admin' ? 'Admin' : 'Profissional'}
+                            </Badge>
+                            <Badge 
+                              variant={user.status === 'active' ? 'default' : 'destructive'}
+                              className={user.status === 'active' ? 'bg-green-600' : ''}
+                            >
+                              {user.status === 'active' ? 'Ativo' : 'Inativo'}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-symbol-gray-600 truncate">{user.email}</p>
+                          {user.nomeSalao && (
+                            <p className="text-sm text-symbol-gray-500 truncate">{user.nomeSalao}</p>
+                          )}
+                          {user.cidade && (
+                            <p className="text-xs text-symbol-gray-400">
+                              {user.cidade}{user.estado && `, ${user.estado}`}
+                            </p>
+                          )}
                         </div>
-                        <p className="text-sm text-symbol-gray-600 truncate">{user.email}</p>
-                        {user.nomeSalao && (
-                          <p className="text-sm text-symbol-gray-500 truncate">{user.nomeSalao}</p>
-                        )}
-                        {user.cidade && (
-                          <p className="text-xs text-symbol-gray-400">
-                            {user.cidade}{user.estado && `, ${user.estado}`}
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <p className="font-semibold text-symbol-black">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(user.monthlyRevenue || 0)}
                           </p>
-                        )}
+                          <p className="text-xs text-symbol-gray-500">
+                            Faturamento {viewType === 'monthly' ? `${months[selectedMonth-1]}` : 'Anual'} {selectedYear}
+                          </p>
+                        </div>
+
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEditUser(user)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => toggleUserStatus(user.id)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              {user.status === 'active' ? 'Desativar' : 'Ativar'}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="font-semibold text-symbol-black">
-                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(user.monthlyRevenue || 0)}
-                        </p>
-                        <p className="text-xs text-symbol-gray-500">
-                          Faturamento {viewType === 'monthly' ? `${months[selectedMonth-1]}` : 'Anual'} {selectedYear}
-                        </p>
-                      </div>
-
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleEditUser(user)}>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => toggleUserStatus(user.id)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            {user.status === 'active' ? 'Desativar' : 'Ativar'}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                ))}
-              </div>            )}
+                  ));
+                })()} 
+              </div>
+            )}
           </CardContent>
         </Card>
         </TabsContent>

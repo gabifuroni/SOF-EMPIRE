@@ -39,8 +39,8 @@ const Reports = () => {
     // Custos Diretos
     custosDirectos: financialSummary.custos_diretos,
     percentualCustosDirectos: financialSummary.percentuais.custos_diretos_pct,
-    // Custos Indiretos (despesas indiretas + depreciação mensal)
-    custosIndiretos: Number(financialSummary.custos_indiretos ?? 0) + Number(financialSummary.depreciacao_mensal ?? 0),
+    // Custos Indiretos (apenas despesas indiretas mensais, sem depreciação)
+    despesasIndiretas: Number(financialSummary.custos_indiretos ?? 0),
     // Comissões (campo separado dos custos indiretos)
     comissoes: Number(financialSummary.comissoes ?? 0),
     // Impostos (campo separado dos custos indiretos)
