@@ -50,7 +50,7 @@ export const MainMetrics = ({ reportData, formatCurrency }: MainMetricsProps) =>
             <button className="p-2 hover:bg-red-100 rounded-full transition-colors touch-manipulation">
               <Info className="w-4 h-4 lg:w-5 lg:h-5 text-symbol-gray-500 hover:text-red-600 cursor-pointer" />
             </button>
-          }
+          }  
         >
           <CustosDirectosModal />
         </InfoModal>
