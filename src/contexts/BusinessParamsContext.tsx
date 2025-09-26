@@ -50,7 +50,7 @@ export { BusinessParamsContext };
 export const BusinessParamsProvider = ({ children }: { children: ReactNode }) => {
   const { paymentMethods: dbPaymentMethods, isLoading: paymentMethodsLoading, calculateWeightedAverageRate: dbCalculateWeightedAverageRate } = usePaymentMethods();
   const { settings: businessSettings, isLoading: settingsLoading } = useBusinessSettings();
-  const { userGoals, isLoading: goalsLoading } = useUserGoals();
+  const { goals: userGoals, isLoading: goalsLoading } = useUserGoals();
   
   const isLoading = paymentMethodsLoading || settingsLoading || goalsLoading;
 
@@ -60,7 +60,7 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
     lucroDesejado: 21.0,
     despesasIndiretasDepreciacao: 35.0,
     despesasDiretas: 44.0,
-    impostosRate: 8.0,
+    impostosRate: 0.0,
     weightedAverageRate: 0,
     workingDaysPerYear: 240,
     attendanceGoal: 50,

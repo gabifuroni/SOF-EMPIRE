@@ -1,1 +1,7 @@
 project_id = "bgdfyzqchjlldosxafyf"
+
+[auth]
+# JWT token expiration time in seconds (6 hours = 21600 seconds)
+jwt_expiry = 21600
+# Enable automatic token refresh
+enable_refresh_token_rotation = true

@@ -103,40 +103,13 @@ const CashFlow = () => {
 
   const handleAddEntry = async (entryData: EntryData) => {
     try {
-      let amount = entryData.amount;
-      let taxaAplicada = 0;
-      
-      // Verifica se o método de pagamento é cartão de crédito ou débito
-      if (entryData.paymentMethod === 'Cartão de Crédito' || entryData.paymentMethod === 'Cartão de Débito') {
-        // Busca a taxa correspondente nas configurações de pagamento
-        const paymentMethod = paymentMethods.find(method => {
-          if (entryData.paymentMethod === 'Cartão de Crédito') {
-            return method.nome_metodo === 'Crédito';
-          } else if (entryData.paymentMethod === 'Cartão de Débito') {
-            return method.nome_metodo === 'Débito';
-          }
-          return false;
-        });
-        
-        if (paymentMethod) {
-          taxaAplicada = paymentMethod.taxa_percentual;
-          // Ajusta o valor considerando a taxa
-          amount = amount - (amount * (taxaAplicada / 100));
-          
-          toast({
-            title: 'Taxa aplicada',
-            description: `Taxa de ${taxaAplicada.toFixed(2)}% aplicada ao valor da transação.`,
-          });
-        }
-      }
-      
       await addTransaction.mutateAsync({
         description: entryData.description,
-        valor: amount,
+        valor: entryData.amount, // Usar o valor exato inserido pelo usuário
         tipo_transacao: 'ENTRADA',
         date: format(entryData.date, 'yyyy-MM-dd'),
         payment_method: entryData.paymentMethod,
-        commission: entryData.commission ? (amount * entryData.commission) / 100 : null,
+        commission: entryData.commission || null, // Salvar a porcentagem de comissão inserida pelo usuário
       });
       setIsAddEntryModalOpen(false);
     } catch (error) {
@@ -153,40 +126,13 @@ const CashFlow = () => {
     if (!editingEntry) return;
     
     try {
-      let amount = entryData.amount;
-      let taxaAplicada = 0;
-      
-      // Verifica se o método de pagamento é cartão de crédito ou débito
-      if (entryData.paymentMethod === 'Cartão de Crédito' || entryData.paymentMethod === 'Cartão de Débito') {
-        // Busca a taxa correspondente nas configurações de pagamento
-        const paymentMethod = paymentMethods.find(method => {
-          if (entryData.paymentMethod === 'Cartão de Crédito') {
-            return method.nome_metodo === 'Crédito';
-          } else if (entryData.paymentMethod === 'Cartão de Débito') {
-            return method.nome_metodo === 'Débito';
-          }
-          return false;
-        });
-        
-        if (paymentMethod) {
-          taxaAplicada = paymentMethod.taxa_percentual;
-          // Ajusta o valor considerando a taxa
-          amount = amount - (amount * (taxaAplicada / 100));
-          
-          toast({
-            title: 'Taxa aplicada',
-            description: `Taxa de ${taxaAplicada.toFixed(2)}% aplicada ao valor da transação.`,
-          });
-        }
-      }
-      
       await updateTransaction.mutateAsync({
         id: editingEntry.id,
         description: entryData.description,
-        valor: amount,
+        valor: entryData.amount, // Usar o valor exato inserido pelo usuário
         date: format(entryData.date, 'yyyy-MM-dd'),
         payment_method: entryData.paymentMethod,
-        commission: entryData.commission ? (amount * entryData.commission) / 100 : null,
+        commission: entryData.commission || null, // Salvar a porcentagem de comissão inserida pelo usuário
       });
       setEditingEntry(null);
     } catch (error) {

@@ -50,7 +50,15 @@ export const MarginsConfiguration = ({
               min="0"
               max="100"
               value={lucroDesejado}
-              onChange={(e) => setLucroDesejado(parseFloat(e.target.value) || 0)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || value === null) {
+                  setLucroDesejado(0);
+                } else {
+                  const numericValue = parseFloat(value);
+                  setLucroDesejado(isNaN(numericValue) ? 0 : numericValue);
+                }
+              }}
               className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black pr-8"
             />
             <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-symbol-gray-600 text-sm">%</span>
@@ -68,7 +76,15 @@ export const MarginsConfiguration = ({
               min="0"
               max="100"
               value={despesasIndiretasDepreciacao}
-              onChange={(e) => setDespesasIndiretasDepreciacao(parseFloat(e.target.value) || 0)}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === '' || value === null) {
+                  setDespesasIndiretasDepreciacao(0);
+                } else {
+                  const numericValue = parseFloat(value);
+                  setDespesasIndiretasDepreciacao(isNaN(numericValue) ? 0 : numericValue);
+                }
+              }}
               className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black pr-8"
             />
             <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-symbol-gray-600 text-sm">%</span>
@@ -112,13 +128,21 @@ export const MarginsConfiguration = ({
             min="0"
             max="100"
             value={impostosRate}
-            onChange={(e) => setImpostosRate(parseFloat(e.target.value) || 0)}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === '' || value === null) {
+                setImpostosRate(0);
+              } else {
+                const numericValue = parseFloat(value);
+                setImpostosRate(isNaN(numericValue) ? 0 : numericValue);
+              }
+            }}
             className="bg-symbol-gray-50 border-symbol-gray-300 text-symbol-black pr-8 w-full"
           />
           <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-symbol-gray-600 text-sm">%</span>
         </div>
         <p className="text-xs text-symbol-gray-500 mt-1">
-          Taxa fixa de impostos aplicada aos serviços
+          Taxa fixa de impostos aplicada aos serviços (0% para isento)
         </p>
       </div>
       

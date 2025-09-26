@@ -419,6 +419,29 @@ const AdminDashboard = () => {
 
           <Card className="bg-white border-symbol-gray-200 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-symbol-gray-600">
+                Média de Faturamento {viewType === 'monthly' ? 'Mensal' : 'Anual'}
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-symbol-black">
+                {financialLoading ? (
+                  <div className="animate-pulse bg-gray-200 h-6 w-24 rounded"></div>
+                ) : (
+                  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(
+                    activeUsers > 0 ? (financialData?.faturamento_bruto || 0) / activeUsers : 0
+                  )
+                )}
+              </div>
+              <p className="text-xs text-symbol-gray-500 mt-1">
+                Por usuário ativo ({activeUsers} {activeUsers === 1 ? 'usuário' : 'usuários'})
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white border-symbol-gray-200 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-symbol-gray-600">Novas Adesões</CardTitle>
               <Calendar className="h-4 w-4 text-symbol-gray-500" />
             </CardHeader>

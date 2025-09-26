@@ -157,8 +157,20 @@ export const createSaveFunctions = ({
         lucroDesejado,
         despesasIndiretasDepreciacao,
         despesasDiretas,
-        impostosRate
+        impostosRate: impostosRate,
+        taxaImpostosToSave: impostosRate
       });
+      
+      // Verificação explícita para garantir que 0 seja aceito
+      if (impostosRate < 0 || impostosRate > 100) {
+        toast({
+          title: "Erro de Validação",
+          description: "A taxa de impostos deve estar entre 0% e 100%",
+          variant: "destructive"
+        });
+        setIsSaving(false);
+        return;
+      }
 
       await saveSettings.mutateAsync({
         lucroDesejado,
@@ -246,7 +258,11 @@ export const createSaveFunctions = ({
     valorMobilizado: number,
     totalDepreciado: number,
     depreciacaoMensal: number,
-    numProfessionals: number
+    numProfessionals: number,
+    addToIndirectExpenses?: boolean,
+    setIsAddingToIndirectExpenses?: (value: boolean) => void,
+    addDepreciationToIndirectExpenses?: (value: number) => Promise<boolean>,
+    removeDepreciationFromIndirectExpenses?: () => Promise<boolean>
   ) => {
     setIsSaving(true);
     
@@ -275,11 +291,72 @@ export const createSaveFunctions = ({
         depreciacaoMensal,
       });
 
-      toast({
-        title: "Sucesso!",
-        description: "Dados de depreciação salvos com sucesso!",
-        variant: "default"
-      });
+      // Se devemos adicionar às despesas indiretas
+      if (addToIndirectExpenses && setIsAddingToIndirectExpenses && addDepreciationToIndirectExpenses) {
+        setIsAddingToIndirectExpenses(true);
+        try {
+          // Validar se o valor é válido
+          if (depreciacaoMensal <= 0) {
+            throw new Error('Valor de depreciação deve ser maior que zero');
+          }
+
+          const success = await addDepreciationToIndirectExpenses(depreciacaoMensal);
+          if (!success) {
+            throw new Error('Falha ao adicionar depreciação às despesas indiretas');
+          }
+
+          toast({
+            title: "Sucesso!",
+            description: "Dados de depreciação salvos e adicionados às despesas indiretas!",
+            variant: "default"
+          });
+        } catch (indirectExpenseError) {
+          console.error('Error adding to indirect expenses:', indirectExpenseError);
+          let errorMessage = "Dados de depreciação salvos, mas houve erro ao adicionar às despesas indiretas.";
+          
+          if (indirectExpenseError instanceof Error) {
+            errorMessage += ` Erro: ${indirectExpenseError.message}`;
+          }
+          
+          toast({
+            title: "Aviso",
+            description: errorMessage,
+            variant: "destructive"
+          });
+        } finally {
+          setIsAddingToIndirectExpenses(false);
+        }
+      } else if (addToIndirectExpenses === false && setIsAddingToIndirectExpenses && removeDepreciationFromIndirectExpenses) {
+        // Se não deve adicionar às despesas indiretas, remover se existir
+        setIsAddingToIndirectExpenses(true);
+        try {
+          const success = await removeDepreciationFromIndirectExpenses();
+          if (!success) {
+            throw new Error('Falha ao remover depreciação das despesas indiretas');
+          }
+
+          toast({
+            title: "Sucesso!",
+            description: "Dados de depreciação salvos e removidos das despesas indiretas!",
+            variant: "default"
+          });
+        } catch (removeError) {
+          console.error('Error removing depreciation from indirect expenses:', removeError);
+          toast({
+            title: "Aviso",
+            description: "Dados de depreciação salvos, mas houve erro ao remover das despesas indiretas.",
+            variant: "destructive"
+          });
+        } finally {
+          setIsAddingToIndirectExpenses(false);
+        }
+      } else {
+        toast({
+          title: "Sucesso!",
+          description: "Dados de depreciação salvos com sucesso!",
+          variant: "default"
+        });
+      }
     } catch (error) {
       console.error('Error saving depreciation:', error);
       toast({

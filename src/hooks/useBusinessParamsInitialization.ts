@@ -49,7 +49,7 @@ export const useBusinessParamsInitialization = (
       console.log('despesasIndiretasDepreciacao value:', params.despesasIndiretasDepreciacao);
       setLucroDesejado(params.lucroDesejado || 21.0);
       setDespesasIndiretasDepreciacao(params.despesasIndiretasDepreciacao || 35.0);
-      setImpostosRate(params.impostosRate || 8.0);
+      setImpostosRate(params.impostosRate !== undefined ? params.impostosRate : 0.0);
       setValorMobilizado(params.depreciacaoValorMobilizado || 160000);
       setTotalDepreciado(params.depreciacaoTotalMesDepreciado || 87000);
       setNumProfessionals(params.equipeNumeroProfissionais || 2);

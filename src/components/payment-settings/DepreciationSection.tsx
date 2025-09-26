@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calculator, Save } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Calculator, Save, FileSpreadsheet } from 'lucide-react';
 
 interface DepreciationSectionProps {
   valorMobilizado: number;
@@ -11,6 +12,9 @@ interface DepreciationSectionProps {
   depreciacaoMensal: number;
   isSaving: boolean;
   onSave: () => void;
+  addToIndirectExpenses: boolean;
+  setAddToIndirectExpenses: (value: boolean) => void;
+  isAddingToIndirectExpenses: boolean;
 }
 
 export const DepreciationSection = ({
@@ -20,7 +24,10 @@ export const DepreciationSection = ({
   setTotalDepreciado,
   depreciacaoMensal,
   isSaving,
-  onSave
+  onSave,
+  addToIndirectExpenses,
+  setAddToIndirectExpenses,
+  isAddingToIndirectExpenses
 }: DepreciationSectionProps) => {
   return (
     <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
@@ -71,15 +78,20 @@ export const DepreciationSection = ({
           <Label className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
             Depreciação Mensal
           </Label>
-          <div className="flex items-center gap-2">
-            <span className="text-symbol-gray-600 text-sm">R$</span>
-            <Input
-              type="number"
-              step="0.01"
-              value={depreciacaoMensal.toFixed(2)}
-              readOnly
-              className="bg-symbol-gray-100 border-symbol-gray-300 text-symbol-black cursor-not-allowed"
-            />
+          <div className="relative">
+            <div className="flex items-center justify-between p-4 bg-symbol-beige/30 border-2 border-symbol-gold/40 rounded-lg">
+              <div className="flex items-center gap-3">
+                <span className="text-symbol-gray-600 text-sm">R$</span>
+                <span className="text-2xl font-bold text-symbol-black">
+                  {depreciacaoMensal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-3 py-1 bg-symbol-gold text-symbol-black text-xs font-medium rounded-full uppercase tracking-wide">
+                  CALCULADO
+                </span>
+              </div>
+            </div>
           </div>
           <p className="text-xs text-symbol-gray-500 mt-1">
             Calculado automaticamente: Total a ser Depreciado ÷ 60
@@ -87,15 +99,39 @@ export const DepreciationSection = ({
         </div>
       </div>
       
+      {/* Add to Indirect Expenses Option */}
+      <div className="mt-6 p-4 bg-symbol-beige/20 rounded-lg border border-symbol-beige/30">
+        <div className="flex items-center gap-3 mb-3">
+          <FileSpreadsheet className="text-symbol-gold" size={18} />
+          <Label className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
+            Incluir nas Despesas Indiretas
+          </Label>
+        </div>
+        <div className="flex items-center space-x-3">
+          <Checkbox
+            id="add-to-indirect"
+            checked={addToIndirectExpenses}
+            onCheckedChange={(checked) => setAddToIndirectExpenses(checked === true)}
+            className="border-symbol-gold data-[state=checked]:bg-symbol-gold data-[state=checked]:border-symbol-gold"
+          />
+          <Label htmlFor="add-to-indirect" className="text-sm text-symbol-gray-700 cursor-pointer">
+            Adicionar automaticamente a depreciação mensal como despesa indireta fixa
+          </Label>
+        </div>
+        <p className="text-xs text-symbol-gray-500 mt-2 ml-6">
+          Quando ativado, o valor da depreciação mensal será automaticamente incluído como uma categoria de despesa indireta fixa em todos os meses.
+        </p>
+      </div>
+      
       {/* Save Depreciation Button */}
       <div className="mt-6 flex justify-center">
         <Button 
           onClick={onSave}
-          disabled={isSaving}
+          disabled={isSaving || isAddingToIndirectExpenses}
           className="bg-symbol-gold hover:bg-symbol-gold/80 text-symbol-black font-medium py-3 px-6 transition-all duration-300 flex items-center justify-center gap-2 uppercase tracking-wider text-sm disabled:opacity-50"
         >
           <Save size={18} />
-          {isSaving ? 'Salvando...' : 'Salvar Dados de Depreciação'}
+          {isSaving || isAddingToIndirectExpenses ? 'Salvando...' : 'Salvar Dados de Depreciação'}
         </Button>
       </div>
     </div>

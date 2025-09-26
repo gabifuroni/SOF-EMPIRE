@@ -76,7 +76,7 @@ export const useReportData = (
     const taxasCartao = faturamento * (percentualCartao / 100);
 
     // 4. Taxes
-    const percentualImposto = businessParams?.impostosRate || 8;
+    const percentualImposto = businessParams?.impostosRate !== undefined ? businessParams.impostosRate : 0;
     const impostos = faturamento * (percentualImposto / 100);
 
     // Calculate percentages
@@ -84,8 +84,8 @@ export const useReportData = (
     const percentualMateriasPrimas = faturamento > 0 ? (custoMateriasPrimas / faturamento) * 100 : 0;
     const percentualImpostos = faturamento > 0 ? (impostos / faturamento) * 100 : 0;
 
-    // Total direct costs: comissão + cartão + impostos + TODAS as saídas do fluxo de caixa
-    const custosDirectos = comissoesReais + taxasCartao + impostos + todasSaidasFluxoCaixa;
+    // Total direct costs: impostos + TODAS as saídas do fluxo de caixa (comissões e taxas de cartão removidas)
+    const custosDirectos = impostos + todasSaidasFluxoCaixa;
 
     // Operational margin (like in ServiceTable: operationalMargin)
     const margemOperacionalValor = faturamento - custosDirectos;    // Operational cost (like in ServiceTable: operationalCost)
@@ -119,7 +119,7 @@ export const useReportData = (
       
       // Comissão
       comissoes: comissoesReais,
-      percentualComissao,
+      percentualComissoes: percentualComissao,
       
       // Matéria Prima
       custoMateriasPrimas,
@@ -207,11 +207,11 @@ export const useHistoricalData = (
       const percentualCartao = businessParams?.weightedAverageRate || 3.5;
       const taxasCartao = faturamento * (percentualCartao / 100);
       
-      const percentualImposto = businessParams?.impostosRate || 8;
+      const percentualImposto = businessParams?.impostosRate !== undefined ? businessParams.impostosRate : 0;
       const impostos = faturamento * (percentualImposto / 100);
       
-      // Total direct costs: comissão + cartão + impostos + todas as saídas do fluxo de caixa
-      const custosDirectos = comissoesReais + taxasCartao + impostos + todasSaidasFluxoCaixa;
+      // Total direct costs: impostos + todas as saídas do fluxo de caixa (comissões e taxas de cartão removidas)
+      const custosDirectos = impostos + todasSaidasFluxoCaixa;
       
       const margemOperacionalValor = faturamento - custosDirectos;
         const percentualCustoOperacional = businessParams?.despesasIndiretasDepreciacao || 15;

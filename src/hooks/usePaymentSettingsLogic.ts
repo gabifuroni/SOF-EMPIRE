@@ -3,6 +3,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
 import { useBusinessSettings } from '@/hooks/useBusinessSettings';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
+import { useDepreciationIndirectExpense } from '@/hooks/useDepreciationIndirectExpense';
 import { 
   CreditCard, 
   Banknote, 
@@ -39,6 +40,7 @@ export const usePaymentSettingsLogic = () => {
   const { params, updateParams } = useBusinessParams();
   const { saveSettings } = useBusinessSettings();
   const { paymentMethods: dbPaymentMethods, updatePaymentMethod: updateDbPaymentMethod } = usePaymentMethods();
+  const { hasDepreciationCategory, addDepreciationToIndirectExpenses, removeDepreciationFromIndirectExpenses } = useDepreciationIndirectExpense();
 
   // State management
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
@@ -49,6 +51,9 @@ export const usePaymentSettingsLogic = () => {
   const [valorMobilizado, setValorMobilizado] = useState(0);
   const [totalDepreciado, setTotalDepreciado] = useState(0);
   const depreciacaoMensal = totalDepreciado / 60;
+  const [addToIndirectExpenses, setAddToIndirectExpenses] = useState(false);
+  const [isAddingToIndirectExpenses, setIsAddingToIndirectExpenses] = useState(false);
+  const [hasCheckedDepreciationCategory, setHasCheckedDepreciationCategory] = useState(false);
 
   // Working days state
   const [workingDays, setWorkingDays] = useState<WorkingDays>({
@@ -178,6 +183,18 @@ export const usePaymentSettingsLogic = () => {
     return totalWorkingDaysInYear - holidays.length;
   }, [workingDays, holidays]);
 
+  // Verificar se a categoria de depreciação já existe para definir o estado inicial do checkbox
+  useEffect(() => {
+    if (!hasCheckedDepreciationCategory) {
+      if (hasDepreciationCategory) {
+        setAddToIndirectExpenses(true);
+        console.log('Found existing depreciation category, checkbox set to true');
+      }
+      
+      setHasCheckedDepreciationCategory(true);
+    }
+  }, [hasDepreciationCategory, hasCheckedDepreciationCategory]);
+
   // Computed values
   const weightedAverageRate = calculateWeightedAverageRate();
   const totalDistribution = getTotalDistribution();
@@ -197,6 +214,14 @@ export const usePaymentSettingsLogic = () => {
     totalDepreciado,
     setTotalDepreciado,
     depreciacaoMensal,
+    addToIndirectExpenses,
+    setAddToIndirectExpenses,
+    isAddingToIndirectExpenses,
+    setIsAddingToIndirectExpenses,
+    hasCheckedDepreciationCategory,
+    setHasCheckedDepreciationCategory,
+    addDepreciationToIndirectExpenses,
+    removeDepreciationFromIndirectExpenses,
     workingDays,
     setWorkingDays,
     holidays,

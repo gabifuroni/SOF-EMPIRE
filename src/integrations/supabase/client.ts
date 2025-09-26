@@ -11,4 +11,12 @@ if (!SUPABASE_PUBLISHABLE_KEY) {
   throw new Error('Missing env.VITE_PUBLIC_SUPABASE_ANON_KEY');
 }
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    // Session will be automatically managed by Supabase
+    // Token expiry is controlled by JWT settings (6 hours)
+  },
+});

@@ -59,6 +59,8 @@ export const useIndirectExpenseCategories = () => {
     },
   });
 
+
+
   const updateCategory = useMutation({
     mutationFn: async ({ id, categoryName }: { id: string; categoryName: string }) => {
       const { data, error } = await supabase

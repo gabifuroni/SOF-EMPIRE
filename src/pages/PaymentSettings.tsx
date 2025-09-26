@@ -122,14 +122,22 @@ const PaymentSettings = () => {
         totalDepreciado={logic.totalDepreciado}
         setTotalDepreciado={logic.setTotalDepreciado}
         depreciacaoMensal={logic.depreciacaoMensal}
-        isSaving={logic.isSaving}        onSave={() => saveFunctions.handleSaveDepreciation(
+        isSaving={logic.isSaving}
+        addToIndirectExpenses={logic.addToIndirectExpenses}
+        setAddToIndirectExpenses={logic.setAddToIndirectExpenses}
+        isAddingToIndirectExpenses={logic.isAddingToIndirectExpenses}
+        onSave={() => saveFunctions.handleSaveDepreciation(
           logic.lucroDesejado,
           logic.despesasIndiretasDepreciacao,
           logic.impostosRate,
           logic.valorMobilizado,
           logic.totalDepreciado,
           logic.depreciacaoMensal,
-          logic.numProfessionals
+          logic.numProfessionals,
+          logic.addToIndirectExpenses,
+          logic.setIsAddingToIndirectExpenses,
+          logic.addDepreciationToIndirectExpenses,
+          logic.removeDepreciationFromIndirectExpenses
         )}
       />
 
