@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -28,25 +27,13 @@ import Header from "./components/layout/Header";
 
 const queryClient = new QueryClient();
 
-// Componente interno que tem acesso ao QueryClient
 const AppContent = () => {
   const { user, loading, signOut } = useSupabaseAuth();
   const { isAdmin, loading: adminLoading } = useAdminAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const handleToggleMobileMenu = () => {
-    console.log('Toggling mobile menu:', !isMobileMenuOpen);
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
-
-  const handleCloseMobileMenu = () => {
-    setIsMobileMenuOpen(false);
-  };
-
-  // Close menu when route changes
-  const handleRouteChange = () => {
-    setIsMobileMenuOpen(false);
-  };
+  const handleToggleMobileMenu = () => setIsMobileMenuOpen(prev => !prev);
+  const handleCloseMobileMenu = () => setIsMobileMenuOpen(false);
 
   if (loading || adminLoading) {
     return (
@@ -72,7 +59,6 @@ const AppContent = () => {
     );
   }
 
-  // Convert Supabase user to app user format
   const appUser = {
     id: user.id,
     name: user.user_metadata?.nome_profissional_ou_salao || user.email?.split('@')[0] || 'Usuário',
@@ -89,30 +75,28 @@ const AppContent = () => {
   return (
     <BusinessParamsProvider>
       <BrowserRouter>
-        <Routes>
-          {/* Admin Routes */}
-          <Route path="/admin" element={
-            <AuthWrapper>
+        {/* AuthWrapper uma única vez — evita monitor duplicado */}
+        <AuthWrapper>
+          <Routes>
+            {/* Admin Routes */}
+            <Route path="/admin" element={
               <AdminRoute>
                 <AdminDashboard />
               </AdminRoute>
-            </AuthWrapper>
-          } />
-          
-          {/* Regular User Routes */}
-          <Route path="/*" element={
-            <AuthWrapper>
+            } />
+
+            {/* Regular User Routes */}
+            <Route path="/*" element={
               <AdminRedirect>
                 <div className="min-h-screen flex w-full bg-elite-pearl-50">
-                  <Sidebar 
-                    userRole={appUser.role} 
+                  <Sidebar
+                    userRole={appUser.role}
                     isMobileMenuOpen={isMobileMenuOpen}
                     onCloseMobileMenu={handleCloseMobileMenu}
                   />
-                  
                   <div className="flex-1 flex flex-col min-w-0">
-                    <Header 
-                      user={appUser} 
+                    <Header
+                      user={appUser}
                       onLogout={handleLogout}
                       onToggleMobileMenu={handleToggleMobileMenu}
                     />
@@ -133,9 +117,9 @@ const AppContent = () => {
                   </div>
                 </div>
               </AdminRedirect>
-            </AuthWrapper>
-          } />
-        </Routes>
+            } />
+          </Routes>
+        </AuthWrapper>
       </BrowserRouter>
     </BusinessParamsProvider>
   );
