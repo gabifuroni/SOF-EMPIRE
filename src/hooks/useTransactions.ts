@@ -1,6 +1,6 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useSupabaseAuth } from './useSupabaseAuth';
 import type { Tables, TablesInsert } from '@/integrations/supabase/types';
 
 type Transaction = Tables<'transacoes_financeiras'>;
@@ -13,12 +13,12 @@ interface DateRange {
 
 export const useTransactions = (dateRange?: DateRange) => {
   const queryClient = useQueryClient();
+  const { user } = useSupabaseAuth();
 
   const { data: transactions = [], isLoading } = useQuery({
-    queryKey: ['transactions', dateRange],
+    queryKey: ['transactions', user?.id, dateRange],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user?.id) return [];
 
       let query = supabase
         .from('transacoes_financeiras')
@@ -26,31 +26,24 @@ export const useTransactions = (dateRange?: DateRange) => {
         .eq('user_id', user.id)
         .order('date', { ascending: false });
 
-      if (dateRange?.start) {
-        query = query.gte('date', dateRange.start);
-      }
-      if (dateRange?.end) {
-        query = query.lte('date', dateRange.end);
-      }
-      
+      if (dateRange?.start) query = query.gte('date', dateRange.start);
+      if (dateRange?.end) query = query.lte('date', dateRange.end);
+
       const { data, error } = await query;
-      
       if (error) throw error;
       return data;
     },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 2, // 2 minutos
   });
 
   const addTransaction = useMutation({
     mutationFn: async (transaction: Omit<TransactionInsert, 'user_id'>) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not authenticated');
+      if (!user?.id) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
         .from('transacoes_financeiras')
-        .insert({
-          ...transaction,
-          user_id: user.id,
-        })
+        .insert({ ...transaction, user_id: user.id })
         .select()
         .single();
 
@@ -58,8 +51,8 @@ export const useTransactions = (dateRange?: DateRange) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      queryClient.invalidateQueries({ queryKey: ['profile'] }); // Para atualizar patente
+      queryClient.invalidateQueries({ queryKey: ['transactions', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
     },
   });
 
@@ -76,7 +69,7 @@ export const useTransactions = (dateRange?: DateRange) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', user?.id] });
     },
   });
 
@@ -90,15 +83,9 @@ export const useTransactions = (dateRange?: DateRange) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', user?.id] });
     },
   });
 
-  return {
-    transactions,
-    isLoading,
-    addTransaction,
-    updateTransaction,
-    deleteTransaction,
-  };
+  return { transactions, isLoading, addTransaction, updateTransaction, deleteTransaction };
 };
