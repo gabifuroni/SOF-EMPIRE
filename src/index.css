@@ -72,8 +72,8 @@
     @apply border-border;
   }
 
-  body {
-    @apply bg-background text-foreground font-inter;
+  body:not(.login-page) {
+  @apply bg-background text-foreground font-inter;
     font-weight: 300; /* Lighter font weight for elegance */
     letter-spacing: 0.01em;
   }
