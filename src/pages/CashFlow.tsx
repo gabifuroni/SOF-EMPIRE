@@ -1,12 +1,7 @@
-
-import { useState, useEffect } from 'react';
-import { Plus, Filter, TrendingUp, TrendingDown, DollarSign, Edit, Trash2, ExternalLink } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import CashFlowTable from '@/components/cash-flow/CashFlowTable';
-import CashFlowHeader from '@/components/cash-flow/CashFlowHeader';
+import { useState } from 'react';
+import { Plus, TrendingUp, TrendingDown, DollarSign, Edit, Trash2, ExternalLink, Calendar } from 'lucide-react';
 import AddEntryModal from '@/components/cash-flow/AddEntryModal';
+import CashFlowTable from '@/components/cash-flow/CashFlowTable';
 import { format, parse } from 'date-fns';
 import { useTransactions } from '@/hooks/useTransactions';
 import { usePaymentMethods } from '@/hooks/usePaymentMethods';
@@ -15,29 +10,28 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 interface Transaction {
-  id: string;
-  date: string;
-  description: string;
-  tipo_transacao: 'ENTRADA' | 'SAIDA';
-  valor: number;
-  payment_method?: string | null;
-  category?: string | null;
-  commission?: number | null;
-  user_id: string;
-  created_at?: string;
-  updated_at?: string;
+  id: string; date: string; description: string;
+  tipo_transacao: 'ENTRADA' | 'SAIDA'; valor: number;
+  payment_method?: string | null; category?: string | null;
+  commission?: number | null; user_id: string;
+  created_at?: string; updated_at?: string;
 }
 
 interface EntryData {
-  description: string;
-  amount: number;
-  date: Date;
-  paymentMethod?: string;
-  category?: string;
-  commission?: number;
+  description: string; amount: number; date: Date;
+  paymentMethod?: string; category?: string; commission?: number;
 }
 
 type FilterType = 'todos' | 'entradas' | 'saidas';
+
+const MONTHS = [
+  { key: '01', label: 'Janeiro' }, { key: '02', label: 'Fevereiro' },
+  { key: '03', label: 'Março' }, { key: '04', label: 'Abril' },
+  { key: '05', label: 'Maio' }, { key: '06', label: 'Junho' },
+  { key: '07', label: 'Julho' }, { key: '08', label: 'Agosto' },
+  { key: '09', label: 'Setembro' }, { key: '10', label: 'Outubro' },
+  { key: '11', label: 'Novembro' }, { key: '12', label: 'Dezembro' },
+];
 
 const CashFlow = () => {
   const navigate = useNavigate();
@@ -49,12 +43,12 @@ const CashFlow = () => {
   const [selectedMonth, setSelectedMonth] = useState((new Date().getMonth() + 1).toString().padStart(2, '0'));
 
   const { transactions, isLoading, addTransaction, updateTransaction, deleteTransaction } = useTransactions();
-  const { paymentMethods, isLoading: isLoadingPaymentMethods } = usePaymentMethods();
+  const { paymentMethods } = usePaymentMethods();
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear + i - 2);
 
-  // Convert Supabase transactions to CashFlowEntry format for compatibility
   const convertedEntries: CashFlowEntry[] = transactions.map((t: Transaction) => ({
     id: t.id,
-    // Parse como data local no formato esperado (yyyy-MM-dd)
     date: parse(t.date, 'yyyy-MM-dd', new Date()),
     description: t.description,
     type: t.tipo_transacao === 'ENTRADA' ? 'entrada' as const : 'saida' as const,
@@ -64,302 +58,203 @@ const CashFlow = () => {
     commission: t.commission || undefined,
   }));
 
-  // Log temporário para debug
-  console.log('Total de transações carregadas:', transactions.length);
-  console.log('Transações de despesas:', transactions.filter(t => 
-    t.category === 'Despesas Diretas' || t.category === 'Despesas Indiretas'
-  ));
-  console.log('Todas as transações:', transactions);
-
-  // Filter entries based on current filters
   const filteredEntries = convertedEntries.filter(entry => {
     if (filterType !== 'todos') {
-      const typeFilter = filterType === 'entradas' ? 'entrada' : 'saida';
-      if (entry.type !== typeFilter) return false;
+      if (entry.type !== (filterType === 'entradas' ? 'entrada' : 'saida')) return false;
     }
-    
-    // Filter by selected month and year
     const entryYear = entry.date.getFullYear().toString();
     const entryMonth = (entry.date.getMonth() + 1).toString().padStart(2, '0');
-    
-    if (entryYear !== selectedYear || entryMonth !== selectedMonth) {
-      return false;
-    }
-    
-    return true;
+    return entryYear === selectedYear && entryMonth === selectedMonth;
   });
 
-  const totalEntradas = filteredEntries
-    .filter(entry => entry.type === 'entrada')
-    .reduce((sum, entry) => sum + entry.amount, 0);
-
-  const totalSaidas = filteredEntries
-    .filter(entry => entry.type === 'saida')
-    .reduce((sum, entry) => sum + Math.abs(entry.amount), 0);
-
-  // Cálculo do saldo como a diferença entre entradas e saídas
-  // totalSaidas já é um valor positivo no cálculo, então precisamos subtrair
+  const totalEntradas = filteredEntries.filter(e => e.type === 'entrada').reduce((s, e) => s + e.amount, 0);
+  const totalSaidas = filteredEntries.filter(e => e.type === 'saida').reduce((s, e) => s + Math.abs(e.amount), 0);
   const saldoPeriodo = totalEntradas - totalSaidas;
 
   const handleAddEntry = async (entryData: EntryData) => {
     try {
       await addTransaction.mutateAsync({
-        description: entryData.description,
-        valor: entryData.amount, // Usar o valor exato inserido pelo usuário
-        tipo_transacao: 'ENTRADA',
-        date: format(entryData.date, 'yyyy-MM-dd'),
-        payment_method: entryData.paymentMethod,
-        commission: entryData.commission || null, // Salvar a porcentagem de comissão inserida pelo usuário
+        description: entryData.description, valor: entryData.amount,
+        tipo_transacao: 'ENTRADA', date: format(entryData.date, 'yyyy-MM-dd'),
+        payment_method: entryData.paymentMethod, commission: entryData.commission || null,
       });
       setIsAddEntryModalOpen(false);
-    } catch (error) {
-      console.error('Error adding entry:', error);
-      toast({
-        title: 'Erro',
-        description: 'Ocorreu um erro ao adicionar a entrada.',
-        variant: 'destructive',
-      });
+    } catch {
+      toast({ title: 'Erro', description: 'Ocorreu um erro ao adicionar a entrada.', variant: 'destructive' });
     }
   };
 
   const handleEditEntry = async (entryData: EntryData) => {
     if (!editingEntry) return;
-    
     try {
       await updateTransaction.mutateAsync({
-        id: editingEntry.id,
-        description: entryData.description,
-        valor: entryData.amount, // Usar o valor exato inserido pelo usuário
-        date: format(entryData.date, 'yyyy-MM-dd'),
-        payment_method: entryData.paymentMethod,
-        commission: entryData.commission || null, // Salvar a porcentagem de comissão inserida pelo usuário
+        id: editingEntry.id, description: entryData.description,
+        valor: entryData.amount, date: format(entryData.date, 'yyyy-MM-dd'),
+        payment_method: entryData.paymentMethod, commission: entryData.commission || null,
       });
       setEditingEntry(null);
-    } catch (error) {
-      console.error('Error updating entry:', error);
-      toast({
-        title: 'Erro',
-        description: 'Ocorreu um erro ao atualizar a entrada.',
-        variant: 'destructive',
-      });
+    } catch {
+      toast({ title: 'Erro', description: 'Ocorreu um erro ao atualizar a entrada.', variant: 'destructive' });
     }
   };
 
   const handleDeleteEntry = async (id: string) => {
-    try {
-      await deleteTransaction.mutateAsync(id);
-    } catch (error) {
-      console.error('Error deleting entry:', error);
-    }
+    try { await deleteTransaction.mutateAsync(id); } catch {}
   };
 
   const openEditModal = (entry: CashFlowEntry) => {
-    // Só permite editar entradas
-    if (entry.type === 'entrada') {
-      setEditingEntry(entry);
-      setIsAddEntryModalOpen(true);
-    }
+    if (entry.type === 'entrada') { setEditingEntry(entry); setIsAddEntryModalOpen(true); }
   };
 
-  const closeEditModal = () => {
-    setEditingEntry(null);
-    setIsAddEntryModalOpen(false);
-  };
+  const card: React.CSSProperties = { background: '#13131a', border: '1px solid #2a2a38', borderRadius: 12 };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-symbol-gold border-t-symbol-beige rounded-full animate-spin mx-auto"></div>
-          <p className="brand-body text-symbol-gray-600">Carregando transações...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 40, height: 40, border: '3px solid #2a2a38', borderTopColor: '#c9a84c', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
 
   return (
-    <div className="space-y-8 p-6 animate-minimal-fade">
-      {/* Header Section */}
-      <CashFlowHeader 
-        selectedYear={selectedYear}
-        selectedMonth={selectedMonth}
-        onYearChange={setSelectedYear}
-        onMonthChange={setSelectedMonth}
-      />
-      
-      <div className="flex flex-col sm:flex-row gap-3 justify-end">
-        <Button 
-          onClick={() => setIsAddEntryModalOpen(true)}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Adicionar Entrada
-        </Button>
-        
-        <Button 
-          onClick={() => navigate('/expenses')}
-          variant="outline"
-          className="bg-transparent border-symbol-gray-300 text-symbol-gray-700 hover:bg-symbol-gray-50 font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
-        >
-          <ExternalLink className="w-4 h-4 mr-2" />
-          Gerenciar Despesas
-        </Button>
-      </div>
+    <div style={{ padding: '24px 28px', background: '#0f0f17', minHeight: '100%' }}>
+      <style>{`
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .cf-card{animation:fadeUp 0.4s ease both}
+        .cf-card:hover{border-color:#3a3a4a!important}
+        .cf-filter-btn{background:transparent;border:1px solid #2a2a38;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;color:#9090a8;font-family:Inter,sans-serif}
+        .cf-filter-btn.active{background:#c9a84c;border-color:#c9a84c;color:#0a0a0f;font-weight:600}
+        .cf-filter-btn:hover:not(.active){border-color:#3a3a4a;color:#f0f0f8}
+        .cf-btn-primary{background:linear-gradient(135deg,#00c896,#00a07a);color:#0a0a0f;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity 0.15s;font-family:Inter,sans-serif}
+        .cf-btn-primary:hover{opacity:0.9}
+        .cf-btn-secondary{background:rgba(255,255,255,0.05);border:1px solid #2a2a38;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:500;color:#9090a8;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all 0.15s;font-family:Inter,sans-serif}
+        .cf-btn-secondary:hover{border-color:#3a3a4a;color:#f0f0f8}
+        .cf-select{background:#1c1c26;border:1px solid #2a2a38;border-radius:8px;padding:8px 12px;color:#f0f0f8;font-size:13px;outline:none;cursor:pointer;font-family:Inter,sans-serif}
+        .cf-entry-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #2a2a38;transition:background 0.12s}
+        .cf-entry-row:last-child{border-bottom:none}
+        .cf-entry-row:hover{background:rgba(255,255,255,0.02)}
+        .cf-icon-btn{background:rgba(255,255,255,0.05);border:1px solid #2a2a38;border-radius:6px;padding:6px;cursor:pointer;color:#9090a8;display:flex;transition:all 0.15s}
+        .cf-icon-btn:hover{border-color:#3a3a4a;color:#f0f0f8}
+        .cf-icon-btn.danger:hover{border-color:rgba(255,77,106,0.3);color:#ff4d6a;background:rgba(255,77,106,0.08)}
+      `}</style>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-emerald-50/50 to-emerald-100/30 border-emerald-200/50">
-          <div className="flex items-center justify-between mb-4">
-            <TrendingUp className="text-emerald-600" size={20} />
-          </div>
-          <div className="mb-2">
-            <h3 className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wider">
-              Total de Entradas
-            </h3>
-          </div>
-          <div className="brand-heading text-2xl text-symbol-black">
-            R$ {totalEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </div>
+      {/* Header */}
+      <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+        <div>
+          <h1 style={{ fontFamily: 'serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Fluxo de Caixa</h1>
+          <div style={{ width: 36, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 6 }} />
+          <p style={{ fontSize: 13, color: '#9090a8' }}>Gerencie suas entradas e saídas financeiras</p>
         </div>
-        
-        <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-red-50/50 to-red-100/30 border-red-200/50">
-          <div className="flex items-center justify-between mb-4">
-            <TrendingDown className="text-red-600" size={20} />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/expenses')}
-              className="text-xs px-2 py-1 h-6"
-            >
-              Ver Despesas
-            </Button>
-          </div>
-          <div className="mb-2">
-            <h3 className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wider">
-              Total de Saídas
-            </h3>
-          </div>
-          <div className="brand-heading text-2xl text-symbol-black">
-            R$ {Math.abs(totalSaidas).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </div>
-        </div>
-        
-        <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-blue-50/50 to-blue-100/30 border-blue-200/50">
-          <div className="flex items-center justify-between mb-4">
-            <DollarSign className={`${saldoPeriodo >= 0 ? 'text-blue-600' : 'text-red-600'}`} size={20} />
-          </div>
-          <div className="mb-2">
-            <h3 className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wider">
-              Saldo do Período
-            </h3>
-          </div>
-          <div className={`brand-heading text-2xl ${saldoPeriodo >= 0 ? 'text-symbol-black' : 'text-red-600'}`}>
-            R$ {saldoPeriodo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+
+        {/* Month/Year selectors */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#13131a', border: '1px solid #2a2a38', borderRadius: 10, padding: '6px 12px' }}>
+            <Calendar size={14} style={{ color: '#9090a8' }} />
+            <select className="cf-select" style={{ background: 'transparent', border: 'none', padding: 0 }} value={selectedMonth} onChange={e => setSelectedMonth(e.target.value)}>
+              {MONTHS.map(m => <option key={m.key} value={m.key}>{m.label}</option>)}
+            </select>
+            <select className="cf-select" style={{ background: 'transparent', border: 'none', padding: 0 }} value={selectedYear} onChange={e => setSelectedYear(e.target.value)}>
+              {years.map(y => <option key={y} value={y.toString()}>{y}</option>)}
+            </select>
           </div>
         </div>
       </div>
 
-      {/* Cash Flow Table */}
-      <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
-        <div className="mb-6">
-          <h3 className="brand-heading text-xl text-symbol-black mb-2">
-            Lançamentos Financeiros
-          </h3>
-          <div className="w-8 h-px bg-symbol-beige"></div>
+      {/* Action buttons */}
+      <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
+        <button className="cf-btn-primary" onClick={() => setIsAddEntryModalOpen(true)}>
+          <Plus size={16} /> Adicionar Entrada
+        </button>
+        <button className="cf-btn-secondary" onClick={() => navigate('/expenses')}>
+          <ExternalLink size={16} /> Gerenciar Despesas
+        </button>
+      </div>
+
+      {/* Summary cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14, marginBottom: 24 }}>
+        {[
+          { label: 'Total de Entradas', value: totalEntradas, icon: <TrendingUp size={18} style={{ color: '#00c896' }} />, color: '#00c896', bg: 'rgba(0,200,150,0.08)' },
+          { label: 'Total de Saídas', value: totalSaidas, icon: <TrendingDown size={18} style={{ color: '#ff4d6a' }} />, color: '#ff4d6a', bg: 'rgba(255,77,106,0.08)', action: () => navigate('/expenses') },
+          { label: 'Saldo do Período', value: saldoPeriodo, icon: <DollarSign size={18} style={{ color: saldoPeriodo >= 0 ? '#4d9fff' : '#ff4d6a' }} />, color: saldoPeriodo >= 0 ? '#4d9fff' : '#ff4d6a', bg: saldoPeriodo >= 0 ? 'rgba(77,159,255,0.08)' : 'rgba(255,77,106,0.08)' },
+        ].map((item, i) => (
+          <div key={i} className="cf-card" style={{ ...card, padding: 20, animationDelay: `${i * 0.05}s` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{item.icon}</div>
+              {item.action && <button className="cf-btn-secondary" style={{ padding: '4px 10px', fontSize: 11 }} onClick={item.action}>Ver Despesas</button>}
+            </div>
+            <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>{item.label}</div>
+            <div style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 600, color: item.color }}>
+              R$ {Math.abs(item.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Filter tabs */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {(['todos', 'entradas', 'saidas'] as FilterType[]).map(f => (
+          <button key={f} className={`cf-filter-btn ${filterType === f ? 'active' : ''}`} onClick={() => setFilterType(f)}>
+            {f === 'todos' ? 'Todos' : f === 'entradas' ? 'Entradas' : 'Saídas'}
+          </button>
+        ))}
+      </div>
+
+      {/* Transactions */}
+      <div className="cf-card" style={{ ...card, overflow: 'hidden' }}>
+        <div style={{ padding: '18px 20px', borderBottom: '1px solid #2a2a38' }}>
+          <h3 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Lançamentos Financeiros</h3>
+          <div style={{ width: 24, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginTop: 6 }} />
         </div>
-        
-        {/* Mobile View: Card List */}
-        <div className="space-y-4 lg:hidden">
-          {filteredEntries.map((entry) => (
-            <div key={entry.id} className="symbol-card p-4 bg-symbol-gray-50 border border-symbol-gray-200">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex-1">
-                  <h4 className="brand-subheading text-symbol-black font-medium text-sm mb-1">
-                    {entry.description}
-                  </h4>
-                  <p className="text-xs text-symbol-gray-500">
-                    {format(new Date(entry.date), 'dd/MM/yyyy')}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-sm font-medium ${
-                    entry.type === 'entrada' 
-                      ? 'text-green-600' 
-                      : 'text-red-600'
-                  }`}>
-                    {entry.type === 'entrada' ? '+' : '-'} R$ {Math.abs(entry.amount).toFixed(2)}
-                  </span>
-                  <div className="flex gap-1">
+
+        {filteredEntries.length === 0 ? (
+          <div style={{ padding: '48px 20px', textAlign: 'center', color: '#606078' }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>📭</div>
+            <div style={{ fontSize: 14, marginBottom: 4 }}>Nenhum lançamento encontrado</div>
+            <div style={{ fontSize: 12 }}>Adicione uma entrada para começar</div>
+          </div>
+        ) : (
+          <>
+            {/* Mobile */}
+            <div style={{ display: 'block' }} className="lg-hidden-block">
+              <style>{`.lg-hidden-block{display:block}@media(min-width:1024px){.lg-hidden-block{display:none!important}}`}</style>
+              {filteredEntries.map(entry => (
+                <div key={entry.id} className="cf-entry-row" style={{ flexWrap: 'wrap' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: entry.type === 'entrada' ? 'rgba(0,200,150,0.1)' : 'rgba(255,77,106,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+                    {entry.type === 'entrada' ? '📈' : '📉'}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#f0f0f8', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.description}</div>
+                    <div style={{ fontSize: 11, color: '#9090a8' }}>{format(entry.date, 'dd/MM/yyyy')}{entry.paymentMethod && ` · ${entry.paymentMethod}`}</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: entry.type === 'entrada' ? '#00c896' : '#ff4d6a' }}>
+                      {entry.type === 'entrada' ? '+' : '-'} R$ {Math.abs(entry.amount).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                    </span>
                     {entry.type === 'entrada' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => openEditModal(entry)}
-                        className="h-8 w-8 p-0"
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                    )}
-                    {entry.type === 'entrada' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteEntry(entry.id)}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                      <>
+                        <button className="cf-icon-btn" onClick={() => openEditModal(entry)}><Edit size={13} /></button>
+                        <button className="cf-icon-btn danger" onClick={() => handleDeleteEntry(entry.id)}><Trash2 size={13} /></button>
+                      </>
                     )}
                     {entry.type === 'saida' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate('/expenses')}
-                        className="h-8 px-2 text-xs"
-                      >
-                        Ver em Despesas
-                      </Button>
+                      <button className="cf-btn-secondary" style={{ padding: '4px 10px', fontSize: 11 }} onClick={() => navigate('/expenses')}>Ver em Despesas</button>
                     )}
                   </div>
                 </div>
-              </div>
-              {entry.paymentMethod && (
-                <p className="text-xs text-symbol-gray-600">
-                  <span className="font-medium">Método:</span> {entry.paymentMethod}
-                </p>
-              )}
-              {entry.category && (
-                <p className="text-xs text-symbol-gray-600">
-                  <span className="font-medium">Categoria:</span> {entry.category}
-                </p>
-              )}
+              ))}
             </div>
-          ))}
-        </div>
 
-        {/* Desktop View: Table */}
-        <div className="hidden lg:block">
-          <CashFlowTable 
-            entries={filteredEntries}
-            onEdit={openEditModal}
-            onDelete={handleDeleteEntry}
-          />
-        </div>
+            {/* Desktop */}
+            <div style={{ display: 'none' }} className="lg-visible-block">
+              <style>{`.lg-visible-block{display:none!important}@media(min-width:1024px){.lg-visible-block{display:block!important}}`}</style>
+              <CashFlowTable entries={filteredEntries} onEdit={openEditModal} onDelete={handleDeleteEntry} />
+            </div>
+          </>
+        )}
       </div>
 
-      <AddEntryModal
-        show={isAddEntryModalOpen && !editingEntry}
-        onClose={() => setIsAddEntryModalOpen(false)}
-        onSave={handleAddEntry}
-      />
-
+      <AddEntryModal show={isAddEntryModalOpen && !editingEntry} onClose={() => setIsAddEntryModalOpen(false)} onSave={handleAddEntry} />
       {editingEntry && editingEntry.type === 'entrada' && (
-        <AddEntryModal
-          show={true}
-          onClose={closeEditModal}
-          onSave={handleEditEntry}
-          entry={editingEntry}
-        />
+        <AddEntryModal show={true} onClose={() => { setEditingEntry(null); setIsAddEntryModalOpen(false); }} onSave={handleEditEntry} entry={editingEntry} />
       )}
     </div>
   );
