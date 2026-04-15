@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Plus, BarChart3 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Plus, BarChart3, Scissors, TrendingUp, Target, Award } from 'lucide-react';
 import ServiceTable from '@/components/services/ServiceTable';
 import AddServiceModal from '@/components/services/AddServiceModal';
 import ServiceAnalysisModal from '@/components/services/ServiceAnalysisModal';
@@ -18,194 +17,90 @@ const Services = () => {
   const [isAnalysisModalOpen, setIsAnalysisModalOpen] = useState(false);
   const [analyzingService, setAnalyzingService] = useState<Service | null>(null);
 
-  const handleAddService = async (serviceData: Omit<Service, 'id'>) => {
-    try {
-      await addService.mutateAsync(serviceData);
-      setIsAddModalOpen(false);
-    } catch (error) {
-      console.error('Erro ao adicionar serviço:', error);
-    }
+  const handleAddService = async (data: Omit<Service, 'id'>) => {
+    try { await addService.mutateAsync(data); setIsAddModalOpen(false); } catch {}
   };
-
-  const handleEditService = async (serviceData: Omit<Service, 'id'>) => {
+  const handleEditService = async (data: Omit<Service, 'id'>) => {
     if (!editingService) return;
-    
-    try {
-      await updateService.mutateAsync({ id: editingService.id, serviceData });
-      setEditingService(null);
-    } catch (error) {
-      console.error('Erro ao atualizar serviço:', error);
-    }
+    try { await updateService.mutateAsync({ id: editingService.id, serviceData: data }); setEditingService(null); } catch {}
   };
+  const handleDeleteService = async (id: string) => { try { await deleteService.mutateAsync(id); } catch {} };
+  const handleAnalyzeService = (service: Service) => { setAnalyzingService(service); setIsAnalysisModalOpen(true); };
 
-  const handleDeleteService = async (id: string) => {
-    try {
-      await deleteService.mutateAsync(id);
-    } catch (error) {
-      console.error('Erro ao excluir serviço:', error);
-    }
-  };
-
-  const handleAnalyzeService = (service: Service) => {
-    setAnalyzingService(service);
-    setIsAnalysisModalOpen(true);
-  };
-
-  // Calculate summary metrics
   const totalServices = services.length;
-  const averageProfit = services.reduce((sum, service) => sum + service.grossProfit, 0) / totalServices || 0;
-  const averageMargin = services.reduce((sum, service) => sum + service.profitMargin, 0) / totalServices || 0;
-  const bestPerformingService = services.reduce((best, current) => 
-    current.profitMargin > best.profitMargin ? current : best, services[0]
+  const averageProfit = totalServices > 0 ? services.reduce((s, sv) => s + sv.grossProfit, 0) / totalServices : 0;
+  const averageMargin = totalServices > 0 ? services.reduce((s, sv) => s + sv.profitMargin, 0) / totalServices : 0;
+  const bestService = services.length > 0 ? services.reduce((best, cur) => cur.profitMargin > best.profitMargin ? cur : best, services[0]) : null;
+
+  if (servicesLoading || materialsLoading) return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 40, height: 40, border: '3px solid #2a2a38', borderTopColor: '#c9a84c', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
   );
 
-  const openEditModal = (service: Service) => {
-    setEditingService(service);
-  };
-
-  const closeEditModal = () => {
-    setEditingService(null);
-  };
-
-  if (servicesLoading || materialsLoading) {
-    return (
-      <div className="space-y-8 p-6 animate-minimal-fade">
-        <div className="text-center py-12">
-          <p className="brand-body text-symbol-gray-600">Carregando...</p>
-        </div>
-      </div>
-    );
-  }
+  const summaryCards = [
+    { icon: <Scissors size={16} style={{ color: '#4d9fff' }} />, bg: 'rgba(77,159,255,0.1)', label: 'Total de Serviços', value: String(totalServices), sub: '' },
+    { icon: <TrendingUp size={16} style={{ color: '#00c896' }} />, bg: 'rgba(0,200,150,0.1)', label: 'Lucro Médio', value: `R$ ${averageProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`, sub: '' },
+    { icon: <Target size={16} style={{ color: '#a78bfa' }} />, bg: 'rgba(167,139,250,0.1)', label: 'Margem Média', value: `${averageMargin.toFixed(1)}%`, sub: '' },
+    { icon: <Award size={16} style={{ color: '#c9a84c' }} />, bg: 'rgba(201,168,76,0.1)', label: 'Melhor Performance', value: bestService?.name || 'N/A', sub: bestService ? `${bestService.profitMargin.toFixed(1)}% margem` : '' },
+  ];
 
   return (
-    <div className="space-y-8 p-6 animate-minimal-fade">
-      {/* Header Section */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+    <div style={{ padding: '24px 28px', background: '#0f0f17', minHeight: '100%' }}>
+      <style>{`
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .svc-card{animation:fadeUp 0.4s ease both;background:#13131a;border:1px solid #2a2a38;border-radius:12px;transition:border-color 0.2s}
+        .svc-card:hover{border-color:#3a3a4a}
+        /* Override ServiceTable colors for dark theme */
+        .svc-wrap table{background:#13131a!important}
+        .svc-wrap th{background:#1c1c26!important;color:#606078!important;border-color:#2a2a38!important;font-size:10px!important;letter-spacing:0.1em!important;text-transform:uppercase!important}
+        .svc-wrap td{border-color:#2a2a38!important;color:#f0f0f8!important}
+        .svc-wrap tr:hover td{background:rgba(255,255,255,0.02)!important}
+        .svc-wrap .text-symbol-black,.svc-wrap .text-symbol-gray-700{color:#f0f0f8!important}
+        .svc-wrap .text-symbol-gray-600,.svc-wrap .text-symbol-gray-500{color:#9090a8!important}
+        .svc-wrap .symbol-card{background:#1c1c26!important;border-color:#2a2a38!important}
+      `}</style>
+
+      {/* Header */}
+      <div className="svc-card" style={{ background: 'transparent', border: 'none', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24, padding: 0 }}>
         <div>
-          <h1 className="brand-heading text-3xl text-symbol-black mb-2">
-            Serviços & Preços
-          </h1>
-          <div className="w-12 h-px bg-symbol-gold mb-4"></div>
-          <p className="brand-body text-symbol-gray-600">
-            Gerencie seus serviços e configure preços estratégicos
-          </p>
+          <h1 style={{ fontFamily: 'serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Serviços & Preços</h1>
+          <div style={{ width: 36, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 6 }} />
+          <p style={{ fontSize: 13, color: '#9090a8' }}>Gerencie seus serviços e configure preços estratégicos</p>
         </div>
-        
-        <Button 
-          onClick={() => setIsAddModalOpen(true)}
-          className="bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Serviço
-        </Button>
+        <button onClick={() => setIsAddModalOpen(true)} style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', color: '#0a0a0f', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Inter,sans-serif' }}>
+          <Plus size={16} /> Novo Serviço
+        </button>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="symbol-card p-4 sm:p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-blue-50/50 to-blue-100/30 border-blue-200/50">
-          <div className="flex items-center justify-between mb-4">
-            <BarChart3 className="text-blue-600" size={20} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 14, marginBottom: 24 }}>
+        {summaryCards.map((card, i) => (
+          <div key={i} className="svc-card" style={{ padding: 20, animationDelay: `${i * 0.05}s` }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>{card.icon}</div>
+            <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>{card.label}</div>
+            <div style={{ fontFamily: 'serif', fontSize: i === 0 ? 28 : 18, fontWeight: 600, color: '#f0f0f8', marginBottom: card.sub ? 4 : 0 }}>{card.value}</div>
+            {card.sub && <div style={{ fontSize: 11, color: '#c9a84c', fontWeight: 500 }}>{card.sub}</div>}
           </div>
-          <div className="mb-2">
-            <h3 className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wider">
-              Total de Serviços
-            </h3>
-          </div>
-          <div className="brand-heading text-2xl text-symbol-black">
-            {totalServices}
-          </div>
-        </div>
-
-        <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-emerald-50/50 to-emerald-100/30 border-emerald-200/50">
-          <div className="flex items-center justify-between mb-4">
-            <BarChart3 className="text-emerald-600" size={20} />
-          </div>
-          <div className="mb-2">
-            <h3 className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wider">
-              Lucro Médio
-            </h3>
-          </div>
-          <div className="brand-heading text-2xl text-symbol-black">
-            R$ {averageProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </div>
-        </div>
-
-        <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-gradient-to-br from-purple-50/50 to-purple-100/30 border-purple-200/50">
-          <div className="flex items-center justify-between mb-4">
-            <BarChart3 className="text-purple-600" size={20} />
-          </div>
-          <div className="mb-2">
-            <h3 className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wider">
-              Margem Média
-            </h3>
-          </div>
-          <div className="brand-heading text-2xl text-symbol-black">
-            {averageMargin.toFixed(1)}%
-          </div>
-        </div>
-
-        <div className="symbol-card p-6 hover:shadow-xl transition-all duration-300 shadow-lg bg-white border-symbol-gold/30">
-          <div className="flex items-center justify-between mb-4">
-            <BarChart3 className="text-amber-600" size={20} />
-          </div>
-          <div className="mb-2">
-            <h3 className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wider">
-              Melhor Performance
-            </h3>
-          </div>
-          <div className="brand-heading text-lg text-symbol-black">
-            {bestPerformingService?.name || 'N/A'}
-          </div>
-          <div className="text-sm text-amber-600 font-medium">
-            {bestPerformingService?.profitMargin.toFixed(1)}% margem
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Services Table */}
-      <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
-        <div className="mb-6">
-          <h2 className="brand-heading text-xl text-symbol-black mb-2">
-            Lista de Serviços
-          </h2>
-          <div className="w-8 h-px bg-symbol-beige"></div>
+      <div className="svc-card" style={{ overflow: 'hidden' }}>
+        <div style={{ padding: '18px 20px', borderBottom: '1px solid #2a2a38', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <BarChart3 size={16} style={{ color: '#c9a84c' }} />
+          <h2 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Lista de Serviços</h2>
+          <span style={{ marginLeft: 'auto', fontSize: 11, color: '#9090a8', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 20, padding: '2px 10px' }}>{totalServices} serviços</span>
         </div>
-        
-        <ServiceTable 
-          services={services}
-          onEdit={openEditModal}
-          onDelete={handleDeleteService}
-          onAnalyze={handleAnalyzeService}
-        />
+        <div className="svc-wrap" style={{ overflowX: 'auto' }}>
+          <ServiceTable services={services} onEdit={setEditingService} onDelete={handleDeleteService} onAnalyze={handleAnalyzeService} />
+        </div>
       </div>
 
-      <AddServiceModal
-        show={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSave={handleAddService}
-        materials={materials}
-      />
-
-      {editingService && (
-        <AddServiceModal
-          show={true}
-          onClose={closeEditModal}
-          onSave={handleEditService}
-          materials={materials}
-          service={editingService}
-        />
-      )}
-
-      <ServiceAnalysisModal
-        service={analyzingService}
-        materials={materials}
-        businessParams={params}
-        show={isAnalysisModalOpen}
-        onClose={() => {
-          setIsAnalysisModalOpen(false);
-          setAnalyzingService(null);
-        }}
-      />
+      <AddServiceModal show={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSave={handleAddService} materials={materials} />
+      {editingService && <AddServiceModal show={true} onClose={() => setEditingService(null)} onSave={handleEditService} materials={materials} service={editingService} />}
+      <ServiceAnalysisModal service={analyzingService} materials={materials} businessParams={params} show={isAnalysisModalOpen} onClose={() => { setIsAnalysisModalOpen(false); setAnalyzingService(null); }} />
     </div>
   );
 };
