@@ -1,7 +1,5 @@
-
-import { User, LogOut, Menu } from 'lucide-react';
+import { User, LogOut, Menu, Bell } from 'lucide-react';
 import { User as UserType, PATENTE_LEVELS } from '@/types';
-import { cn } from '@/lib/utils';
 import { useProfile } from '@/hooks/useProfile';
 
 interface HeaderProps {
@@ -12,17 +10,16 @@ interface HeaderProps {
 
 const Header = ({ user, onLogout, onToggleMobileMenu }: HeaderProps) => {
   const { profile } = useProfile();
-  
+
   const getCurrentPatente = (revenue: number) => {
     const sortedPatentes = [...PATENTE_LEVELS].sort((a, b) => b.minRevenue - a.minRevenue);
     return sortedPatentes.find(p => revenue >= p.minRevenue) || PATENTE_LEVELS[0];
   };
 
-  const currentPatente = user.role === 'professional' && user.monthlyRevenue 
-    ? getCurrentPatente(user.monthlyRevenue) 
+  const currentPatente = user.role === 'professional' && user.monthlyRevenue
+    ? getCurrentPatente(user.monthlyRevenue)
     : null;
 
-  // Extract first and last name from full name
   const getFirstAndLastName = (fullName: string) => {
     const names = fullName.trim().split(' ');
     if (names.length === 1) return names[0];
@@ -31,82 +28,76 @@ const Header = ({ user, onLogout, onToggleMobileMenu }: HeaderProps) => {
 
   const fullName = profile?.nome_profissional_ou_salao || user.name;
   const displayName = getFirstAndLastName(fullName);
-  
-  // Extract salon name from endereco field
   const salonName = profile?.nome_salao || '';
 
   return (
-    <header className="bg-symbol-white/80 backdrop-blur-sm border-b border-symbol-gray-200 px-4 sm:px-6 py-4 sticky top-0 z-30">
-      <div className="flex items-center justify-between">
-        {/* Left Section */}
-        <div className="flex items-center gap-4">
-          {/* Mobile Menu Button */}
-          <button
-            onClick={onToggleMobileMenu}
-            className="lg:hidden p-2 rounded-lg bg-symbol-gray-100 hover:bg-symbol-gray-200 transition-colors"
-          >
-            <Menu size={20} className="text-symbol-gray-700" />
-          </button>
+    <header style={{
+      background: '#13131a',
+      borderBottom: '1px solid #2a2a38',
+      padding: '0 24px',
+      height: 64,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      position: 'sticky',
+      top: 0,
+      zIndex: 30,
+      flexShrink: 0,
+    }}>
+      <style>{`
+        .header-icon-btn { background: rgba(255,255,255,0.05); border: 1px solid #2a2a38; border-radius: 8px; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; color: #9090a8; }
+        .header-icon-btn:hover { background: rgba(255,255,255,0.1); border-color: #3a3a4a; color: #f0f0f8; }
+        .header-logout-btn { background: rgba(255,77,106,0.08); border: 1px solid rgba(255,77,106,0.2); border-radius: 8px; padding: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; color: #ff4d6a; }
+        .header-logout-btn:hover { background: rgba(255,77,106,0.15); }
+      `}</style>
 
-          {/* Title and Patente */}
-          <div className="flex items-center gap-4">
-            <h2 className="brand-heading text-xl sm:text-2xl text-symbol-black">
-              {user.role === 'professional' ? 'Painel Profissional' : 'Painel Administrativo'}
-            </h2>
-            
-            {currentPatente && (
-              <div className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-full border border-indigo-200">
-                <span className="text-base sm:text-lg">{currentPatente.icon}</span>
-                <span className="brand-body text-symbol-gray-700 text-sm sm:text-base">
-                  {currentPatente.name}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
+      {/* LEFT */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        {/* Mobile menu button */}
+        <button className="header-icon-btn lg:hidden" onClick={onToggleMobileMenu}>
+          <Menu size={18} />
+        </button>
 
-        {/* Right Section */}
-        <div className="flex items-center gap-2 sm:gap-4">
-          {/* User Info - Hidden on very small screens */}
-          <div className="hidden sm:block text-right">
-            <p className="brand-body text-symbol-black text-sm sm:text-base">{displayName}</p>
-            {salonName && (
-              <p className="text-xs sm:text-sm text-symbol-gray-600">{salonName}</p>
-            )}
+        <div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: '#f0f0f8', fontFamily: 'serif', letterSpacing: '0.02em' }}>
+            {user.role === 'professional' ? 'Painel Profissional' : 'Painel Administrativo'}
           </div>
-          
-          {/* Action Buttons */}
-          <div className="flex items-center gap-1 sm:gap-2">
-            <button className="p-2 rounded-lg bg-symbol-gray-100 hover:bg-symbol-gray-200 transition-colors">
-              <User size={18} className="text-symbol-gray-700 sm:w-5 sm:h-5" />
-            </button>
-            
-            <button 
-              onClick={onLogout}
-              className="p-2 rounded-lg bg-red-50 hover:bg-red-100 transition-colors"
-            >
-              <LogOut size={18} className="text-red-600 sm:w-5 sm:h-5" />
-            </button>
-          </div>
+          {currentPatente && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+              <span style={{ fontSize: 12 }}>{currentPatente.icon}</span>
+              <span style={{ fontSize: 11, color: '#c9a84c', fontWeight: 500 }}>{currentPatente.name}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Mobile Patente Display */}
-      {currentPatente && (
-        <div className="sm:hidden mt-3 flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-full border border-indigo-200 w-fit">
-          <span className="text-base">{currentPatente.icon}</span>
-          <span className="brand-body text-symbol-gray-700 text-sm">
-            {currentPatente.name}
-          </span>
+      {/* RIGHT */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* User info */}
+        <div style={{ textAlign: 'right', display: 'none' }} className="sm:block" >
+          <div style={{ fontSize: 13, fontWeight: 500, color: '#f0f0f8' }}>{displayName}</div>
+          {salonName && <div style={{ fontSize: 11, color: '#9090a8' }}>{salonName}</div>}
         </div>
-      )}
 
-      {/* Mobile User Info */}
-      <div className="sm:hidden mt-2 text-left">
-        <p className="font-medium text-elite-charcoal-800 text-sm">{displayName}</p>
-        {salonName && (
-          <p className="text-xs text-elite-charcoal-600">{salonName}</p>
-        )}
+        {/* Avatar */}
+        <div style={{
+          width: 36, height: 36, borderRadius: 10,
+          background: 'linear-gradient(135deg, #c9a84c, #8a6520)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 14, fontWeight: 700, color: '#0a0a0f', flexShrink: 0,
+        }}>
+          {displayName.charAt(0).toUpperCase()}
+        </div>
+
+        <div style={{ width: 1, height: 24, background: '#2a2a38' }} />
+
+        <button className="header-icon-btn">
+          <Bell size={16} />
+        </button>
+
+        <button className="header-logout-btn" onClick={onLogout}>
+          <LogOut size={16} />
+        </button>
       </div>
     </header>
   );
