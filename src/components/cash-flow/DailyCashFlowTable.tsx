@@ -1,8 +1,6 @@
-
-import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Trash2 } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
 type Transaction = Tables<'transacoes_financeiras'>;
@@ -16,14 +14,12 @@ interface DailyCashFlowTableProps {
 const DailyCashFlowTable = ({ todayEntries, today, onDeleteEntry }: DailyCashFlowTableProps) => {
   if (todayEntries.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="mx-auto w-24 h-24 bg-symbol-beige/30 flex items-center justify-center mb-4">
-          <span className="text-3xl">💰</span>
-        </div>
-        <h3 className="brand-subheading text-symbol-black text-lg mb-3">
+      <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+        <div style={{ fontSize: 40, marginBottom: 16 }}>💰</div>
+        <h3 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8', marginBottom: 8 }}>
           Nenhum lançamento hoje
         </h3>
-        <p className="brand-body text-symbol-gray-600 mb-6">
+        <p style={{ fontSize: 13, color: '#9090a8' }}>
           Adicione sua primeira entrada ou saída do dia
         </p>
       </div>
@@ -31,69 +27,63 @@ const DailyCashFlowTable = ({ todayEntries, today, onDeleteEntry }: DailyCashFlo
   }
 
   return (
-    <div className="overflow-x-auto">
-      <Table>        
-        <TableHeader>
-          <TableRow>
-            <TableHead className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Descrição</TableHead>
-            <TableHead className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Tipo</TableHead>
-            <TableHead className="brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Método/Categoria</TableHead>
-            <TableHead className="text-right brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Valor (R$)</TableHead>
-            <TableHead className="text-right brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Comissão (%)</TableHead>
-            <TableHead className="text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Horário</TableHead>
-            <TableHead className="text-center brand-subheading text-symbol-gray-700 text-sm uppercase tracking-wide">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {todayEntries
+    <div style={{ overflowX: 'auto' }}>
+      <style>{`
+        .dcf-table { width: 100%; border-collapse: collapse; }
+        .dcf-table th { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #606078; padding: 12px 16px; text-align: left; background: #1c1c26; border-bottom: 1px solid #2a2a38; }
+        .dcf-table td { padding: 13px 16px; font-size: 13px; color: #f0f0f8; border-bottom: 1px solid #2a2a38; vertical-align: middle; }
+        .dcf-table tr:last-child td { border-bottom: none; }
+        .dcf-table tr:hover td { background: rgba(255,255,255,0.02); }
+        .dcf-del-btn { background: rgba(255,77,106,0.08); border: 1px solid rgba(255,77,106,0.2); border-radius: 6px; padding: 5px 8px; cursor: pointer; color: #ff4d6a; display: flex; align-items: center; transition: all 0.15s; }
+        .dcf-del-btn:hover { background: rgba(255,77,106,0.15); }
+      `}</style>
+      <table className="dcf-table">
+        <thead>
+          <tr>
+            <th>Descrição</th>
+            <th>Tipo</th>
+            <th>Método/Categoria</th>
+            <th style={{ textAlign: 'right' }}>Valor (R$)</th>
+            <th style={{ textAlign: 'right' }}>Comissão</th>
+            <th style={{ textAlign: 'center' }}>Horário</th>
+            <th style={{ textAlign: 'center' }}>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {[...todayEntries]
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .map((entry, index) => (            
-            <TableRow key={entry.id} className={index % 2 === 0 ? 'bg-symbol-gray-50/30' : ''}>
-              <TableCell className="font-medium brand-body text-symbol-black">{entry.description}</TableCell>
-              <TableCell>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                  entry.tipo_transacao === 'ENTRADA' 
-                    ? 'bg-emerald-100 text-emerald-800' 
-                    : 'bg-red-100 text-red-800'
-                }`}>
-                  {entry.tipo_transacao === 'ENTRADA' ? 'Entrada' : 'Saída'}
-                </span>
-              </TableCell>
-              <TableCell className="text-sm text-symbol-gray-600">
-                {entry.payment_method || entry.category || '-'}
-              </TableCell>              <TableCell className="text-right">
-                <span className={`font-semibold ${
-                  entry.tipo_transacao === 'ENTRADA' ? 'text-emerald-600' : 'text-red-600'
-                }`}>
-                  R$ {Number(entry.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </span>
-              </TableCell>              <TableCell className="text-right">
-                {entry.tipo_transacao === 'ENTRADA' && entry.commission ? (
-                  <span className="text-blue-600 font-semibold">
-                    {((Number(entry.commission) / Number(entry.valor)) * 100).toFixed(1)}%
-                    <span className="block text-xs text-symbol-gray-500">
-                      (R$ {Number(entry.commission).toLocaleString('pt-BR', { minimumFractionDigits: 2 })})
-                    </span>
+            .map(entry => (
+              <tr key={entry.id}>
+                <td style={{ fontWeight: 500 }}>{entry.description}</td>
+                <td>
+                  <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 99, background: entry.tipo_transacao === 'ENTRADA' ? 'rgba(0,200,150,0.12)' : 'rgba(255,77,106,0.12)', color: entry.tipo_transacao === 'ENTRADA' ? '#00c896' : '#ff4d6a' }}>
+                    {entry.tipo_transacao === 'ENTRADA' ? 'Entrada' : 'Saída'}
                   </span>
-                ) : '-'}
-              </TableCell>
-              <TableCell className="text-center text-sm text-symbol-gray-600">
-                {format(new Date(entry.created_at), 'HH:mm', { locale: ptBR })}
-              </TableCell>
-              <TableCell className="text-center">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => onDeleteEntry(entry.id)}
-                  className="text-symbol-gray-600 hover:text-red-600 font-light"
-                >
-                  Excluir
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                </td>
+                <td style={{ color: '#9090a8', fontSize: 12 }}>{entry.payment_method || entry.category || '—'}</td>
+                <td style={{ textAlign: 'right', fontFamily: 'serif', fontWeight: 600, color: entry.tipo_transacao === 'ENTRADA' ? '#00c896' : '#ff4d6a' }}>
+                  R$ {Number(entry.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </td>
+                <td style={{ textAlign: 'right', fontSize: 12 }}>
+                  {entry.tipo_transacao === 'ENTRADA' && entry.commission ? (
+                    <span style={{ color: '#4d9fff' }}>
+                      {((Number(entry.commission) / Number(entry.valor)) * 100).toFixed(1)}%
+                      <div style={{ fontSize: 10, color: '#606078' }}>R$ {Number(entry.commission).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                    </span>
+                  ) : '—'}
+                </td>
+                <td style={{ textAlign: 'center', color: '#9090a8', fontSize: 12 }}>
+                  {format(new Date(entry.created_at), 'HH:mm', { locale: ptBR })}
+                </td>
+                <td style={{ textAlign: 'center' }}>
+                  <button className="dcf-del-btn" onClick={() => onDeleteEntry(entry.id)}>
+                    <Trash2 size={13} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+        </tbody>
+      </table>
     </div>
   );
 };
