@@ -100,7 +100,7 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
                 {/* Mat Prima R$ */}
                 <td style={{ color: '#00c896' }}>
                   <div>R$ {totalMaterialCost.toFixed(2)}</div>
-                  {materialCosts.length > 0 && <div style={{ fontSize: 10, color: '#00a07a' }}>{materialCosts.length} item{materialCosts.length > 1 ? 's' : ''}</div>}
+                  {materialCosts.length > 0 && <div style={{ fontSize: 10, color: '#00a07a' }}>{materialCosts.length} {materialCosts.length > 1 ? 'itens' : 'item'}</div>}
                 </td>
                 {/* Mat Prima % */}
                 <td style={{ color: '#00c896' }}>
