@@ -1,15 +1,8 @@
 import React from 'react';
-
 export const ReportHeader = () => (
-  <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-    <div>
-      <h1 className="brand-heading text-3xl text-symbol-black mb-2">
-        Relatórios Mensais
-      </h1>
-      <div className="w-12 h-px bg-symbol-gold mb-4"></div>
-      <p className="brand-body text-symbol-gray-600">
-        Análise completa do desempenho financeiro
-      </p>
-    </div>
+  <div>
+    <h1 style={{ fontFamily: 'serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Relatórios Mensais</h1>
+    <div style={{ width: 36, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 6 }} />
+    <p style={{ fontSize: 13, color: '#9090a8' }}>Análise completa do desempenho financeiro</p>
   </div>
 );
