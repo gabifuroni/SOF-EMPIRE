@@ -37,11 +37,12 @@ const AppContent = () => {
 
   if (loading || adminLoading) {
     return (
-      <div className="min-h-screen elite-gradient flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-elite-champagne-300 border-t-elite-champagne-600 rounded-full animate-spin mx-auto"></div>
-          <p className="font-playfair text-elite-charcoal-700">Carregando...</p>
+      <div style={{ minHeight: '100vh', background: '#0a0a0f', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 48, height: 48, border: '3px solid #2a2a38', borderTopColor: '#c9a84c', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
+          <p style={{ color: '#9090a8', fontSize: 14, fontFamily: 'Inter, sans-serif' }}>Carregando...</p>
         </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
@@ -75,32 +76,30 @@ const AppContent = () => {
   return (
     <BusinessParamsProvider>
       <BrowserRouter>
-        {/* AuthWrapper uma única vez — evita monitor duplicado */}
         <AuthWrapper>
           <Routes>
-            {/* Admin Routes */}
             <Route path="/admin" element={
               <AdminRoute>
                 <AdminDashboard />
               </AdminRoute>
             } />
 
-            {/* Regular User Routes */}
             <Route path="/*" element={
               <AdminRedirect>
-                <div className="min-h-screen flex w-full bg-elite-pearl-50">
+                {/* Full dark layout */}
+                <div style={{ minHeight: '100vh', display: 'flex', width: '100%', background: '#0f0f17' }}>
                   <Sidebar
                     userRole={appUser.role}
                     isMobileMenuOpen={isMobileMenuOpen}
                     onCloseMobileMenu={handleCloseMobileMenu}
                   />
-                  <div className="flex-1 flex flex-col min-w-0">
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, background: '#0f0f17' }}>
                     <Header
                       user={appUser}
                       onLogout={handleLogout}
                       onToggleMobileMenu={handleToggleMobileMenu}
                     />
-                    <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
+                    <main style={{ flex: 1, overflowY: 'auto', background: '#0f0f17' }}>
                       <Routes>
                         <Route path="/dashboard" element={<Dashboard />} />
                         <Route path="/daily-cash-flow" element={<DailyCashFlow />} />
