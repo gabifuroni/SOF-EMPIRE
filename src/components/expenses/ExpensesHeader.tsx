@@ -1,7 +1,4 @@
-
-import { Calendar, Save } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Calendar } from 'lucide-react';
 
 interface ExpensesHeaderProps {
   selectedYear: string;
@@ -12,80 +9,45 @@ interface ExpensesHeaderProps {
 }
 
 const MONTHS = [
-  { key: 'january', label: 'Janeiro' },
-  { key: 'february', label: 'Fevereiro' },
-  { key: 'march', label: 'Março' },
-  { key: 'april', label: 'Abril' },
-  { key: 'may', label: 'Maio' },
-  { key: 'june', label: 'Junho' },
-  { key: 'july', label: 'Julho' },
-  { key: 'august', label: 'Agosto' },
-  { key: 'september', label: 'Setembro' },
-  { key: 'october', label: 'Outubro' },
-  { key: 'november', label: 'Novembro' },
-  { key: 'december', label: 'Dezembro' },
+  { key: 'january', label: 'Janeiro' }, { key: 'february', label: 'Fevereiro' },
+  { key: 'march', label: 'Março' }, { key: 'april', label: 'Abril' },
+  { key: 'may', label: 'Maio' }, { key: 'june', label: 'Junho' },
+  { key: 'july', label: 'Julho' }, { key: 'august', label: 'Agosto' },
+  { key: 'september', label: 'Setembro' }, { key: 'october', label: 'Outubro' },
+  { key: 'november', label: 'Novembro' }, { key: 'december', label: 'Dezembro' },
 ];
 
-const ExpensesHeader = ({ 
-  selectedYear, 
-  selectedMonth, 
-  onYearChange, 
-  onMonthChange, 
-  onSave 
-}: ExpensesHeaderProps) => {
+const ExpensesHeader = ({ selectedYear, selectedMonth, onYearChange, onMonthChange, onSave }: ExpensesHeaderProps) => {
   const currentYear = new Date().getFullYear();
   const years = Array.from({ length: 5 }, (_, i) => currentYear + i - 2);
 
   return (
-    <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
       <div>
-        <h1 className="brand-heading text-3xl text-symbol-black mb-2">
-          Gestão de Despesas
-        </h1>
-        <div className="w-12 h-px bg-symbol-gold mb-4"></div>
-        <p className="brand-body text-symbol-gray-600">
-          Gerencie suas despesas diretas e indiretas
-        </p>
+        <h1 style={{ fontFamily: 'serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Gestão de Despesas</h1>
+        <div style={{ width: 36, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 6 }} />
+        <p style={{ fontSize: 13, color: '#9090a8' }}>Gerencie suas despesas diretas e indiretas</p>
       </div>
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-          <div className='flex flex-row-reverse items-center gap-2 mb-2 sm:mb-0'>
-          <Calendar className="w-7 h-7 text-symbol-gray-600" />
-          <Select value={selectedMonth} onValueChange={onMonthChange}>
-            <SelectTrigger className="w-full sm:w-40 bg-symbol-gray-50 border-symbol-gray-300">
-              <SelectValue placeholder="Selecione o mês" />
-            </SelectTrigger>
-            <SelectContent>
-              {MONTHS.map(month => (
-                <SelectItem key={month.key} value={month.key}>
-                  {month.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-              </div>
-        
-        <Select value={selectedYear} onValueChange={onYearChange}>
-          <SelectTrigger className="w-full sm:w-32 bg-symbol-gray-50 border-symbol-gray-300">
-            <SelectValue placeholder="Ano" />
-          </SelectTrigger>
-          <SelectContent>
-            {years.map(year => (
-              <SelectItem key={year} value={year.toString()}>
-                {year}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>        
-        {onSave && (
-          <Button 
-            onClick={onSave}
-            className="w-full sm:w-auto bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#13131a', border: '1px solid #2a2a38', borderRadius: 10, padding: '6px 12px' }}>
+          <Calendar size={14} style={{ color: '#9090a8' }} />
+          <select
+            value={selectedMonth} onChange={e => onMonthChange(e.target.value)}
+            style={{ background: 'transparent', border: 'none', color: '#f0f0f8', fontSize: 13, outline: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
           >
-            <Save className="w-4 h-4 mr-2" />
-            Salvar Alterações
-          </Button>
+            {MONTHS.map(m => <option key={m.key} value={m.key} style={{ background: '#1c1c26' }}>{m.label}</option>)}
+          </select>
+          <select
+            value={selectedYear} onChange={e => onYearChange(e.target.value)}
+            style={{ background: 'transparent', border: 'none', color: '#f0f0f8', fontSize: 13, outline: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+          >
+            {years.map(y => <option key={y} value={y.toString()} style={{ background: '#1c1c26' }}>{y}</option>)}
+          </select>
+        </div>
+        {onSave && (
+          <button onClick={onSave} style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', color: '#0a0a0f', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Inter, sans-serif' }}>
+            💾 Salvar Alterações
+          </button>
         )}
       </div>
     </div>
