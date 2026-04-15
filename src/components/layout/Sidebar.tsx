@@ -1,22 +1,9 @@
-
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { 
-  Home, 
-  Calendar, 
-  User, 
-  Search,
-  FileText,
-  DollarSign,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Scissors,
-  Package,
-  TrendingUp,
-  Receipt,
-  BarChart3,
-  Settings
+import {
+  Home, DollarSign, User, Package, Scissors,
+  TrendingUp, Receipt, BarChart3, Settings,
+  ChevronLeft, ChevronRight, X
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -35,8 +22,8 @@ const Sidebar = ({ userRole, isMobileMenuOpen = false, onCloseMobileMenu }: Side
       section: 'Principal',
       items: [
         { icon: Home, label: 'Painel Principal', href: '/dashboard' },
-        { icon: DollarSign, label: 'Fluxo de Caixa Diário', href: '/daily-cash-flow' }
-      ]
+        { icon: DollarSign, label: 'Fluxo de Caixa Diário', href: '/daily-cash-flow' },
+      ],
     },
     {
       section: 'Gestão',
@@ -45,16 +32,16 @@ const Sidebar = ({ userRole, isMobileMenuOpen = false, onCloseMobileMenu }: Side
         { icon: Scissors, label: 'Serviços & Preços', href: '/services' },
         { icon: TrendingUp, label: 'Fluxo de Caixa', href: '/cash-flow' },
         { icon: Receipt, label: 'Despesas', href: '/expenses' },
-        { icon: BarChart3, label: 'Relatório Mensal', href: '/reports' }
-      ]
+        { icon: BarChart3, label: 'Relatório Mensal', href: '/reports' },
+      ],
     },
     {
       section: 'Configurações',
       items: [
         { icon: User, label: 'Perfil', href: '/profile' },
-        { icon: Settings, label: 'Parâmetros do Negócio', href: '/payment-settings' }
-      ]
-    }
+        { icon: Settings, label: 'Parâmetros do Negócio', href: '/payment-settings' },
+      ],
+    },
   ];
 
   const adminMenuItems = [
@@ -62,223 +49,192 @@ const Sidebar = ({ userRole, isMobileMenuOpen = false, onCloseMobileMenu }: Side
       section: 'Administração',
       items: [
         { icon: Home, label: 'Painel Admin', href: '/admin' },
-        { icon: User, label: 'Usuários', href: '/admin/users' }
-      ]
-    }
+        { icon: User, label: 'Usuários', href: '/admin/users' },
+      ],
+    },
   ];
 
   const menuItems = userRole === 'admin' ? adminMenuItems : professionalMenuItems;
+
   const handleLinkClick = () => {
-    if (onCloseMobileMenu) {
-      onCloseMobileMenu();
-    }
+    if (onCloseMobileMenu) onCloseMobileMenu();
   };
 
-  console.log('Sidebar render - isMobileMenuOpen:', isMobileMenuOpen);
+  const sidebarStyle: React.CSSProperties = {
+    background: 'linear-gradient(180deg, #0d0d14 0%, #13131a 100%)',
+    borderRight: '1px solid #2a2a38',
+  };
+
+  const NavItem = ({ item, isCollapsed }: { item: typeof professionalMenuItems[0]['items'][0], isCollapsed: boolean }) => {
+    const isActive = location.pathname === item.href;
+    return (
+      <li className="relative group">
+        <Link
+          to={item.href}
+          onClick={handleLinkClick}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: isCollapsed ? 0 : 10,
+            justifyContent: isCollapsed ? 'center' : 'flex-start',
+            padding: isCollapsed ? '10px' : '10px 12px',
+            borderRadius: 8,
+            marginBottom: 2,
+            transition: 'all 0.15s',
+            background: isActive ? 'rgba(201,168,76,0.12)' : 'transparent',
+            color: isActive ? '#c9a84c' : '#9090a8',
+            border: isActive ? '1px solid rgba(201,168,76,0.2)' : '1px solid transparent',
+            textDecoration: 'none',
+            fontSize: 13,
+            fontWeight: isActive ? 500 : 400,
+            position: 'relative',
+          }}
+          className="sidebar-nav-item"
+        >
+          <item.icon size={16} style={{ flexShrink: 0, color: isActive ? '#c9a84c' : '#9090a8' }} />
+          {!isCollapsed && <span>{item.label}</span>}
+          {isCollapsed && (
+            <div style={{
+              position: 'absolute', left: '100%', marginLeft: 10,
+              background: '#1c1c26', color: '#f0f0f8', fontSize: 12,
+              padding: '6px 12px', borderRadius: 8, whiteSpace: 'nowrap',
+              border: '1px solid #2a2a38', boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              opacity: 0, pointerEvents: 'none', zIndex: 100,
+            }} className="sidebar-tooltip">
+              {item.label}
+            </div>
+          )}
+        </Link>
+      </li>
+    );
+  };
 
   return (
-    <>      {/* Mobile Backdrop */}
+    <>
+      <style>{`
+        .sidebar-nav-item:hover { background: rgba(255,255,255,0.05) !important; color: #f0f0f8 !important; }
+        .sidebar-nav-item:hover svg { color: #f0f0f8 !important; }
+        .sidebar-nav-item:hover .sidebar-tooltip { opacity: 1 !important; pointer-events: auto !important; }
+      `}</style>
+
+      {/* Mobile backdrop */}
       {isMobileMenuOpen && (
-        <div 
-          className="lg:hidden fixed inset-0 bg-black/50 z-[50] transition-opacity duration-300"
+        <div
+          className="lg:hidden fixed inset-0 bg-black/60 z-[50]"
           onClick={onCloseMobileMenu}
         />
       )}
 
-      {/* Desktop Sidebar */}
-      <div className={cn(
-        "hidden lg:flex symbol-sidebar text-symbol-white transition-all duration-300 ease-in-out flex-col relative",
-        collapsed ? "w-20" : "w-64"
-      )}>
-        {/* Header */}
-        <div className={cn(
-          "p-6 border-b border-symbol-gray-800 transition-all duration-300",
-          collapsed ? "p-4" : "p-6"
-        )}>
-          <div className="flex items-center justify-between">
-            {!collapsed ? (
-              <div className="text-center flex-1">
-                {/* Geometric Symbol */}
-                <div className="mb-2 flex justify-center">
-                  <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="Geometric Symbol" className="w-12 transition-all duration-300" />
-                </div>
-                <div className="w-8 h-px bg-symbol-gold mx-auto"></div>
+      {/* DESKTOP SIDEBAR */}
+      <div
+        className={cn('hidden lg:flex flex-col transition-all duration-300 relative flex-shrink-0', collapsed ? 'w-[72px]' : 'w-[240px]')}
+        style={sidebarStyle}
+      >
+        {/* Logo */}
+        <div style={{ padding: collapsed ? '20px 12px' : '20px 16px', borderBottom: '1px solid #2a2a38', display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between' }}>
+          {!collapsed && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #c9a84c, #8a6520)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="SOF" style={{ width: 22, height: 22, objectFit: 'contain' }} />
               </div>
-            ) : (
-              <div className="flex justify-center w-full">
-                <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="Geometric Symbol" className="w-8 transition-all duration-300" />
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#f0f0f8', letterSpacing: '0.04em', fontFamily: 'serif' }}>SOF Empire</div>
+                <div style={{ fontSize: 10, color: '#9090a8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Financeiro</div>
               </div>
-            )}
-            
-            {/* Toggle Button */}
+            </div>
+          )}
+          {collapsed && (
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #c9a84c, #8a6520)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="SOF" style={{ width: 22, height: 22, objectFit: 'contain' }} />
+            </div>
+          )}
+          {!collapsed && (
             <button
-              onClick={() => setCollapsed(!collapsed)}
-              className={cn(
-                "p-2 rounded-lg hover:bg-symbol-gray-700 transition-all duration-300 group",
-                collapsed ? "absolute -right-3 top-6 bg-symbol-gray-800 shadow-lg border border-symbol-gray-600" : ""
-              )}
+              onClick={() => setCollapsed(true)}
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #2a2a38', borderRadius: 6, padding: '4px 6px', cursor: 'pointer', color: '#9090a8', display: 'flex', alignItems: 'center' }}
             >
-              {collapsed ? (
-                <ChevronRight size={16} className="text-symbol-gold group-hover:text-symbol-white" />
-              ) : (
-                <ChevronLeft size={16} className="text-symbol-gray-400 group-hover:text-symbol-white" />
-              )}
+              <ChevronLeft size={14} />
             </button>
-          </div>
+          )}
         </div>
 
-        {/* Navigation */}
-        <nav className={cn(
-          "flex-1 space-y-2 overflow-y-auto transition-all duration-300",
-          collapsed ? "p-2" : "p-4 space-y-8"
-        )}>
-          {menuItems.map((section, sectionIndex) => (
-            <div key={section.section}>
+        {/* Expand button when collapsed */}
+        {collapsed && (
+          <button
+            onClick={() => setCollapsed(false)}
+            style={{
+              position: 'absolute', right: -12, top: 24,
+              width: 24, height: 24, borderRadius: '50%',
+              background: '#1c1c26', border: '1px solid #2a2a38',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: '#9090a8', zIndex: 10,
+            }}
+          >
+            <ChevronRight size={12} />
+          </button>
+        )}
+
+        {/* Nav */}
+        <nav style={{ flex: 1, padding: collapsed ? '16px 10px' : '16px 12px', overflowY: 'auto' }}>
+          {menuItems.map((section, i) => (
+            <div key={section.section} style={{ marginBottom: 24 }}>
               {!collapsed && (
-                <h3 className="brand-subheading text-symbol-gray-400 text-xs uppercase tracking-widest mb-4">
+                <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#606078', marginBottom: 8, paddingLeft: 12 }}>
                   {section.section}
-                </h3>
+                </div>
               )}
-              
-              {/* Section Separator for collapsed state */}
-              {collapsed && sectionIndex > 0 && (
-                <div className="my-4 mx-2 h-px bg-symbol-gray-800"></div>
-              )}
-              
-              <ul className={cn(
-                "transition-all duration-300",
-                collapsed ? "space-y-2" : "space-y-1"
-              )}>
-                {section.items.map((item) => {
-                  const isActive = location.pathname === item.href;
-                  return (
-                    <li key={item.href} className="relative group">
-                      <Link
-                        to={item.href}
-                        className={cn(
-                          "flex items-center transition-all duration-200 brand-body relative",
-                          collapsed 
-                            ? "justify-center p-3 rounded-xl mx-1" 
-                            : "gap-3 px-3 py-3",
-                          isActive 
-                            ? collapsed 
-                              ? "bg-symbol-gold text-symbol-black shadow-lg" 
-                              : "bg-symbol-gold/10 text-symbol-gold border-r-2 border-symbol-gold"
-                            : collapsed
-                              ? "text-symbol-gray-300 hover:bg-symbol-gray-700 hover:text-symbol-white"
-                              : "text-symbol-gray-300 hover:bg-symbol-gray-800 hover:text-symbol-white"
-                        )}
-                      >
-                        <item.icon size={18} className={cn(
-                          "transition-all duration-200",
-                          collapsed && isActive ? "text-symbol-black" : ""
-                        )} />
-                        {!collapsed && (
-                          <span className="font-light text-sm">{item.label}</span>
-                        )}
-                        
-                        {/* Tooltip for collapsed state */}
-                        {collapsed && (
-                          <div className="absolute left-full ml-3 px-3 py-2 bg-symbol-black text-symbol-white text-sm rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 whitespace-nowrap z-50 border border-symbol-gray-700">
-                            {item.label}
-                            <div className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-1 w-2 h-2 bg-symbol-black rotate-45 border-l border-b border-symbol-gray-700"></div>
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                  );
-                })}
+              {collapsed && i > 0 && <div style={{ height: 1, background: '#2a2a38', margin: '12px 4px' }} />}
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {section.items.map(item => <NavItem key={item.href} item={item} isCollapsed={collapsed} />)}
               </ul>
             </div>
           ))}
         </nav>
 
         {/* Footer */}
-        <div className={cn(
-          "border-t border-symbol-gray-800 transition-all duration-300",
-          collapsed ? "p-2" : "p-4"
-        )}>
-          <div className="text-center text-symbol-gray-500 text-xs">
-            {!collapsed ? (
-              <>
-                <p className="brand-body uppercase tracking-widest">Sistema Premium</p>
-                <div className="w-4 h-px bg-symbol-gray-700 mx-auto mt-2"></div>
-              </>
-            ) : (
-              <div className="flex justify-center">
-                <div className="w-6 h-px bg-symbol-gray-700"></div>
-              </div>
-            )}
+        <div style={{ padding: collapsed ? '12px' : '12px 16px', borderTop: '1px solid #2a2a38' }}>
+          <div style={{ fontSize: 10, color: '#606078', textAlign: 'center', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            {!collapsed ? 'Sistema Premium' : '·'}
           </div>
         </div>
-      </div>      {/* Mobile Sidebar - unchanged */}
-      <div 
-        className={cn(
-          "lg:hidden fixed inset-y-0 left-0 z-[60] w-80 symbol-sidebar text-symbol-white transform transition-transform duration-300 ease-in-out",
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-        style={{ 
+      </div>
+
+      {/* MOBILE SIDEBAR */}
+      <div
+        className="lg:hidden fixed inset-y-0 left-0 z-[60] w-80 flex flex-col"
+        style={{
+          ...sidebarStyle,
           transform: isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)',
-          visibility: 'visible',
-          display: 'block'
+          transition: 'transform 0.3s ease-in-out',
         }}
       >
-        {/* Mobile Header */}
-        <div className="p-4 border-b border-symbol-gray-800 flex items-center justify-between">
-          <div className="text-center">
-            {/* Geometric Symbol */}
-            <div className="mb-1 flex justify-center">
-              <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="Geometric Symbol" className="w-8 transition-all duration-300" />
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #2a2a38', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #c9a84c, #8a6520)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="SOF" style={{ width: 20, height: 20, objectFit: 'contain' }} />
             </div>
-            <div className="w-8 h-px bg-symbol-gold mx-auto"></div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#f0f0f8', fontFamily: 'serif' }}>SOF Empire</div>
           </div>
-          <button
-            onClick={onCloseMobileMenu}
-            className="p-2 rounded-sm hover:bg-symbol-gray-800 transition-colors"
-          >
-            <X size={20} />
+          <button onClick={onCloseMobileMenu} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #2a2a38', borderRadius: 8, padding: 8, cursor: 'pointer', color: '#9090a8', display: 'flex' }}>
+            <X size={18} />
           </button>
         </div>
 
-        {/* Mobile Navigation */}
-        <nav className="flex-1 p-4 space-y-8 overflow-y-auto">
+        <nav style={{ flex: 1, padding: '16px', overflowY: 'auto' }}>
           {menuItems.map((section) => (
-            <div key={section.section}>
-              <h3 className="brand-subheading text-symbol-gray-400 text-xs uppercase tracking-widest mb-4">
+            <div key={section.section} style={{ marginBottom: 24 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#606078', marginBottom: 8, paddingLeft: 12 }}>
                 {section.section}
-              </h3>
-              <ul className="space-y-1">
-                {section.items.map((item) => {
-                  const isActive = location.pathname === item.href;
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        to={item.href}
-                        onClick={handleLinkClick}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-4 transition-all duration-200 brand-body",
-                          isActive 
-                            ? "bg-symbol-gold/10 text-symbol-gold border-r-2 border-symbol-gold" 
-                            : "text-symbol-gray-300 hover:bg-symbol-gray-800 hover:text-symbol-white"
-                        )}
-                      >
-                        <item.icon size={18} />
-                        <span className="font-light text-sm">{item.label}</span>
-                      </Link>
-                    </li>
-                  );
-                })}
+              </div>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                {section.items.map(item => <NavItem key={item.href} item={item} isCollapsed={false} />)}
               </ul>
             </div>
           ))}
         </nav>
 
-        {/* Mobile Footer */}
-        <div className="p-4 border-t border-symbol-gray-800">
-          <div className="text-center text-symbol-gray-500 text-xs">
-            <p className="brand-body uppercase tracking-widest">Sistema Premium</p>
-            <div className="w-4 h-px bg-symbol-gray-700 mx-auto mt-2"></div>
-          </div>
+        <div style={{ padding: '12px 16px', borderTop: '1px solid #2a2a38', textAlign: 'center', fontSize: 10, color: '#606078', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Sistema Premium
         </div>
       </div>
     </>
