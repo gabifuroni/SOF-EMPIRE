@@ -65,7 +65,7 @@ const DailyCashFlow = () => {
   );
 
   return (
-    <div style={{ padding: '24px 28px', background: '#0f0f17', minHeight: '100%' }}>
+    <div style={{ padding: '24px 28px', background: "#0f0f17", minHeight: "100%" }}>
       <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} .dcf-card{animation:fadeUp 0.4s ease both} .dcf-card:hover{border-color:#3a3a4a!important}`}</style>
 
       {/* Header */}
