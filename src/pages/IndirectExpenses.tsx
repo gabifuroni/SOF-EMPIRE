@@ -13,9 +13,6 @@ import { useTransactions } from "@/hooks/useTransactions";
 import { convertExpenseCategoryFromDb, convertMonthlyExpenseFromDb } from "@/utils/typeConverters";
 import type { ExpenseCategory, MonthlyExpense } from "@/types";
 
-interface DirectExpenseCategory { id: string; name: string; isCustom: boolean; }
-interface DirectExpenseValue { categoryId: string; value: number; }
-
 const MONTHS = [
   { key: "january", label: "Janeiro" }, { key: "february", label: "Fevereiro" },
   { key: "march", label: "Março" }, { key: "april", label: "Abril" },
@@ -74,11 +71,8 @@ const IndirectExpenses = () => {
           if (existingTransactions && existingTransactions.length > 0) { await supabase.from('transacoes_financeiras').delete().in('id', existingTransactions.map(t => t.id)); }
         } catch {}
         if (value > 0) {
-          if (isFixed) {
-            await Promise.all(MONTHS.map(async (month, index) => { const monthDate = `${selectedYear}-${(index + 1).toString().padStart(2, "0")}-01`; await addTransaction.mutateAsync({ description: `Despesa Indireta: ${category?.nome_categoria_despesa || ''}`, valor: -value, tipo_transacao: 'SAIDA' as const, date: monthDate, category: 'Despesas Indiretas', payment_method: null }); }));
-          } else {
-            await addTransaction.mutateAsync({ description: `Despesa Indireta: ${category?.nome_categoria_despesa || ''}`, valor: -value, tipo_transacao: 'SAIDA' as const, date: dateString, category: 'Despesas Indiretas', payment_method: null });
-          }
+          if (isFixed) { await Promise.all(MONTHS.map(async (month, index) => { await addTransaction.mutateAsync({ description: `Despesa Indireta: ${category?.nome_categoria_despesa || ''}`, valor: -value, tipo_transacao: 'SAIDA' as const, date: `${selectedYear}-${(index + 1).toString().padStart(2, "0")}-01`, category: 'Despesas Indiretas', payment_method: null }); })); }
+          else { await addTransaction.mutateAsync({ description: `Despesa Indireta: ${category?.nome_categoria_despesa || ''}`, valor: -value, tipo_transacao: 'SAIDA' as const, date: dateString, category: 'Despesas Indiretas', payment_method: null }); }
         }
         return result;
       });
@@ -115,14 +109,11 @@ const IndirectExpenses = () => {
     return tempValue !== (expenseValue?.valor_mensal || 0);
   });
 
-  const calculateYearlyTotal = (categoryId: string): number => {
-    return expenses.filter((exp) => exp.categoria_id === categoryId && exp.mes_referencia.startsWith(selectedYear)).reduce((sum, exp) => sum + exp.valor_mensal, 0);
-  };
+  const calculateYearlyTotal = (categoryId: string): number => expenses.filter((exp) => exp.categoria_id === categoryId && exp.mes_referencia.startsWith(selectedYear)).reduce((sum, exp) => sum + exp.valor_mensal, 0);
 
   const addNewCategory = async () => {
     if (!newCategoryName.trim()) return;
-    try { await addCategory.mutateAsync(newCategoryName.trim()); setNewCategoryName(""); setShowAddCategory(false); toast.success("Nova categoria adicionada!"); }
-    catch { toast.error("Erro ao adicionar categoria"); }
+    try { await addCategory.mutateAsync(newCategoryName.trim()); setNewCategoryName(""); setShowAddCategory(false); toast.success("Nova categoria adicionada!"); } catch { toast.error("Erro ao adicionar categoria"); }
   };
 
   const removeCategory = async (categoryId: string) => {
@@ -136,13 +127,11 @@ const IndirectExpenses = () => {
   };
 
   const editCategory = async (categoryId: string, newName: string) => {
-    try { await updateCategory.mutateAsync({ id: categoryId, categoryName: newName }); toast.success("Categoria atualizada!"); }
-    catch { toast.error("Erro ao atualizar categoria"); }
+    try { await updateCategory.mutateAsync({ id: categoryId, categoryName: newName }); toast.success("Categoria atualizada!"); } catch { toast.error("Erro ao atualizar categoria"); }
   };
 
   const toggleFixedExpense = async (categoryId: string, isFixed: boolean) => {
-    try { await updateCategoryFixed.mutateAsync({ id: categoryId, isFixed }); }
-    catch { toast.error("Erro ao alterar tipo de despesa"); }
+    try { await updateCategoryFixed.mutateAsync({ id: categoryId, isFixed }); } catch { toast.error("Erro ao alterar tipo de despesa"); }
   };
 
   const updateDirectExpense = (categoryId: string, value: number) => setTempDirectExpenseValues((prev) => ({ ...prev, [categoryId]: value }));
@@ -169,8 +158,7 @@ const IndirectExpenses = () => {
 
   const addNewDirectCategory = async () => {
     if (!newDirectCategoryName.trim()) return;
-    try { await addDirectCategory.mutateAsync(newDirectCategoryName.trim()); setNewDirectCategoryName(""); setShowAddDirectCategory(false); toast.success("Nova categoria adicionada!"); }
-    catch { toast.error("Erro ao adicionar categoria"); }
+    try { await addDirectCategory.mutateAsync(newDirectCategoryName.trim()); setNewDirectCategoryName(""); setShowAddDirectCategory(false); toast.success("Nova categoria adicionada!"); } catch { toast.error("Erro ao adicionar categoria"); }
   };
 
   const removeDirectCategory = async (categoryId: string) => {
@@ -257,27 +245,45 @@ const IndirectExpenses = () => {
   return (
     <div style={{ padding: '24px 28px', background: '#0f0f17', minHeight: '100%' }}>
       <style>{`
-        .exp-tab-list { background: #13131a !important; border: 1px solid #2a2a38 !important; border-radius: 10px !important; padding: 4px !important; }
-        .exp-tab-trigger { color: #9090a8 !important; border-radius: 7px !important; font-size: 13px !important; font-weight: 500 !important; padding: 9px 20px !important; transition: all 0.2s !important; }
-        .exp-tab-trigger[data-state=active] { background: #c9a84c !important; color: #0a0a0f !important; font-weight: 600 !important; }
-        .exp-tab-content { background: #13131a; border: 1px solid #2a2a38; border-radius: 12px; margin-top: 16px; overflow: hidden; }
+        /* Tab styles */
+        .exp-tab-list{background:#13131a!important;border:1px solid #2a2a38!important;border-radius:10px!important;padding:4px!important}
+        .exp-tab-trigger{color:#9090a8!important;border-radius:7px!important;font-size:13px!important;font-weight:500!important;padding:9px 20px!important;transition:all 0.2s!important}
+        .exp-tab-trigger[data-state=active]{background:#c9a84c!important;color:#0a0a0f!important;font-weight:600!important}
+        
+        /* Table internals dark override */
+        .exp-table-wrap *{color:#f0f0f8}
+        .exp-table-wrap table{background:#13131a!important;width:100%}
+        .exp-table-wrap thead tr{background:#1c1c26!important}
+        .exp-table-wrap th{background:#1c1c26!important;color:#606078!important;border-color:#2a2a38!important;font-size:10px!important;font-weight:600!important;letter-spacing:0.1em!important;padding:12px 16px!important}
+        .exp-table-wrap td{border-color:#2a2a38!important;color:#f0f0f8!important;padding:12px 16px!important}
+        .exp-table-wrap tr:hover td{background:rgba(255,255,255,0.02)!important}
+        .exp-table-wrap input:not([type=checkbox]){background:#1c1c26!important;border-color:#2a2a38!important;color:#f0f0f8!important;border-radius:6px!important}
+        .exp-table-wrap input:focus{border-color:#c9a84c!important;box-shadow:0 0 0 2px rgba(201,168,76,0.15)!important}
+        .exp-table-wrap .bg-white,.exp-table-wrap .bg-gray-50,.exp-table-wrap .bg-symbol-gray-50,.exp-table-wrap .bg-symbol-beige{background:#1c1c26!important}
+        .exp-table-wrap .border-symbol-gray-200,.exp-table-wrap .border-gray-200{border-color:#2a2a38!important}
+        .exp-table-wrap .text-symbol-black,.exp-table-wrap .text-gray-900,.exp-table-wrap .text-gray-800{color:#f0f0f8!important}
+        .exp-table-wrap .text-symbol-gray-600,.exp-table-wrap .text-gray-600,.exp-table-wrap .text-gray-500{color:#9090a8!important}
+        .exp-table-wrap button:not([data-state]){background:rgba(255,255,255,0.05)!important;border-color:#2a2a38!important;color:#9090a8!important}
+        .exp-table-wrap button:not([data-state]):hover{border-color:#3a3a4a!important;color:#f0f0f8!important}
+        .exp-table-wrap .symbol-card,.exp-table-wrap [class*=symbol-card]{background:#1c1c26!important;border-color:#2a2a38!important}
+        .exp-table-wrap h3,.exp-table-wrap h4,.exp-table-wrap p,.exp-table-wrap label,.exp-table-wrap span:not([class*=emerald]):not([class*=red]):not([class*=green]):not([class*=gold]){color:#f0f0f8!important}
+        .exp-table-wrap .text-emerald-600,.exp-table-wrap .text-green-600{color:#00c896!important}
+        .exp-table-wrap .text-red-600{color:#ff4d6a!important}
+        .exp-table-wrap .text-symbol-gold,.exp-table-wrap .text-amber-600{color:#c9a84c!important}
+        .exp-table-wrap [class*=bg-emerald]{background:rgba(0,200,150,0.15)!important}
+        .exp-table-wrap [class*=bg-red]{background:rgba(255,77,106,0.15)!important}
+        .exp-table-wrap .bg-symbol-gold,.exp-table-wrap [class*=bg-amber]{background:rgba(201,168,76,0.15)!important}
+        /* Checkbox */
+        .exp-table-wrap [data-radix-checkbox-root]{background:#1c1c26!important;border-color:#3a3a4a!important}
+        .exp-table-wrap [data-radix-checkbox-root][data-state=checked]{background:#c9a84c!important;border-color:#c9a84c!important}
+        /* Save button */
+        .exp-table-wrap .bg-symbol-black,.exp-table-wrap .bg-gray-900{background:linear-gradient(135deg,#c9a84c,#8a6520)!important;color:#0a0a0f!important}
+        /* Unsaved changes indicator */
+        .exp-table-wrap .bg-yellow-50,.exp-table-wrap .bg-amber-50{background:rgba(201,168,76,0.08)!important;border-color:rgba(201,168,76,0.2)!important}
       `}</style>
 
-      <ExpensesHeader
-        selectedYear={selectedYear}
-        selectedMonth={selectedMonth}
-        onYearChange={setSelectedYear}
-        onMonthChange={setSelectedMonth}
-      />
-
-      <ExpensesSummaryCards
-        totalCategories={convertedCategories.length + directCategories.length}
-        monthTotal={totalMonthExpenses}
-        fixedExpensesTotal={fixedExpensesTotal}
-        variableExpenses={variableExpenses}
-        directExpensesTotal={directMonthTotal}
-        indirectExpensesTotal={indirectMonthTotal}
-      />
+      <ExpensesHeader selectedYear={selectedYear} selectedMonth={selectedMonth} onYearChange={setSelectedYear} onMonthChange={setSelectedMonth} />
+      <ExpensesSummaryCards totalCategories={convertedCategories.length + directCategories.length} monthTotal={totalMonthExpenses} fixedExpensesTotal={fixedExpensesTotal} variableExpenses={variableExpenses} directExpensesTotal={directMonthTotal} indirectExpensesTotal={indirectMonthTotal} />
 
       <Tabs defaultValue="indirect" className="w-full">
         <TabsList className="exp-tab-list grid w-full grid-cols-2">
@@ -285,51 +291,43 @@ const IndirectExpenses = () => {
           <TabsTrigger value="direct" className="exp-tab-trigger">Despesas Diretas</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="indirect" className="exp-tab-content">
-          <IndirectExpensesTable
-            categories={convertedCategories}
-            expenses={convertedExpenses}
-            fixedExpenses={categories.reduce((acc, cat) => ({ ...acc, [cat.id]: cat.is_fixed }), {})}
-            selectedMonth={selectedMonth}
-            selectedYear={selectedYear}
-            newCategoryName={newCategoryName}
-            showAddCategory={showAddCategory}
-            hasUnsavedChanges={hasUnsavedChanges}
-            onUpdateExpense={updateExpense}
-            onSaveExpenseValues={saveExpenseValues}
-            onToggleFixedExpense={toggleFixedExpense}
-            onRemoveCategory={removeCategory}
-            onAddNewCategory={addNewCategory}
-            onEditCategory={editCategory}
-            onSetNewCategoryName={setNewCategoryName}
-            onSetShowAddCategory={setShowAddCategory}
-            getExpenseForCategory={getExpenseForCategory}
-            getTempExpenseValue={getTempExpenseValue}
-            calculateYearlyTotal={calculateYearlyTotal}
-            calculateMonthTotal={calculateMonthTotal}
-          />
+        <TabsContent value="indirect">
+          <div style={{ background: '#13131a', border: '1px solid #2a2a38', borderRadius: 12, marginTop: 16, overflow: 'hidden' }}>
+            <div className="exp-table-wrap">
+              <IndirectExpensesTable
+                categories={convertedCategories} expenses={convertedExpenses}
+                fixedExpenses={categories.reduce((acc, cat) => ({ ...acc, [cat.id]: cat.is_fixed }), {})}
+                selectedMonth={selectedMonth} selectedYear={selectedYear}
+                newCategoryName={newCategoryName} showAddCategory={showAddCategory}
+                hasUnsavedChanges={hasUnsavedChanges}
+                onUpdateExpense={updateExpense} onSaveExpenseValues={saveExpenseValues}
+                onToggleFixedExpense={toggleFixedExpense} onRemoveCategory={removeCategory}
+                onAddNewCategory={addNewCategory} onEditCategory={editCategory}
+                onSetNewCategoryName={setNewCategoryName} onSetShowAddCategory={setShowAddCategory}
+                getExpenseForCategory={getExpenseForCategory} getTempExpenseValue={getTempExpenseValue}
+                calculateYearlyTotal={calculateYearlyTotal} calculateMonthTotal={calculateMonthTotal}
+              />
+            </div>
+          </div>
         </TabsContent>
 
-        <TabsContent value="direct" className="exp-tab-content">
-          <DirectExpensesTable
-            selectedMonth={selectedMonth}
-            selectedYear={selectedYear}
-            categories={directCategories.map(cat => ({ id: cat.id, name: cat.nome_categoria, isCustom: !cat.is_predefinida }))}
-            expenseValues={directExpenses.filter(exp => { const monthNumber = MONTHS.findIndex((m) => m.key === selectedMonth) + 1; const dateString = `${selectedYear}-${monthNumber.toString().padStart(2, "0")}-01`; return exp.mes_referencia === dateString; }).map(exp => ({ categoryId: exp.categoria_id, value: exp.valor_mensal }))}
-            tempExpenseValues={tempDirectExpenseValues}
-            hasUnsavedChanges={hasUnsavedDirectChanges}
-            newCategoryName={newDirectCategoryName}
-            showAddCategory={showAddDirectCategory}
-            onUpdateExpense={updateDirectExpense}
-            onSaveExpenseValues={saveDirectExpenseValues}
-            onAddNewCategory={addNewDirectCategory}
-            onRemoveCategory={removeDirectCategory}
-            onEditCategory={editDirectCategory}
-            onSetNewCategoryName={setNewDirectCategoryName}
-            onSetShowAddCategory={setShowAddDirectCategory}
-            getTempExpenseValue={getTempDirectExpenseValue}
-            calculateMonthTotal={calculateDirectMonthTotal}
-          />
+        <TabsContent value="direct">
+          <div style={{ background: '#13131a', border: '1px solid #2a2a38', borderRadius: 12, marginTop: 16, overflow: 'hidden' }}>
+            <div className="exp-table-wrap">
+              <DirectExpensesTable
+                selectedMonth={selectedMonth} selectedYear={selectedYear}
+                categories={directCategories.map(cat => ({ id: cat.id, name: cat.nome_categoria, isCustom: !cat.is_predefinida }))}
+                expenseValues={directExpenses.filter(exp => { const monthNumber = MONTHS.findIndex((m) => m.key === selectedMonth) + 1; const dateString = `${selectedYear}-${monthNumber.toString().padStart(2, "0")}-01`; return exp.mes_referencia === dateString; }).map(exp => ({ categoryId: exp.categoria_id, value: exp.valor_mensal }))}
+                tempExpenseValues={tempDirectExpenseValues} hasUnsavedChanges={hasUnsavedDirectChanges}
+                newCategoryName={newDirectCategoryName} showAddCategory={showAddDirectCategory}
+                onUpdateExpense={updateDirectExpense} onSaveExpenseValues={saveDirectExpenseValues}
+                onAddNewCategory={addNewDirectCategory} onRemoveCategory={removeDirectCategory}
+                onEditCategory={editDirectCategory} onSetNewCategoryName={setNewDirectCategoryName}
+                onSetShowAddCategory={setShowAddDirectCategory} getTempExpenseValue={getTempDirectExpenseValue}
+                calculateMonthTotal={calculateDirectMonthTotal}
+              />
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
