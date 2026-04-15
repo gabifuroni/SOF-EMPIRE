@@ -1,203 +1,145 @@
 import { useState } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Plus, Edit, Trash2, Package } from 'lucide-react';
 import MaterialTable from '@/components/materials/MaterialTable';
 import AddMaterialModal from '@/components/materials/AddMaterialModal';
 import { useMaterials } from '@/hooks/useMaterials';
 import type { Material } from '@/types';
 
-type MaterialFormData = {
-  name: string;
-  batchQuantity: number;
-  unit: string;
-  batchPrice: number;
-};
+type MaterialFormData = { name: string; batchQuantity: number; unit: string; batchPrice: number; };
 
 const Materials = () => {
   const { materials, isLoading, addMaterial, updateMaterial, deleteMaterial } = useMaterials();
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
 
-  const handleAddMaterial = async (materialData: MaterialFormData) => {
-    try {
-      const materialToAdd: Omit<Material, 'id' | 'unitCost'> = {
-        name: materialData.name,
-        batchQuantity: materialData.batchQuantity,
-        unit: materialData.unit,
-        batchPrice: materialData.batchPrice,
-        // unitCost será calculado automaticamente pelo banco
-      };
-      
-      await addMaterial.mutateAsync(materialToAdd as Omit<Material, 'id'>);
-      setIsAddModalOpen(false);
-    } catch (error) {
-      console.error('Error adding material:', error);
-      // Manter o modal aberto em caso de erro
-    }
+  const handleAddMaterial = async (data: MaterialFormData) => {
+    try { await addMaterial.mutateAsync({ name: data.name, batchQuantity: data.batchQuantity, unit: data.unit, batchPrice: data.batchPrice } as Omit<Material, 'id'>); setIsAddModalOpen(false); } catch {}
   };
 
-  const handleEditMaterial = async (materialData: MaterialFormData) => {
+  const handleEditMaterial = async (data: MaterialFormData) => {
     if (!editingMaterial) return;
-    
-    try {
-      const materialToUpdate: Omit<Material, 'id' | 'unitCost'> = {
-        name: materialData.name,
-        batchQuantity: materialData.batchQuantity,
-        unit: materialData.unit,
-        batchPrice: materialData.batchPrice,
-        // unitCost será calculado automaticamente pelo banco
-      };
-      await updateMaterial.mutateAsync({
-        id: editingMaterial.id,
-        materialData: materialToUpdate as Omit<Material, 'id'>,
-      });
-      setEditingMaterial(null);
-    } catch (error) {
-      console.error('Error updating material:', error);
-    }
+    try { await updateMaterial.mutateAsync({ id: editingMaterial.id, materialData: { name: data.name, batchQuantity: data.batchQuantity, unit: data.unit, batchPrice: data.batchPrice } as Omit<Material, 'id'> }); setEditingMaterial(null); } catch {}
   };
 
-  const handleDeleteMaterial = async (id: string) => {
-    try {
-      await deleteMaterial.mutateAsync(id);
-    } catch (error) {
-      console.error('Error deleting material:', error);
-    }
-  };
+  const handleDeleteMaterial = async (id: string) => { try { await deleteMaterial.mutateAsync(id); } catch {} };
 
-  const openEditModal = (material: Material) => {
-    setEditingMaterial(material);
-  };
-
-  const closeEditModal = () => {
-    setEditingMaterial(null);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-symbol-gold border-t-symbol-beige rounded-full animate-spin mx-auto"></div>
-          <p className="brand-body text-symbol-gray-600">Carregando matérias-primas...</p>
-        </div>
-      </div>
-    );
-  }
+  if (isLoading) return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 40, height: 40, border: '3px solid #2a2a38', borderTopColor: '#c9a84c', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
 
   return (
-    <div className="space-y-8 p-6 animate-minimal-fade">
-      {/* Header Section */}
-      <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+    <div style={{ padding: '24px 28px', background: '#0f0f17', minHeight: '100%' }}>
+      <style>{`
+        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .mat-table{width:100%;border-collapse:collapse}
+        .mat-table th{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#606078;padding:12px 16px;text-align:left;background:#1c1c26;border-bottom:1px solid #2a2a38}
+        .mat-table td{padding:14px 16px;font-size:13px;color:#f0f0f8;border-bottom:1px solid #2a2a38;vertical-align:middle}
+        .mat-table tr:last-child td{border-bottom:none}
+        .mat-table tr:hover td{background:rgba(255,255,255,0.02)}
+        .mat-btn{background:rgba(255,255,255,0.05);border:1px solid #2a2a38;border-radius:6px;padding:6px 8px;cursor:pointer;color:#9090a8;display:inline-flex;align-items:center;transition:all 0.15s}
+        .mat-btn:hover{border-color:#3a3a4a;color:#f0f0f8}
+        .mat-btn.danger:hover{background:rgba(255,77,106,0.08);border-color:rgba(255,77,106,0.3);color:#ff4d6a}
+        .mat-mobile-card{background:#1c1c26;border:1px solid #2a2a38;border-radius:10px;padding:16px;margin-bottom:10px}
+      `}</style>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 28, animation: 'fadeUp 0.4s ease both' }}>
         <div>
-          <h1 className="brand-heading text-3xl text-symbol-black mb-2">
-            Matéria-Prima
-          </h1>
-          <div className="w-12 h-px bg-symbol-gold mb-4"></div>
-          <p className="brand-body text-symbol-gray-600">
-            Gerencie os materiais utilizados em seus serviços
-          </p>
+          <h1 style={{ fontFamily: 'serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Matéria-Prima</h1>
+          <div style={{ width: 36, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 6 }} />
+          <p style={{ fontSize: 13, color: '#9090a8' }}>Gerencie os materiais utilizados em seus serviços</p>
         </div>
-        
-        <Button 
-          onClick={() => {
-            console.log('Materials: Opening add modal');
-            setIsAddModalOpen(true);
-          }}
-          className="bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light py-3 px-6 transition-all duration-300 uppercase tracking-wide text-sm"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Matéria-Prima
-        </Button>
+        <button onClick={() => setIsAddModalOpen(true)} style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', color: '#0a0a0f', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Inter,sans-serif' }}>
+          <Plus size={16} /> Nova Matéria-Prima
+        </button>
       </div>
 
-      {/* Materials Table */}
-      <div className="symbol-card p-4 sm:p-8 shadow-lg hover:shadow-xl transition-all duration-300">
-        <div className="mb-6">
-          <h2 className="brand-heading text-xl text-symbol-black mb-2">
-            Lista de Matérias-Primas
-          </h2>
-          <div className="w-8 h-px bg-symbol-beige"></div>
+      {/* Card */}
+      <div style={{ background: '#13131a', border: '1px solid #2a2a38', borderRadius: 12, overflow: 'hidden', animation: 'fadeUp 0.4s 0.05s ease both' }}>
+        <div style={{ padding: '18px 20px', borderBottom: '1px solid #2a2a38', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <Package size={16} style={{ color: '#c9a84c' }} />
+          <h2 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Lista de Matérias-Primas</h2>
+          <span style={{ marginLeft: 'auto', fontSize: 11, color: '#9090a8', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 20, padding: '2px 10px' }}>{materials.length} itens</span>
         </div>
-        
-        {/* Mobile View: Card List */}
-        <div className="space-y-4 md:hidden">
-          {materials.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-symbol-gray-600">Nenhuma matéria-prima cadastrada ainda.</p>
-            </div>
-          ) : (
-            materials.map((material) => (
-              <div key={material.id} className="symbol-card p-4 bg-symbol-gray-50 border border-symbol-gray-200">
-                <div className="flex justify-between items-start mb-3">
-                  <h3 className="brand-subheading text-symbol-black font-medium text-sm">{material.name}</h3>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => openEditModal(material)}
-                      className="h-8 w-8 p-0"
-                    >
-                      <Edit className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteMaterial(material.id)}
-                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
+
+        {materials.length === 0 ? (
+          <div style={{ padding: '48px 24px', textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🧴</div>
+            <h3 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8', marginBottom: 8 }}>Nenhuma matéria-prima cadastrada</h3>
+            <p style={{ fontSize: 13, color: '#9090a8' }}>Adicione os materiais utilizados nos seus serviços</p>
+          </div>
+        ) : (
+          <>
+            {/* Mobile */}
+            <div style={{ display: 'block', padding: '12px' }} className="md-hidden">
+              <style>{`.md-hidden{display:block}@media(min-width:768px){.md-hidden{display:none!important}}`}</style>
+              {materials.map(m => (
+                <div key={m.id} className="mat-mobile-card">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+                    <span style={{ fontFamily: 'serif', fontSize: 15, fontWeight: 600, color: '#f0f0f8' }}>{m.name}</span>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button className="mat-btn" onClick={() => setEditingMaterial(m)}><Edit size={13} /></button>
+                      <button className="mat-btn danger" onClick={() => handleDeleteMaterial(m.id)}><Trash2 size={13} /></button>
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                    {[
+                      { label: 'Preço do Lote', value: `R$ ${m.batchPrice.toFixed(2)}` },
+                      { label: 'Qtd. do Lote', value: `${m.batchQuantity} ${m.unit}` },
+                      { label: 'Custo/Unidade', value: `R$ ${m.unitCost.toFixed(2)} / ${m.unit}`, color: '#c9a84c' },
+                    ].map((item, i) => (
+                      <div key={i}>
+                        <div style={{ fontSize: 10, color: '#606078', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 2 }}>{item.label}</div>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: item.color || '#f0f0f8' }}>{item.value}</div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <div className="text-sm text-symbol-gray-600 space-y-1">
-                  <p><span className="font-medium">Preço do Lote:</span> R$ {material.batchPrice.toFixed(2)}</p>
-                  <p><span className="font-medium">Qtd. do Lote:</span> {material.batchQuantity} {material.unit}</p>
-                  <p><span className="font-medium">Custo/Unidade:</span> R$ {material.unitCost.toFixed(2)}</p>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-
-        {/* Desktop View: Table */}
-        <div className="hidden md:block">
-          {materials.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-symbol-gray-600">Nenhuma matéria-prima cadastrada ainda.</p>
+              ))}
             </div>
-          ) : (
-            <MaterialTable 
-              materials={materials}
-              onEdit={openEditModal}
-              onDelete={handleDeleteMaterial}
-            />
-          )}
-        </div>
+
+            {/* Desktop */}
+            <div style={{ display: 'none' }} className="md-visible">
+              <style>{`.md-visible{display:none!important}@media(min-width:768px){.md-visible{display:block!important}}`}</style>
+              <table className="mat-table">
+                <thead>
+                  <tr>
+                    <th>Nome do Produto/Material</th>
+                    <th>Quantidade por Lote</th>
+                    <th>Valor Pago no Lote</th>
+                    <th>Custo por Unidade</th>
+                    <th style={{ textAlign: 'center' }}>Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {materials.map(m => (
+                    <tr key={m.id}>
+                      <td style={{ fontWeight: 500 }}>{m.name}</td>
+                      <td style={{ color: '#9090a8' }}>{m.batchQuantity} {m.unit}</td>
+                      <td>R$ {m.batchPrice.toFixed(2)}</td>
+                      <td style={{ color: '#c9a84c', fontWeight: 500 }}>R$ {m.unitCost.toFixed(2)} / {m.unit}</td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+                          <button className="mat-btn" onClick={() => setEditingMaterial(m)}><Edit size={13} /></button>
+                          <button className="mat-btn danger" onClick={() => handleDeleteMaterial(m.id)}><Trash2 size={13} /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
 
-      <AddMaterialModal
-        isOpen={isAddModalOpen}
-        onClose={() => {
-          console.log('Materials: Closing add modal');
-          setIsAddModalOpen(false);
-        }}
-        onSave={handleAddMaterial}
-        title="Adicionar Nova Matéria-Prima"
-      />
-
+      <AddMaterialModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSave={handleAddMaterial} title="Adicionar Nova Matéria-Prima" />
       {editingMaterial && (
-        <AddMaterialModal
-          isOpen={true}
-          onClose={closeEditModal}
-          onSave={handleEditMaterial}
-          title="Editar Matéria-Prima"
-          initialData={{
-            name: editingMaterial.name,
-            batchQuantity: editingMaterial.batchQuantity,
-            unit: editingMaterial.unit,
-            batchPrice: editingMaterial.batchPrice,
-          }}
-        />
+        <AddMaterialModal isOpen={true} onClose={() => setEditingMaterial(null)} onSave={handleEditMaterial} title="Editar Matéria-Prima"
+          initialData={{ name: editingMaterial.name, batchQuantity: editingMaterial.batchQuantity, unit: editingMaterial.unit, batchPrice: editingMaterial.batchPrice }} />
       )}
     </div>
   );
