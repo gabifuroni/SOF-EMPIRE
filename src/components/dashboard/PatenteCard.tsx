@@ -1,4 +1,3 @@
-
 import { usePatentes } from '@/hooks/usePatentes';
 import { useProfile } from '@/hooks/useProfile';
 import { useTransactions } from '@/hooks/useTransactions';
@@ -14,109 +13,123 @@ const PatenteCard = ({ currentRevenue }: PatenteCardProps) => {
 
   if (patentesLoading || profileLoading || transactionsLoading) {
     return (
-      <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300 animate-pulse">
-        <div className="h-6 bg-symbol-gray-200 rounded mb-4"></div>
-        <div className="h-4 bg-symbol-gray-200 rounded w-3/4"></div>
+      <div style={{ background: '#13131a', border: '1px solid #2a2a38', borderRadius: 12, padding: '24px 28px' }}>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          <div style={{ width: 48, height: 48, borderRadius: 12, background: '#1c1c26' }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ height: 16, background: '#1c1c26', borderRadius: 4, marginBottom: 8, width: '40%' }} />
+            <div style={{ height: 12, background: '#1c1c26', borderRadius: 4, width: '60%' }} />
+          </div>
+        </div>
       </div>
     );
   }
-  // Calculate total accumulated revenue from transactions (only ENTRADA)
+
   const totalRevenue = transactions
-    .filter(transaction => transaction.tipo_transacao === 'ENTRADA')
-    .reduce((sum, transaction) => sum + Number(transaction.valor), 0);
-  
-  // Sort patentes by faturamento_minimo_necessario to ensure correct order
+    .filter(t => t.tipo_transacao === 'ENTRADA')
+    .reduce((sum, t) => sum + Number(t.valor), 0);
+
   const sortedPatentes = [...patentes].sort((a, b) => a.faturamento_minimo_necessario - b.faturamento_minimo_necessario);
-  
-  // Find current patente (highest one that user has achieved)
+
   const currentPatente = sortedPatentes
     .filter(p => totalRevenue >= p.faturamento_minimo_necessario)
     .pop() || sortedPatentes[0];
 
-  // Find next patente (first one above current revenue)
-  const nextPatente = sortedPatentes.find(p => 
-    p.faturamento_minimo_necessario > totalRevenue
-  );
+  const nextPatente = sortedPatentes.find(p => p.faturamento_minimo_necessario > totalRevenue);
 
-  const progressToNext = nextPatente 
-    ? ((totalRevenue - (currentPatente?.faturamento_minimo_necessario || 0)) / 
+  const progressToNext = nextPatente
+    ? ((totalRevenue - (currentPatente?.faturamento_minimo_necessario || 0)) /
        (nextPatente.faturamento_minimo_necessario - (currentPatente?.faturamento_minimo_necessario || 0))) * 100
     : 100;
 
-  const remainingToNext = nextPatente 
-    ? nextPatente.faturamento_minimo_necessario - totalRevenue
-    : 0;
+  const remainingToNext = nextPatente ? nextPatente.faturamento_minimo_necessario - totalRevenue : 0;
 
   return (
-    <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-symbol-gold/10 to-symbol-beige/20 border-symbol-gold/30">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-4">
-          <div className="text-4xl">
+    <div style={{
+      background: 'linear-gradient(135deg, #16141f 0%, #13131a 60%, #1a1520 100%)',
+      border: '1px solid rgba(201,168,76,0.2)',
+      borderRadius: 12,
+      padding: '24px 28px',
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {/* Glow effect */}
+      <div style={{
+        position: 'absolute', top: -40, right: -40,
+        width: 160, height: 160,
+        background: 'radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%)',
+        borderRadius: '50%', pointerEvents: 'none',
+      }} />
+
+      {/* Top row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: 14,
+            background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26,
+          }}>
             {currentPatente?.icon || '🌱'}
           </div>
           <div>
-            <h3 className="brand-heading text-xl text-symbol-black">
+            <div style={{ fontFamily: 'serif', fontSize: 18, fontWeight: 600, color: '#f0f0f8', marginBottom: 3 }}>
               {currentPatente?.nome_patente || 'Iniciante'}
-            </h3>
-            <p className="brand-body text-symbol-gray-600 text-sm">
-              Sua patente atual
-            </p>
+            </div>
+            <div style={{ fontSize: 12, color: '#9090a8' }}>Sua patente atual</div>
           </div>
         </div>
-        <div className="text-right">
-          <div className="brand-heading text-2xl text-symbol-black">
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 600, color: '#c9a84c' }}>
             R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </div>
-          <p className="brand-body text-symbol-gray-600 text-sm">
-            Faturamento total
-          </p>
+          <div style={{ fontSize: 11, color: '#9090a8', marginTop: 2 }}>Faturamento total</div>
         </div>
       </div>
 
       {nextPatente && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <span className="text-lg">{nextPatente.icon}</span>
-              <span className="brand-subheading text-symbol-black text-sm uppercase tracking-wider">
+        <div>
+          {/* Next patente label */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 16 }}>{nextPatente.icon}</span>
+              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9090a8' }}>
                 Próxima: {nextPatente.nome_patente}
               </span>
             </div>
-            <span className="brand-body text-symbol-gray-600 text-sm">
+            <span style={{ fontSize: 12, color: '#c9a84c', fontWeight: 500 }}>
               {progressToNext.toFixed(1)}%
             </span>
           </div>
-          
-          <div className="w-full bg-symbol-gray-200 h-3 overflow-hidden rounded-full">
-            <div 
-              className="h-full bg-gradient-to-r from-symbol-gold to-symbol-beige transition-all duration-700 rounded-full"
-              style={{ width: `${Math.min(progressToNext, 100)}%` }}
-            />
+
+          {/* Progress bar */}
+          <div style={{ height: 8, background: '#1c1c26', borderRadius: 99, overflow: 'hidden', marginBottom: 10 }}>
+            <div style={{
+              height: '100%',
+              width: `${Math.min(progressToNext, 100)}%`,
+              background: 'linear-gradient(90deg, #c9a84c, #e8c96a)',
+              borderRadius: 99,
+              transition: 'width 0.7s ease',
+            }} />
           </div>
-          
-          <div className="flex justify-between text-sm">
-            <span className="text-symbol-gray-600">
-              Atual: R$ {totalRevenue.toLocaleString('pt-BR')}
-            </span>
-            <span className="text-symbol-gray-600">
-              Próxima: R$ {nextPatente.faturamento_minimo_necessario.toLocaleString('pt-BR')}
-            </span>
+
+          {/* Labels */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#606078', marginBottom: 10 }}>
+            <span>Atual: R$ {totalRevenue.toLocaleString('pt-BR')}</span>
+            <span>Próxima: R$ {nextPatente.faturamento_minimo_necessario.toLocaleString('pt-BR')}</span>
           </div>
-          
-          <div className="text-center pt-2">
-            <span className="brand-body text-symbol-gray-600 text-sm">
-              Faltam <strong className="text-symbol-black">
-                R$ {remainingToNext.toLocaleString('pt-BR')}
-              </strong> para a próxima patente
+
+          <div style={{ textAlign: 'center', paddingTop: 8, borderTop: '1px solid #2a2a38' }}>
+            <span style={{ fontSize: 12, color: '#9090a8' }}>
+              Faltam <strong style={{ color: '#c9a84c' }}>R$ {remainingToNext.toLocaleString('pt-BR')}</strong> para a próxima patente
             </span>
           </div>
         </div>
       )}
 
       {!nextPatente && (
-        <div className="text-center py-4">
-          <div className="text-2xl mb-2">👑</div>
-          <p className="brand-subheading text-symbol-black text-sm uppercase tracking-wider">
+        <div style={{ textAlign: 'center', paddingTop: 12, borderTop: '1px solid #2a2a38' }}>
+          <div style={{ fontSize: 24, marginBottom: 8 }}>👑</div>
+          <p style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#c9a84c' }}>
             Parabéns! Você alcançou a patente máxima!
           </p>
         </div>
