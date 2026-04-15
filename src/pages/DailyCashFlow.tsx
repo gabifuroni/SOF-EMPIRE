@@ -1,173 +1,148 @@
 import { useState, useMemo } from 'react';
 import AddEntryModal from '@/components/cash-flow/AddEntryModal';
-import DailyCashFlowHeader from '@/components/cash-flow/DailyCashFlowHeader';
-import DailyCashFlowMetrics from '@/components/cash-flow/DailyCashFlowMetrics';
 import DailyCashFlowTable from '@/components/cash-flow/DailyCashFlowTable';
 import { format, isToday, parse } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Plus, ExternalLink, TrendingUp, TrendingDown, DollarSign, Target } from 'lucide-react';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
+import { useNavigate } from 'react-router-dom';
 
 const DailyCashFlow = () => {
-  const today = useMemo(() => new Date(), []); // Esta data será fixada no momento da renderização
-  const currentDate = new Date(); // Data sempre atual para os modais
+  const navigate = useNavigate();
+  const today = useMemo(() => new Date(), []);
+  const currentDate = new Date();
   const [isAddEntryModalOpen, setIsAddEntryModalOpen] = useState(false);
-
   const { transactions, isLoading, addTransaction, deleteTransaction } = useTransactions();
   const { params, isLoading: paramsLoading } = useBusinessParams();
 
   const todayEntries = useMemo(() => {
     if (!transactions) return [];
-    
     return transactions.filter(entry => {
-      // Parse como data local para evitar deslocamentos de fuso
       const entryDate = entry.date ? parse(entry.date, 'yyyy-MM-dd', new Date()) : null;
       return !!entryDate && isToday(entryDate);
     });
   }, [transactions]);
 
   const dailyTotals = useMemo(() => {
-    const totalEntradas = todayEntries
-      .filter(entry => entry.tipo_transacao === 'ENTRADA')
-      .reduce((sum, entry) => sum + Number(entry.valor || 0), 0);
-
-    // Saídas serão mostradas como resumo das despesas cadastradas (implementação futura)
-    const totalSaidas = todayEntries
-      .filter(entry => entry.tipo_transacao === 'SAIDA')
-      .reduce((sum, entry) => sum + Number(entry.valor || 0), 0);
-
-    const saldoDia = totalEntradas - totalSaidas;
-
-    return { totalEntradas, totalSaidas, saldoDia };
+    const totalEntradas = todayEntries.filter(e => e.tipo_transacao === 'ENTRADA').reduce((s, e) => s + Number(e.valor || 0), 0);
+    const totalSaidas = todayEntries.filter(e => e.tipo_transacao === 'SAIDA').reduce((s, e) => s + Number(e.valor || 0), 0);
+    return { totalEntradas, totalSaidas, saldoDia: totalEntradas - totalSaidas };
   }, [todayEntries]);
 
   const dailyGoalData = useMemo(() => {
-    if (paramsLoading || !params) {
-      return {
-        dailyGoal: 0,
-        currentProgress: 0,
-        remainingToGoal: 0,
-        goalLabel: '',
-        goalUnit: '',
-        progressPercentage: 0
-      };
-    }
-
+    if (paramsLoading || !params) return { dailyGoal: 0, currentProgress: 0, remainingToGoal: 0, goalLabel: '', goalUnit: '', progressPercentage: 0 };
     const workingDaysPerMonth = Math.floor(params.workingDaysPerYear / 12);
-    let dailyGoal = 0;
-    let currentProgress = 0;
-    let goalLabel = '';
-    let goalUnit = '';
-    
+    let dailyGoal = 0, currentProgress = 0, goalLabel = '', goalUnit = '';
     if (params.goalType === 'financial') {
-      // Meta financeira - baseada no faturamento mensal
       dailyGoal = params.monthlyGoal / workingDaysPerMonth;
       currentProgress = dailyTotals.totalEntradas;
-      goalLabel = 'Meta de Faturamento Diária';
-      goalUnit = 'R$';
+      goalLabel = 'Meta de Faturamento Diária'; goalUnit = 'R$';
     } else {
-      // Meta de atendimentos - baseada no número de atendimentos mensais
       dailyGoal = Math.ceil(params.attendanceGoal / workingDaysPerMonth);
-      currentProgress = todayEntries.filter(entry => entry.tipo_transacao === 'ENTRADA').length;
-      goalLabel = 'Meta de Atendimentos Diária';
-      goalUnit = '';
+      currentProgress = todayEntries.filter(e => e.tipo_transacao === 'ENTRADA').length;
+      goalLabel = 'Meta de Atendimentos Diária'; goalUnit = '';
     }
-    
-    const remainingToGoal = Math.max(0, dailyGoal - currentProgress);
-    const progressPercentage = dailyGoal > 0 ? (currentProgress / dailyGoal) * 100 : 0;
+    return { dailyGoal, currentProgress, remainingToGoal: Math.max(0, dailyGoal - currentProgress), goalLabel, goalUnit, progressPercentage: dailyGoal > 0 ? (currentProgress / dailyGoal) * 100 : 0 };
+  }, [params, paramsLoading, dailyTotals, todayEntries]);
 
-    return {
-      dailyGoal,
-      currentProgress,
-      remainingToGoal,
-      goalLabel,
-      goalUnit,
-      progressPercentage
-    };
-  }, [params, paramsLoading, dailyTotals, todayEntries]);  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleAddEntry = async (entryData: any) => {
     try {
-      await addTransaction.mutateAsync({
-        description: entryData.description,
-        valor: entryData.amount,
-        tipo_transacao: 'ENTRADA',
-        // Usa exatamente a data escolhida no modal
-        date: format(entryData.date, 'yyyy-MM-dd'),
-        payment_method: entryData.paymentMethod,
-        commission: entryData.commission ? (entryData.amount * entryData.commission) / 100 : null,
-      });
+      await addTransaction.mutateAsync({ description: entryData.description, valor: entryData.amount, tipo_transacao: 'ENTRADA', date: format(entryData.date, 'yyyy-MM-dd'), payment_method: entryData.paymentMethod, commission: entryData.commission ? (entryData.amount * entryData.commission) / 100 : null });
       setIsAddEntryModalOpen(false);
-    } catch (error) {
-      console.error('Erro ao adicionar entrada:', error);
-    }
+    } catch {}
   };
-  const handleDeleteEntry = async (id: string) => {
-    try {
-      await deleteTransaction.mutateAsync(id);
-    } catch (error) {
-      console.error('Erro ao excluir lançamento:', error);
-    }
-  };
-  if (isLoading || paramsLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-12 h-12 border-4 border-symbol-gold border-t-symbol-beige rounded-full animate-spin mx-auto"></div>
-          <p className="brand-body text-symbol-gray-600">
-            {isLoading ? 'Carregando transações...' : 'Carregando parâmetros...'}
-          </p>
-        </div>
-      </div>
-    );
-  }
+
+  const handleDeleteEntry = async (id: string) => { try { await deleteTransaction.mutateAsync(id); } catch {} };
+
+  const card = (color: string, bg: string): React.CSSProperties => ({ background: '#13131a', border: '1px solid #2a2a38', borderRadius: 12, padding: 20, transition: 'border-color 0.2s' });
+
+  if (isLoading || paramsLoading) return (
+    <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 40, height: 40, border: '3px solid #2a2a38', borderTopColor: '#c9a84c', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
 
   return (
-    <div className="space-y-8 p-6 animate-minimal-fade">
-      <DailyCashFlowHeader
-        today={today}
-        onAddEntry={() => setIsAddEntryModalOpen(true)}
-      />      <DailyCashFlowMetrics
-        totalEntradas={dailyTotals.totalEntradas}
-        totalSaidas={dailyTotals.totalSaidas}
-        saldoDia={dailyTotals.saldoDia}
-        dailyGoal={dailyGoalData.dailyGoal}
-        currentProgress={dailyGoalData.currentProgress}
-        remainingToGoal={dailyGoalData.remainingToGoal}
-        goalLabel={dailyGoalData.goalLabel}
-        goalUnit={dailyGoalData.goalUnit}
-      />      <div className="symbol-card p-8 shadow-lg hover:shadow-xl transition-all duration-300">
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-            <div>
-              <h3 className="brand-heading text-xl text-symbol-black mb-2">
-                Lançamentos de Hoje - {format(today, 'dd/MM/yyyy', { locale: ptBR })}
-              </h3>
-              <div className="w-8 h-px bg-symbol-beige"></div>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-symbol-gray-600 mb-1">
-                {todayEntries.length} lançamento{todayEntries.length !== 1 ? 's' : ''} hoje
-              </p>
-              {dailyGoalData.dailyGoal > 0 && (
-                <div className="text-sm text-symbol-gray-600">
-                  Progresso da meta: {dailyGoalData.progressPercentage.toFixed(1)}%
-                </div>
-              )}
-            </div>
-          </div>
+    <div style={{ padding: '24px 28px', background: '#0f0f17', minHeight: '100%' }}>
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}} .dcf-card{animation:fadeUp 0.4s ease both} .dcf-card:hover{border-color:#3a3a4a!important}`}</style>
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 28 }}>
+        <div>
+          <h1 style={{ fontFamily: 'serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Fluxo de Caixa Diário</h1>
+          <div style={{ width: 36, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 6 }} />
+          <p style={{ fontSize: 13, color: '#9090a8' }}>Controle suas entradas do dia {format(today, "dd/MM/yyyy", { locale: ptBR })}</p>
+        </div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <button onClick={() => setIsAddEntryModalOpen(true)} style={{ background: 'linear-gradient(135deg,#00c896,#00a07a)', color: '#0a0a0f', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Inter,sans-serif' }}>
+            <Plus size={16} /> Adicionar Entrada
+          </button>
+          <button onClick={() => navigate('/expenses')} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #2a2a38', color: '#9090a8', borderRadius: 10, padding: '10px 20px', fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Inter,sans-serif' }}>
+            <ExternalLink size={16} /> Gerenciar Despesas
+          </button>
+        </div>
+      </div>
+
+      {/* Metrics */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 14, marginBottom: 24 }}>
+        <div className="dcf-card" style={card('#00c896', 'rgba(0,200,150,0.08)')}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(0,200,150,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}><TrendingUp size={16} style={{ color: '#00c896' }} /></div>
+          <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>Entradas do Dia</div>
+          <div style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 600, color: '#00c896' }}>R$ {dailyTotals.totalEntradas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
         </div>
 
-        <DailyCashFlowTable
-          todayEntries={todayEntries}
-          today={today}
-          onDeleteEntry={handleDeleteEntry}
-        />
-      </div>      <AddEntryModal
-        show={isAddEntryModalOpen}
-        onClose={() => setIsAddEntryModalOpen(false)}
-        onSave={handleAddEntry}
-        defaultDate={currentDate}
-      />
+        <div className="dcf-card" style={card('#ff4d6a', 'rgba(255,77,106,0.08)')}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(255,77,106,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}><TrendingDown size={16} style={{ color: '#ff4d6a' }} /></div>
+          <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>Saídas do Dia</div>
+          <div style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 600, color: '#ff4d6a' }}>R$ {dailyTotals.totalSaidas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        </div>
+
+        <div className="dcf-card" style={card('#4d9fff', 'rgba(77,159,255,0.08)')}>
+          <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(77,159,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}><DollarSign size={16} style={{ color: dailyTotals.saldoDia >= 0 ? '#4d9fff' : '#ff4d6a' }} /></div>
+          <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>Saldo do Dia</div>
+          <div style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 600, color: dailyTotals.saldoDia >= 0 ? '#f0f0f8' : '#ff4d6a' }}>R$ {dailyTotals.saldoDia.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+        </div>
+
+        {dailyGoalData.dailyGoal > 0 && (
+          <div className="dcf-card" style={card('#c9a84c', 'rgba(201,168,76,0.08)')}>
+            <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(201,168,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}><Target size={16} style={{ color: '#c9a84c' }} /></div>
+            <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>{dailyGoalData.goalLabel}</div>
+            <div style={{ fontFamily: 'serif', fontSize: 18, fontWeight: 600, color: '#f0f0f8', marginBottom: 4 }}>
+              {dailyGoalData.goalUnit === 'R$' ? `R$ ${dailyGoalData.currentProgress.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : `${dailyGoalData.currentProgress} atendimentos`}
+            </div>
+            <div style={{ fontSize: 11, color: '#9090a8', marginBottom: 8 }}>
+              Meta: {dailyGoalData.goalUnit === 'R$' ? `R$ ${dailyGoalData.dailyGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : `${dailyGoalData.dailyGoal} atendimentos`}
+            </div>
+            <div style={{ height: 5, background: '#1c1c26', borderRadius: 99, overflow: 'hidden', marginBottom: 6 }}>
+              <div style={{ height: '100%', width: `${Math.min(100, dailyGoalData.progressPercentage)}%`, background: 'linear-gradient(90deg,#c9a84c,#e8c96a)', borderRadius: 99, transition: 'width 0.5s ease' }} />
+            </div>
+            <div style={{ fontSize: 11, color: '#c9a84c', fontWeight: 500 }}>
+              {dailyGoalData.remainingToGoal > 0 ? `Faltam ${dailyGoalData.goalUnit === 'R$' ? `R$ ${dailyGoalData.remainingToGoal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : `${dailyGoalData.remainingToGoal} atend.`}` : '🎉 Meta atingida!'}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Table */}
+      <div className="dcf-card" style={{ background: '#13131a', border: '1px solid #2a2a38', borderRadius: 12, overflow: 'hidden' }}>
+        <div style={{ padding: '18px 20px', borderBottom: '1px solid #2a2a38', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+          <div>
+            <h3 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8', marginBottom: 4 }}>
+              Lançamentos de Hoje — {format(today, 'dd/MM/yyyy', { locale: ptBR })}
+            </h3>
+            <div style={{ width: 24, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2 }} />
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 13, color: '#9090a8' }}>{todayEntries.length} lançamento{todayEntries.length !== 1 ? 's' : ''} hoje</div>
+            {dailyGoalData.dailyGoal > 0 && <div style={{ fontSize: 12, color: '#c9a84c', fontWeight: 500 }}>Progresso: {dailyGoalData.progressPercentage.toFixed(1)}%</div>}
+          </div>
+        </div>
+        <DailyCashFlowTable todayEntries={todayEntries} today={today} onDeleteEntry={handleDeleteEntry} />
+      </div>
+
+      <AddEntryModal show={isAddEntryModalOpen} onClose={() => setIsAddEntryModalOpen(false)} onSave={handleAddEntry} defaultDate={currentDate} />
     </div>
   );
 };
