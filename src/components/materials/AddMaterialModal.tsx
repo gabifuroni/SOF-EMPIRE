@@ -122,57 +122,67 @@ const AddMaterialModal = ({
     onClose();
   };
 
+  const inputStyle: React.CSSProperties = { width: '100%', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '10px 14px', color: '#f0f0f8', fontSize: 14, outline: 'none', fontFamily: 'Sora, sans-serif', boxSizing: 'border-box' };
+  const labelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#9090a8', marginBottom: 6, display: 'block' };
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto" style={{ background: '#13131a', border: '1px solid #2a2a38', borderRadius: 16, color: '#f0f0f8' }}>
+        <style>{`
+          .mat-input:focus { border-color: #c9a84c !important; box-shadow: 0 0 0 2px rgba(201,168,76,0.15) !important; }
+          .mat-input::placeholder { color: #606078 !important; }
+          .mat-select option { background: #1c1c26; color: #f0f0f8; }
+        `}</style>
+
         <DialogHeader>
-          <DialogTitle className="brand-heading text-xl text-symbol-black">
+          <DialogTitle style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, fontWeight: 600, color: '#f0f0f8' }}>
             {title}
           </DialogTitle>
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 8 }}>
+
+            {/* Nome */}
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
-                    Nome do Produto/Material *
-                  </FormLabel>
+                  <label style={labelStyle}>Nome do Produto/Material *</label>
                   <FormControl>
-                    <Input 
+                    <input
+                      className="mat-input"
+                      style={inputStyle}
                       placeholder="Ex: Esmalte Premium Rosa"
-                      className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige text-symbol-black"
-                      {...field} 
+                      {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage style={{ color: '#ff4d6a', fontSize: 12 }} />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            {/* Quantidade + Unidade */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
               <FormField
                 control={form.control}
                 name="batchQuantity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
-                      Quantidade por Lote *
-                    </FormLabel>
+                    <label style={labelStyle}>Quantidade por Lote *</label>
                     <FormControl>
-                      <Input 
+                      <input
+                        className="mat-input"
+                        style={inputStyle}
                         type="number"
                         step="0.01"
                         placeholder="Ex: 100"
-                        className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige text-symbol-black"
                         {...field}
                         onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage style={{ color: '#ff4d6a', fontSize: 12 }} />
                   </FormItem>
                 )}
               />
@@ -182,81 +192,79 @@ const AddMaterialModal = ({
                 name="unit"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
-                      Unidade da Quantidade *
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige">
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
+                    <label style={labelStyle}>Unidade da Quantidade *</label>
+                    <FormControl>
+                      <select
+                        className="mat-input mat-select"
+                        style={{ ...inputStyle, cursor: 'pointer' }}
+                        value={field.value}
+                        onChange={(e) => field.onChange(e.target.value)}
+                      >
+                        <option value="">Selecione...</option>
                         {UNIT_OPTIONS.map((unit) => (
-                          <SelectItem key={unit.value} value={unit.value}>
-                            {unit.label}
-                          </SelectItem>
+                          <option key={unit.value} value={unit.value}>{unit.label}</option>
                         ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
+                      </select>
+                    </FormControl>
+                    <FormMessage style={{ color: '#ff4d6a', fontSize: 12 }} />
                   </FormItem>
                 )}
               />
             </div>
 
+            {/* Valor */}
             <FormField
               control={form.control}
               name="batchPrice"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">
-                    Valor Pago no Lote/Embalagem (R$) *
-                  </FormLabel>
+                  <label style={labelStyle}>Valor Pago no Lote/Embalagem (R$) *</label>
                   <FormControl>
-                    <Input 
+                    <input
+                      className="mat-input"
+                      style={inputStyle}
                       type="number"
                       step="0.01"
                       placeholder="Ex: 50.00"
-                      className="mt-2 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige text-symbol-black"
                       {...field}
                       onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage style={{ color: '#ff4d6a', fontSize: 12 }} />
                 </FormItem>
               )}
             />
 
+            {/* Custo Unitário */}
             {unitCost > 0 && (
-              <div className="symbol-card p-4 bg-gradient-to-br from-emerald-50/50 to-emerald-100/30 border-emerald-200/50">
-                <h4 className="brand-subheading text-symbol-black text-sm uppercase tracking-wide mb-2">
+              <div style={{ background: 'rgba(0,200,150,0.06)', border: '1px solid rgba(0,200,150,0.2)', borderRadius: 10, padding: '14px 16px' }}>
+                <p style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>
                   💡 Custo Unitário Estimado
-                </h4>
-                <p className="text-emerald-600 font-semibold text-lg">
+                </p>
+                <p style={{ fontSize: 18, fontWeight: 600, color: '#00c896', fontFamily: 'Sora, sans-serif' }}>
                   R$ {unitCost.toFixed(4)} por {form.watch('unit')}
                 </p>
-                <p className="brand-body text-symbol-gray-600 text-sm mt-1">
+                <p style={{ fontSize: 12, color: '#606078', marginTop: 4 }}>
                   Este valor será usado nos cálculos de precificação dos seus serviços
                 </p>
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={handleClose}
-                className="border-symbol-gray-300 text-symbol-gray-700 hover:bg-symbol-gray-50 font-light"
-              >
-                Cancelar
-              </Button>
-              <Button 
+            {/* Botões */}
+            <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
+              <button
                 type="submit"
-                className="bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white font-light"
+                style={{ flex: 1, background: 'linear-gradient(135deg,#00c896,#00a07a)', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 600, color: '#0a0a0f', cursor: 'pointer', fontFamily: 'Sora, sans-serif' }}
               >
                 {initialData ? 'Salvar Alterações' : 'Salvar Matéria-Prima'}
-              </Button>
+              </button>
+              <button
+                type="button"
+                onClick={handleClose}
+                style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid #2a2a38', borderRadius: 10, padding: '12px', fontSize: 14, color: '#9090a8', cursor: 'pointer', fontFamily: 'Sora, sans-serif' }}
+              >
+                Cancelar
+              </button>
             </div>
           </form>
         </Form>
