@@ -278,6 +278,11 @@ const IndirectExpenses = () => {
         .exp-table-wrap [data-radix-checkbox-root][data-state=checked]{background:#c9a84c!important;border-color:#c9a84c!important}
         /* Save button */
         .exp-table-wrap .bg-symbol-black,.exp-table-wrap .bg-gray-900{background:linear-gradient(135deg,#c9a84c,#8a6520)!important;color:#0a0a0f!important}
+        /* Kill ALL hover yellow/beige - row hover dark only */
+        .exp-table-wrap tr:hover,.exp-table-wrap tr:hover td{background:rgba(255,255,255,0.03)!important}
+        .exp-table-wrap tbody tr:hover{background:rgba(255,255,255,0.03)!important}
+        .exp-table-wrap [class*=bg-symbol-gray-50]{background:transparent!important}
+        .exp-table-wrap [class*=bg-symbol-gray]{background:#1c1c26!important}
         /* Unsaved changes indicator */
         .exp-table-wrap .bg-yellow-50,.exp-table-wrap .bg-amber-50{background:rgba(201,168,76,0.08)!important;border-color:rgba(201,168,76,0.2)!important}
       `}</style>
