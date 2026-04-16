@@ -210,8 +210,8 @@ const Dashboard = () => {
       {/* Header */}
       <div className="dash-card" style={{ marginBottom: 24 }}>
         <div style={{ marginBottom: 6 }}>
-          <h1 style={{ fontFamily: 'serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', letterSpacing: '0.02em' }}>
-            Bem-vinda(o), {displayName} 👋
+          <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', letterSpacing: '-0.01em' }}>
+            Bem-vinda(o), <span className="font-feminine">{displayName}</span> 👋
           </h1>
           <div style={{ width: 36, height: 2, background: 'linear-gradient(90deg, #c9a84c, transparent)', borderRadius: 2, margin: '8px 0' }} />
           <p style={{ fontSize: 13, color: '#9090a8' }}>Visão geral do seu negócio em tempo real</p>
