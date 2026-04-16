@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Service, Material, MaterialCost } from '@/types';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
@@ -18,28 +17,15 @@ interface AddServiceModalProps {
 
 const AddServiceModal = ({ show, service, materials, onClose, onSave }: AddServiceModalProps) => {
   const { params } = useBusinessParams();
-  
-  const [formData, setFormData] = useState({
-    name: '',
-    salePrice: 0,
-    commissionRate: 25.0
-  });
+  const [formData, setFormData] = useState({ name: '', salePrice: 0, commissionRate: 25.0 });
   const [materialCosts, setMaterialCosts] = useState<MaterialCost[]>([]);
 
   useEffect(() => {
     if (service) {
-      setFormData({
-        name: service.name,
-        salePrice: service.salePrice,
-        commissionRate: service.commissionRate
-      });
+      setFormData({ name: service.name, salePrice: service.salePrice, commissionRate: service.commissionRate });
       setMaterialCosts(service.materialCosts || []);
     } else {
-      setFormData({
-        name: '',
-        salePrice: 0,
-        commissionRate: 25.0
-      });
+      setFormData({ name: '', salePrice: 0, commissionRate: 25.0 });
       setMaterialCosts([]);
     }
   }, [service, show]);
@@ -49,151 +35,112 @@ const AddServiceModal = ({ show, service, materials, onClose, onSave }: AddServi
     const cardTaxCost = (formData.salePrice * params.weightedAverageRate) / 100;
     const serviceTaxCost = (formData.salePrice * params.impostosRate) / 100;
     const commissionCost = (formData.salePrice * formData.commissionRate) / 100;
-    
-    const totalDirectCosts = materialTotal + cardTaxCost + serviceTaxCost + commissionCost;
     const materialCostPercentage = formData.salePrice > 0 ? (materialTotal / formData.salePrice) * 100 : 0;
+    const totalDirectCosts = commissionCost + cardTaxCost + serviceTaxCost + materialTotal;
     const totalDirectCostsPercentage = formData.salePrice > 0 ? (totalDirectCosts / formData.salePrice) * 100 : 0;
-    
-    // Margem Operacional = Preço - Custos Diretos
     const operationalMargin = formData.salePrice - totalDirectCosts;
     const operationalMarginPercentage = formData.salePrice > 0 ? (operationalMargin / formData.salePrice) * 100 : 0;
-    
-    // Custo Operacional (despesas indiretas)
     const operationalCost = (formData.salePrice * params.despesasIndiretasDepreciacao) / 100;
-    
-    // Lucro Parcial = Margem Operacional - Custo Operacional
     const partialProfit = operationalMargin - operationalCost;
     const partialProfitPercentage = formData.salePrice > 0 ? (partialProfit / formData.salePrice) * 100 : 0;
-    
-    return { 
-      totalCost: totalDirectCosts,
-      grossProfit: operationalMargin,
-      profitMargin: operationalMarginPercentage,
-      operationalCost, 
-      operationalProfit: partialProfit,
-      cardTaxCost,
-      serviceTaxCost,
-      commissionCost,
-      materialTotal,
-      materialCostPercentage,
-      totalDirectCosts,
-      totalDirectCostsPercentage,
-      operationalMargin,
-      operationalMarginPercentage,
-      partialProfit,
-      partialProfitPercentage
-    };
+    const grossProfit = formData.salePrice - totalDirectCosts;
+    const profitMargin = formData.salePrice > 0 ? (grossProfit / formData.salePrice) * 100 : 0;
+    const totalCost = totalDirectCosts + operationalCost;
+    const operationalProfit = formData.salePrice - totalCost;
+    return { totalCost, grossProfit, profitMargin, operationalCost, operationalProfit, cardTaxCost, serviceTaxCost, commissionCost, materialTotal, materialCostPercentage, totalDirectCosts, totalDirectCostsPercentage, operationalMargin, operationalMarginPercentage, partialProfit, partialProfitPercentage };
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const { totalCost, grossProfit, profitMargin } = calculateCosts();
-    
+    const costs = calculateCosts();
     onSave({
-      ...formData,
+      name: formData.name,
+      salePrice: formData.salePrice,
+      commissionRate: formData.commissionRate,
       cardTaxRate: params.weightedAverageRate,
       serviceTaxRate: params.impostosRate,
       materialCosts,
-      totalCost,
-      grossProfit,
-      profitMargin
+      totalCost: costs.totalCost,
+      grossProfit: costs.grossProfit,
+      profitMargin: costs.profitMargin,
     });
-    onClose();
   };
 
-  if (!show) return null;
-
-  const { 
-    totalCost, 
-    grossProfit, 
-    profitMargin, 
-    operationalCost, 
-    operationalProfit, 
-    cardTaxCost,
-    serviceTaxCost,
-    commissionCost,
-    materialTotal,
-    materialCostPercentage,
-    totalDirectCosts,
-    totalDirectCostsPercentage,
-    operationalMargin,
-    operationalMarginPercentage,
-    partialProfit,
-    partialProfitPercentage
-  } = calculateCosts();
+  const costs = calculateCosts();
 
   return (
     <Dialog open={show} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-symbol-white">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto" style={{ background: '#13131a', border: '1px solid #2a2a38', borderRadius: 16, color: '#f0f0f8' }}>
+        <style>{`
+          /* Dark modal overrides */
+          .svc-modal-wrap { color: #f0f0f8; }
+          .svc-modal-wrap label, .svc-modal-wrap h3, .svc-modal-wrap h4, .svc-modal-wrap p, .svc-modal-wrap span { color: #f0f0f8 !important; }
+          .svc-modal-wrap .text-symbol-gray-600, .svc-modal-wrap .text-symbol-gray-700, .svc-modal-wrap .text-gray-600 { color: #9090a8 !important; }
+          .svc-modal-wrap .text-symbol-black, .svc-modal-wrap .text-gray-900, .svc-modal-wrap .text-elite-charcoal-800 { color: #f0f0f8 !important; }
+          .svc-modal-wrap input, .svc-modal-wrap select, .svc-modal-wrap textarea { background: #1c1c26 !important; border-color: #2a2a38 !important; color: #f0f0f8 !important; border-radius: 8px !important; }
+          .svc-modal-wrap input:focus, .svc-modal-wrap select:focus { border-color: #c9a84c !important; box-shadow: 0 0 0 2px rgba(201,168,76,0.15) !important; }
+          .svc-modal-wrap input::placeholder { color: #606078 !important; }
+          .svc-modal-wrap .bg-white, .svc-modal-wrap .bg-symbol-white, .svc-modal-wrap .bg-gray-50, .svc-modal-wrap .bg-symbol-gray-50 { background: #1c1c26 !important; }
+          .svc-modal-wrap .border-symbol-gray-200, .svc-modal-wrap .border-gray-200 { border-color: #2a2a38 !important; }
+          .svc-modal-wrap .symbol-card, .svc-modal-wrap [class*=symbol-card] { background: #1c1c26 !important; border-color: #2a2a38 !important; }
+          .svc-modal-wrap button[type=button]:not([class*=gold]) { background: rgba(255,255,255,0.05) !important; border-color: #2a2a38 !important; color: #9090a8 !important; }
+          .svc-modal-wrap button[type=button]:not([class*=gold]):hover { border-color: #3a3a4a !important; color: #f0f0f8 !important; }
+          .svc-modal-wrap button[type=submit], .svc-modal-wrap .bg-symbol-black, .svc-modal-wrap .bg-gray-900 { background: linear-gradient(135deg,#c9a84c,#8a6520) !important; color: #0a0a0f !important; border: none !important; }
+          .svc-modal-wrap .text-symbol-gold, .svc-modal-wrap .text-amber-600 { color: #c9a84c !important; }
+          .svc-modal-wrap .text-emerald-600, .svc-modal-wrap .text-green-600 { color: #00c896 !important; }
+          .svc-modal-wrap .text-red-600, .svc-modal-wrap .text-rose-600 { color: #ff4d6a !important; }
+          .svc-modal-wrap .text-blue-600 { color: #4d9fff !important; }
+          .svc-modal-wrap .text-orange-600 { color: #fb923c !important; }
+          .svc-modal-wrap [class*=bg-emerald], [class*=bg-green] { background: rgba(0,200,150,0.1) !important; }
+          .svc-modal-wrap [class*=bg-red], [class*=bg-rose] { background: rgba(255,77,106,0.1) !important; }
+          .svc-modal-wrap [class*=bg-blue] { background: rgba(77,159,255,0.1) !important; }
+          .svc-modal-wrap [class*=bg-orange] { background: rgba(251,146,60,0.1) !important; }
+          .svc-modal-wrap [class*=bg-amber], [class*=bg-yellow] { background: rgba(201,168,76,0.1) !important; }
+          .svc-modal-wrap .rounded-lg, .svc-modal-wrap .rounded-xl { background: #1c1c26 !important; }
+          .svc-modal-wrap hr, .svc-modal-wrap .divide-y > * { border-color: #2a2a38 !important; }
+          /* Add material button */
+          .svc-modal-wrap [class*=bg-symbol-gold] { background: linear-gradient(135deg,#c9a84c,#8a6520) !important; color: #0a0a0f !important; }
+        `}</style>
+
         <DialogHeader>
-          <DialogTitle className="brand-heading text-2xl text-symbol-black">
+          <DialogTitle style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 600, color: '#f0f0f8' }}>
             {service ? 'Editar Serviço' : 'Adicionar Novo Serviço'}
           </DialogTitle>
-          <DialogDescription className="brand-body text-symbol-gray-600">
+          <DialogDescription style={{ fontSize: 13, color: '#9090a8' }}>
             Configure o serviço e seus custos para análise de precificação
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <ServiceFormFields
-            formData={{
-              ...formData,
-              cardTaxRate: params.weightedAverageRate,
-              serviceTaxRate: params.impostosRate
-            }}
-            onFormDataChange={setFormData}
-          />
-
-          <MaterialCostSection
-            materialCosts={materialCosts}
-            materials={materials}
-            onMaterialCostsChange={setMaterialCosts}
-          />
-
-          <TaxRatesSection
-            taxRates={{
-              cardTaxRate: params.weightedAverageRate,
-              serviceTaxRate: params.impostosRate,
-              commissionRate: formData.commissionRate
-            }}
-            onTaxRatesChange={(rates) => setFormData({ ...formData, commissionRate: rates.commissionRate })}
-          />
-
-          <FinancialSummary
-            salePrice={formData.salePrice}
-            commissionRate={formData.commissionRate}
-            commissionCost={commissionCost}
-            cardTaxRate={params.weightedAverageRate}
-            cardTaxCost={cardTaxCost}
-            serviceTaxRate={params.impostosRate}
-            serviceTaxCost={serviceTaxCost}
-            materialCost={materialTotal}
-            materialCostPercentage={materialCostPercentage}
-            totalDirectCosts={totalDirectCosts}
-            totalDirectCostsPercentage={totalDirectCostsPercentage}
-            operationalMargin={operationalMargin}
-            operationalMarginPercentage={operationalMarginPercentage}
-            operationalCost={operationalCost}
-            operationalCostPercentage={params.despesasIndiretasDepreciacao}
-            partialProfit={partialProfit}
-            partialProfitPercentage={partialProfitPercentage}
-          />
-
-          <div className="flex flex-col sm:flex-row justify-end gap-3">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose}
-              className="border-symbol-gray-300 text-symbol-gray-700 hover:bg-symbol-gray-50"
-            >
-              Cancelar
-            </Button>
-            <Button 
-              type="submit"
-              className="bg-symbol-black hover:bg-symbol-gray-800 text-symbol-white"
-            >
-              {service ? 'Salvar Alterações' : 'Adicionar Serviço'}
-            </Button>
+          <div className="svc-modal-wrap">
+            <ServiceFormFields
+              formData={{ ...formData, cardTaxRate: params.weightedAverageRate, serviceTaxRate: params.impostosRate }}
+              onFormDataChange={setFormData}
+            />
+            <MaterialCostSection materialCosts={materialCosts} materials={materials} onMaterialCostsChange={setMaterialCosts} />
+            <TaxRatesSection
+              taxRates={{ cardTaxRate: params.weightedAverageRate, serviceTaxRate: params.impostosRate, commissionRate: formData.commissionRate }}
+              onTaxRatesChange={(rates) => setFormData({ ...formData, commissionRate: rates.commissionRate })}
+            />
+            <FinancialSummary
+              salePrice={formData.salePrice} commissionRate={formData.commissionRate}
+              commissionCost={costs.commissionCost} cardTaxRate={params.weightedAverageRate}
+              cardTaxCost={costs.cardTaxCost} serviceTaxRate={params.impostosRate}
+              serviceTaxCost={costs.serviceTaxCost} materialCost={costs.materialTotal}
+              materialCostPercentage={costs.materialCostPercentage} totalDirectCosts={costs.totalDirectCosts}
+              totalDirectCostsPercentage={costs.totalDirectCostsPercentage} operationalMargin={costs.operationalMargin}
+              operationalMarginPercentage={costs.operationalMarginPercentage} operationalCost={costs.operationalCost}
+              operationalCostPercentage={params.despesasIndiretasDepreciacao} partialProfit={costs.partialProfit}
+              partialProfitPercentage={costs.partialProfitPercentage}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
+              <button type="button" onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #2a2a38', borderRadius: 10, padding: '10px 20px', fontSize: 13, color: '#9090a8', cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}>
+                Cancelar
+              </button>
+              <button type="submit" style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', border: 'none', borderRadius: 10, padding: '10px 24px', fontSize: 13, fontWeight: 600, color: '#0a0a0f', cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}>
+                {service ? 'Salvar Alterações' : 'Adicionar Serviço'}
+              </button>
+            </div>
           </div>
         </form>
       </DialogContent>
