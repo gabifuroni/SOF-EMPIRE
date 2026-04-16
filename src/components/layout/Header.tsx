@@ -75,8 +75,8 @@ const Header = ({ user, onLogout, onToggleMobileMenu }: HeaderProps) => {
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         {/* User info */}
         <div style={{ textAlign: 'right', display: 'none' }} className="sm:block" >
-          <div style={{ fontSize: 13, fontWeight: 500, color: '#f0f0f8' }}>{displayName}</div>
-          {salonName && <div style={{ fontSize: 11, color: '#9090a8' }}>{salonName}</div>}
+          <div style={{ fontSize: 13, fontWeight: 500, color: '#f0f0f8' }}><span className="font-feminine" style={{ fontSize: 14 }}>{displayName}</span></div>
+          {salonName && <div style={{ fontSize: 11, color: '#9090a8' }}><span className="font-feminine" style={{ fontSize: 12 }}>{salonName}</span></div>}
         </div>
 
         {/* Avatar */}
