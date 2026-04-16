@@ -121,14 +121,14 @@ const CashFlow = () => {
         @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
         .cf-card{animation:fadeUp 0.4s ease both}
         .cf-card:hover{border-color:#3a3a4a!important}
-        .cf-filter-btn{background:transparent;border:1px solid #2a2a38;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;color:#9090a8;font-family:Inter,sans-serif}
+        .cf-filter-btn{background:transparent;border:1px solid #2a2a38;border-radius:20px;padding:5px 14px;font-size:11px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:all 0.15s;color:#9090a8;font-family:Sora, sans-serif}
         .cf-filter-btn.active{background:#c9a84c;border-color:#c9a84c;color:#0a0a0f;font-weight:600}
         .cf-filter-btn:hover:not(.active){border-color:#3a3a4a;color:#f0f0f8}
-        .cf-btn-primary{background:linear-gradient(135deg,#00c896,#00a07a);color:#0a0a0f;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity 0.15s;font-family:Inter,sans-serif}
+        .cf-btn-primary{background:linear-gradient(135deg,#00c896,#00a07a);color:#0a0a0f;border:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;transition:opacity 0.15s;font-family:Sora, sans-serif}
         .cf-btn-primary:hover{opacity:0.9}
-        .cf-btn-secondary{background:rgba(255,255,255,0.05);border:1px solid #2a2a38;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:500;color:#9090a8;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all 0.15s;font-family:Inter,sans-serif}
+        .cf-btn-secondary{background:rgba(255,255,255,0.05);border:1px solid #2a2a38;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:500;color:#9090a8;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all 0.15s;font-family:Sora, sans-serif}
         .cf-btn-secondary:hover{border-color:#3a3a4a;color:#f0f0f8}
-        .cf-select{background:#1c1c26;border:1px solid #2a2a38;border-radius:8px;padding:8px 12px;color:#f0f0f8;font-size:13px;outline:none;cursor:pointer;font-family:Inter,sans-serif}
+        .cf-select{background:#1c1c26;border:1px solid #2a2a38;border-radius:8px;padding:8px 12px;color:#f0f0f8;font-size:13px;outline:none;cursor:pointer;font-family:Sora, sans-serif}
         .cf-entry-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #2a2a38;transition:background 0.12s}
         .cf-entry-row:last-child{border-bottom:none}
         .cf-entry-row:hover{background:rgba(255,255,255,0.02)}
@@ -140,7 +140,7 @@ const CashFlow = () => {
       {/* Header */}
       <div style={{ marginBottom: 24, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
         <div>
-          <h1 style={{ fontFamily: 'serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Fluxo de Caixa</h1>
+          <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Fluxo de Caixa</h1>
           <div style={{ width: 36, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 6 }} />
           <p style={{ fontSize: 13, color: '#9090a8' }}>Gerencie suas entradas e saídas financeiras</p>
         </div>
@@ -182,7 +182,7 @@ const CashFlow = () => {
               {item.action && <button className="cf-btn-secondary" style={{ padding: '4px 10px', fontSize: 11 }} onClick={item.action}>Ver Despesas</button>}
             </div>
             <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>{item.label}</div>
-            <div style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 600, color: item.color }}>
+            <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 22, fontWeight: 600, color: item.color }}>
               R$ {Math.abs(item.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
           </div>
@@ -201,7 +201,7 @@ const CashFlow = () => {
       {/* Transactions */}
       <div className="cf-card" style={{ ...card, overflow: 'hidden' }}>
         <div style={{ padding: '18px 20px', borderBottom: '1px solid #2a2a38' }}>
-          <h3 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Lançamentos Financeiros</h3>
+          <h3 style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Lançamentos Financeiros</h3>
           <div style={{ width: 24, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginTop: 6 }} />
         </div>
 

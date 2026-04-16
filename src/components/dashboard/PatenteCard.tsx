@@ -79,7 +79,7 @@ const PatenteCard = ({ currentRevenue }: PatenteCardProps) => {
           </div>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 600, color: '#c9a84c' }}>
+          <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 22, fontWeight: 600, color: '#c9a84c' }}>
             R$ {totalRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </div>
           <div style={{ fontSize: 11, color: '#9090a8', marginTop: 2 }}>Faturamento total</div>

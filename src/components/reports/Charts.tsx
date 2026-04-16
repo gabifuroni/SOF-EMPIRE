@@ -15,7 +15,7 @@ const progressBar = (value: number, color: string, label: string, meta: string) 
   <div style={{ marginBottom: 20 }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
       <span style={{ fontSize: 13, color: '#9090a8' }}>{label}</span>
-      <span style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>{value.toFixed(1)}%</span>
+      <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>{value.toFixed(1)}%</span>
     </div>
     <div style={{ height: 6, background: '#1c1c26', borderRadius: 99, overflow: 'hidden', marginBottom: 4 }}>
       <div style={{ height: '100%', width: `${Math.min(Math.abs(value), 100)}%`, background: color, borderRadius: 99, transition: 'width 0.5s ease' }} />
@@ -33,7 +33,7 @@ export const Charts = ({ reportData, pieData, chartConfig, formatCurrency }: Cha
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 16 }}>
       <div style={card}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-          <h3 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Composição das Despesas</h3>
+          <h3 style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Composição das Despesas</h3>
           <InfoModal title="Composição das Despesas" trigger={infoBtn}><ComposicaoDespesasModal /></InfoModal>
         </div>
         <div style={{ width: 28, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 16 }} />
@@ -60,7 +60,7 @@ export const Charts = ({ reportData, pieData, chartConfig, formatCurrency }: Cha
 
       <div style={card}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-          <h3 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Indicadores de Performance</h3>
+          <h3 style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Indicadores de Performance</h3>
           <InfoModal title="Indicadores de Performance" trigger={infoBtn}><IndicadoresPerformanceModal /></InfoModal>
         </div>
         <div style={{ width: 28, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 24 }} />

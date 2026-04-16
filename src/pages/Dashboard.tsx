@@ -253,7 +253,7 @@ const Dashboard = () => {
             <span style={{ fontSize: 10, color: '#4d9fff', background: 'rgba(77,159,255,0.1)', padding: '2px 8px', borderRadius: 99, fontWeight: 500 }}>Mês atual</span>
           </div>
           <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>Faturamento do Mês</div>
-          <div style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 600, color: '#f0f0f8' }}>
+          <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 22, fontWeight: 600, color: '#f0f0f8' }}>
             R$ {monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </div>
         </div>
@@ -267,7 +267,7 @@ const Dashboard = () => {
             <span style={{ fontSize: 10, color: '#00c896', background: 'rgba(0,200,150,0.1)', padding: '2px 8px', borderRadius: 99, fontWeight: 500 }}>{profitMargin.toFixed(1)}% margem</span>
           </div>
           <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>Lucro Estimado</div>
-          <div style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 600, color: '#f0f0f8' }}>
+          <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 22, fontWeight: 600, color: '#f0f0f8' }}>
             R$ {estimatedProfit.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
           </div>
         </div>
@@ -314,7 +314,7 @@ const Dashboard = () => {
             </div>
           ) : (
             <>
-              <div style={{ fontFamily: 'serif', fontSize: 20, fontWeight: 600, color: '#f0f0f8', marginBottom: 4 }}>
+              <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, fontWeight: 600, color: '#f0f0f8', marginBottom: 4 }}>
                 {goalType === 'financial' ? `R$ ${getCurrentGoal().toLocaleString('pt-BR')}` : `${getCurrentGoal()} atendimentos`}
               </div>
               <div style={{ fontSize: 10, color: '#c9a84c', marginBottom: 8 }}>
@@ -335,7 +335,7 @@ const Dashboard = () => {
       {/* Chart */}
       <div className="dash-card" style={{ ...card({ padding: '24px 28px' }), animationDelay: '0.25s' }}>
         <div style={{ marginBottom: 20 }}>
-          <h3 style={{ fontFamily: 'serif', fontSize: 17, fontWeight: 600, color: '#f0f0f8', marginBottom: 4 }}>Faturamento Mensal</h3>
+          <h3 style={{ fontFamily: 'Sora, sans-serif', fontSize: 17, fontWeight: 600, color: '#f0f0f8', marginBottom: 4 }}>Faturamento Mensal</h3>
           <div style={{ width: 28, height: 2, background: 'linear-gradient(90deg, #c9a84c, transparent)', borderRadius: 2, marginBottom: 4 }} />
           <p style={{ fontSize: 12, color: '#9090a8' }}>Evolução dos últimos 6 meses</p>
         </div>

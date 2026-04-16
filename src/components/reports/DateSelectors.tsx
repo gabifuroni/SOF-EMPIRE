@@ -17,11 +17,11 @@ export const DateSelectors = ({ selectedMonth, selectedYear, onMonthChange, onYe
     </div>
     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
       <select value={selectedMonth} onChange={e => onMonthChange(parseInt(e.target.value))}
-        style={{ background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '8px 12px', color: '#f0f0f8', fontSize: 13, outline: 'none', cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}>
+        style={{ background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '8px 12px', color: '#f0f0f8', fontSize: 13, outline: 'none', cursor: 'pointer', fontFamily: 'Sora, sans-serif' }}>
         {months.map((m, i) => <option key={i} value={i} style={{ background: '#1c1c26' }}>{m}</option>)}
       </select>
       <select value={selectedYear} onChange={e => onYearChange(parseInt(e.target.value))}
-        style={{ background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '8px 12px', color: '#f0f0f8', fontSize: 13, outline: 'none', cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}>
+        style={{ background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '8px 12px', color: '#f0f0f8', fontSize: 13, outline: 'none', cursor: 'pointer', fontFamily: 'Sora, sans-serif' }}>
         {years.map(y => <option key={y} value={y} style={{ background: '#1c1c26' }}>{y}</option>)}
       </select>
     </div>

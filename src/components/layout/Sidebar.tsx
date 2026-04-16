@@ -138,7 +138,7 @@ const Sidebar = ({ userRole, isMobileMenuOpen = false, onCloseMobileMenu }: Side
                 <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="SOF" style={{ width: 22, height: 22, objectFit: 'contain' }} />
               </div>
               <div>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#f0f0f8', letterSpacing: '0.04em', fontFamily: 'serif' }}>SOF Empire</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#f0f0f8', letterSpacing: '0.04em', fontFamily: 'Sora, sans-serif' }}>SOF Empire</div>
                 <div style={{ fontSize: 10, color: '#9090a8', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Financeiro</div>
               </div>
             </div>
@@ -213,7 +213,7 @@ const Sidebar = ({ userRole, isMobileMenuOpen = false, onCloseMobileMenu }: Side
             <div style={{ width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #c9a84c, #8a6520)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img src="/lovable-uploads/2c89b6d0-0654-4a70-9721-8febacad65fd.png" alt="SOF" style={{ width: 20, height: 20, objectFit: 'contain' }} />
             </div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: '#f0f0f8', fontFamily: 'serif' }}>SOF Empire</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: '#f0f0f8', fontFamily: 'Sora, sans-serif' }}>SOF Empire</div>
           </div>
           <button onClick={onCloseMobileMenu} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #2a2a38', borderRadius: 8, padding: 8, cursor: 'pointer', color: '#9090a8', display: 'flex' }}>
             <X size={18} />

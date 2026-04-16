@@ -65,11 +65,11 @@ const Services = () => {
       {/* Header */}
       <div className="svc-card" style={{ background: 'transparent', border: 'none', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24, padding: 0 }}>
         <div>
-          <h1 style={{ fontFamily: 'serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Serviços & Preços</h1>
+          <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Serviços & Preços</h1>
           <div style={{ width: 36, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 6 }} />
           <p style={{ fontSize: 13, color: '#9090a8' }}>Gerencie seus serviços e configure preços estratégicos</p>
         </div>
-        <button onClick={() => setIsAddModalOpen(true)} style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', color: '#0a0a0f', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Inter,sans-serif' }}>
+        <button onClick={() => setIsAddModalOpen(true)} style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', color: '#0a0a0f', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Sora, sans-serif' }}>
           <Plus size={16} /> Novo Serviço
         </button>
       </div>
@@ -80,7 +80,7 @@ const Services = () => {
           <div key={i} className="svc-card" style={{ padding: 20, animationDelay: `${i * 0.05}s` }}>
             <div style={{ width: 32, height: 32, borderRadius: 8, background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>{card.icon}</div>
             <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>{card.label}</div>
-            <div style={{ fontFamily: 'serif', fontSize: i === 0 ? 28 : 18, fontWeight: 600, color: '#f0f0f8', marginBottom: card.sub ? 4 : 0 }}>{card.value}</div>
+            <div style={{ fontFamily: 'Sora, sans-serif', fontSize: i === 0 ? 28 : 18, fontWeight: 600, color: '#f0f0f8', marginBottom: card.sub ? 4 : 0 }}>{card.value}</div>
             {card.sub && <div style={{ fontSize: 11, color: '#c9a84c', fontWeight: 500 }}>{card.sub}</div>}
           </div>
         ))}
@@ -90,7 +90,7 @@ const Services = () => {
       <div className="svc-card" style={{ overflow: 'hidden' }}>
         <div style={{ padding: '18px 20px', borderBottom: '1px solid #2a2a38', display: 'flex', alignItems: 'center', gap: 10 }}>
           <BarChart3 size={16} style={{ color: '#c9a84c' }} />
-          <h2 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Lista de Serviços</h2>
+          <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Lista de Serviços</h2>
           <span style={{ marginLeft: 'auto', fontSize: 11, color: '#9090a8', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 20, padding: '2px 10px' }}>{totalServices} serviços</span>
         </div>
         <div className="svc-wrap" style={{ overflowX: 'auto' }}>

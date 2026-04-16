@@ -59,7 +59,7 @@ const Header = ({ user, onLogout, onToggleMobileMenu }: HeaderProps) => {
         </button>
 
         <div>
-          <div style={{ fontSize: 16, fontWeight: 600, color: '#f0f0f8', fontFamily: 'serif', letterSpacing: '0.02em' }}>
+          <div style={{ fontSize: 16, fontWeight: 600, color: '#f0f0f8', fontFamily: 'Sora, sans-serif', letterSpacing: '0.02em' }}>
             {user.role === 'professional' ? 'Painel Profissional' : 'Painel Administrativo'}
           </div>
           {currentPatente && (

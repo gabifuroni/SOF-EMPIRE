@@ -22,7 +22,7 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
         <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'rgba(201,168,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
           <BarChart3 size={28} style={{ color: '#c9a84c' }} />
         </div>
-        <h3 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8', marginBottom: 8 }}>Nenhum serviço cadastrado</h3>
+        <h3 style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8', marginBottom: 8 }}>Nenhum serviço cadastrado</h3>
         <p style={{ fontSize: 13, color: '#9090a8' }}>Adicione seus primeiros serviços para analisar a precificação</p>
       </div>
     );
@@ -90,7 +90,7 @@ const ServiceTable = ({ services, onEdit, onDelete, onAnalyze }: ServiceTablePro
             return (
               <tr key={service.id}>
                 {/* Serviço */}
-                <td style={{ fontFamily: 'serif', fontWeight: 600, color: '#f0f0f8', fontSize: 14 }}>{service.name}</td>
+                <td style={{ fontFamily: 'Sora, sans-serif', fontWeight: 600, color: '#f0f0f8', fontSize: 14 }}>{service.name}</td>
                 {/* Preço */}
                 <td style={{ color: '#f0f0f8', fontWeight: 500 }}>R$ {service.salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                 {/* Comissão % */}

@@ -20,7 +20,7 @@ export const MainMetrics = ({ reportData, formatCurrency }: MainMetricsProps) =>
         <InfoModal title="Faturamento Bruto" trigger={<button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9090a8', display: 'flex' }}><Info size={14} /></button>}><FaturamentoModal /></InfoModal>
       </div>
       <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>Faturamento Bruto</div>
-      <div style={{ fontFamily: 'serif', fontSize: 20, fontWeight: 600, color: '#f0f0f8', marginBottom: 4 }}>{formatCurrency(reportData.faturamento)}</div>
+      <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, fontWeight: 600, color: '#f0f0f8', marginBottom: 4 }}>{formatCurrency(reportData.faturamento)}</div>
       <div style={{ fontSize: 11, color: '#4d9fff', fontWeight: 500 }}>{reportData.transacoesEntrada} transações</div>
     </div>
 
@@ -30,7 +30,7 @@ export const MainMetrics = ({ reportData, formatCurrency }: MainMetricsProps) =>
         <InfoModal title="Custos Diretos" trigger={<button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9090a8', display: 'flex' }}><Info size={14} /></button>}><CustosDirectosModal /></InfoModal>
       </div>
       <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>Custos Diretos</div>
-      <div style={{ fontFamily: 'serif', fontSize: 20, fontWeight: 600, color: '#f0f0f8', marginBottom: 4 }}>{formatCurrency(Number(reportData.custosDirectos))}</div>
+      <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, fontWeight: 600, color: '#f0f0f8', marginBottom: 4 }}>{formatCurrency(Number(reportData.custosDirectos))}</div>
       <div style={{ fontSize: 11, color: '#ff4d6a', fontWeight: 500 }}>{reportData.percentualCustosDirectos.toFixed(1)}% do faturamento</div>
     </div>
 
@@ -40,7 +40,7 @@ export const MainMetrics = ({ reportData, formatCurrency }: MainMetricsProps) =>
         <InfoModal title="Custos Indiretos" trigger={<button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9090a8', display: 'flex' }}><Info size={14} /></button>}><span>Inclui apenas as despesas indiretas mensais.</span></InfoModal>
       </div>
       <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>Custos Indiretos</div>
-      <div style={{ fontFamily: 'serif', fontSize: 20, fontWeight: 600, color: '#f0f0f8' }}>{formatCurrency(reportData.despesasIndiretas || 0)}</div>
+      <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, fontWeight: 600, color: '#f0f0f8' }}>{formatCurrency(reportData.despesasIndiretas || 0)}</div>
     </div>
   </div>
 );

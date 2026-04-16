@@ -24,7 +24,7 @@ const ExpensesHeader = ({ selectedYear, selectedMonth, onYearChange, onMonthChan
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 24 }}>
       <div>
-        <h1 style={{ fontFamily: 'serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Gestão de Despesas</h1>
+        <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Gestão de Despesas</h1>
         <div style={{ width: 36, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 6 }} />
         <p style={{ fontSize: 13, color: '#9090a8' }}>Gerencie suas despesas diretas e indiretas</p>
       </div>
@@ -33,19 +33,19 @@ const ExpensesHeader = ({ selectedYear, selectedMonth, onYearChange, onMonthChan
           <Calendar size={14} style={{ color: '#9090a8' }} />
           <select
             value={selectedMonth} onChange={e => onMonthChange(e.target.value)}
-            style={{ background: 'transparent', border: 'none', color: '#f0f0f8', fontSize: 13, outline: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+            style={{ background: 'transparent', border: 'none', color: '#f0f0f8', fontSize: 13, outline: 'none', cursor: 'pointer', fontFamily: 'Sora, sans-serif' }}
           >
             {MONTHS.map(m => <option key={m.key} value={m.key} style={{ background: '#1c1c26' }}>{m.label}</option>)}
           </select>
           <select
             value={selectedYear} onChange={e => onYearChange(e.target.value)}
-            style={{ background: 'transparent', border: 'none', color: '#f0f0f8', fontSize: 13, outline: 'none', cursor: 'pointer', fontFamily: 'Inter, sans-serif' }}
+            style={{ background: 'transparent', border: 'none', color: '#f0f0f8', fontSize: 13, outline: 'none', cursor: 'pointer', fontFamily: 'Sora, sans-serif' }}
           >
             {years.map(y => <option key={y} value={y.toString()} style={{ background: '#1c1c26' }}>{y}</option>)}
           </select>
         </div>
         {onSave && (
-          <button onClick={onSave} style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', color: '#0a0a0f', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Inter, sans-serif' }}>
+          <button onClick={onSave} style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', color: '#0a0a0f', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Sora, sans-serif' }}>
             💾 Salvar Alterações
           </button>
         )}

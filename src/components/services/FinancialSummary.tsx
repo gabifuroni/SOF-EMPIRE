@@ -11,12 +11,12 @@ const FinancialSummary = ({ salePrice, commissionRate, commissionCost, cardTaxRa
 
   return (
     <div style={{ background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 12, padding: '20px 24px' }}>
-      <h3 style={{ fontFamily: 'serif', fontSize: 18, fontWeight: 600, color: '#f0f0f8', marginBottom: 16 }}>Resumo Financeiro</h3>
+      <h3 style={{ fontFamily: 'Sora, sans-serif', fontSize: 18, fontWeight: 600, color: '#f0f0f8', marginBottom: 16 }}>Resumo Financeiro</h3>
 
       {/* Preço */}
       <div style={{ ...s, background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.2)', textAlign: 'center', marginBottom: 16 }}>
         <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 8 }}>💰 Preço do Serviço</div>
-        <div style={{ fontFamily: 'serif', fontSize: 26, fontWeight: 600, color: '#c9a84c' }}>
+        <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 26, fontWeight: 600, color: '#c9a84c' }}>
           R$ {salePrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </div>
       </div>
@@ -44,7 +44,7 @@ const FinancialSummary = ({ salePrice, commissionRate, commissionCost, cardTaxRa
         <div style={{ background: 'rgba(255,77,106,0.08)', border: '1px solid rgba(255,77,106,0.2)', borderRadius: 8, padding: '12px 14px', marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: '#ff4d6a' }}>Total Custos Diretos:</span>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#ff4d6a' }}>R$ {totalDirectCosts.toFixed(2)}</div>
+            <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#ff4d6a' }}>R$ {totalDirectCosts.toFixed(2)}</div>
             <div style={{ fontSize: 11, color: '#ff8fa3' }}>{totalDirectCostsPercentage.toFixed(1)}% do preço</div>
           </div>
         </div>
@@ -60,7 +60,7 @@ const FinancialSummary = ({ salePrice, commissionRate, commissionCost, cardTaxRa
               <div style={{ fontSize: 11, color: '#9090a8' }}>Valor - Custos Diretos</div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#00c896' }}>R$ {operationalMargin.toFixed(2)}</div>
+              <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#00c896' }}>R$ {operationalMargin.toFixed(2)}</div>
               <div style={{ fontSize: 11, color: '#00a07a' }}>{operationalMarginPercentage.toFixed(1)}%</div>
             </div>
           </div>
@@ -70,7 +70,7 @@ const FinancialSummary = ({ salePrice, commissionRate, commissionCost, cardTaxRa
               <div style={{ fontSize: 11, color: '#9090a8' }}>Despesas Indiretas</div>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#4d9fff' }}>R$ {operationalCost.toFixed(2)}</div>
+              <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#4d9fff' }}>R$ {operationalCost.toFixed(2)}</div>
               <div style={{ fontSize: 11, color: '#4d9fff' }}>{operationalCostPercentage.toFixed(1)}%</div>
             </div>
           </div>
@@ -81,11 +81,11 @@ const FinancialSummary = ({ salePrice, commissionRate, commissionCost, cardTaxRa
       <div style={{ background: partialProfit >= 0 ? 'rgba(201,168,76,0.08)' : 'rgba(255,77,106,0.08)', border: `1px solid ${partialProfit >= 0 ? 'rgba(201,168,76,0.3)' : 'rgba(255,77,106,0.3)'}`, borderRadius: 10, padding: '16px 18px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div>
-            <div style={{ fontFamily: 'serif', fontSize: 15, fontWeight: 600, color: '#f0f0f8' }}>💎 Lucro Parcial:</div>
+            <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 15, fontWeight: 600, color: '#f0f0f8' }}>💎 Lucro Parcial:</div>
             <div style={{ fontSize: 11, color: '#9090a8' }}>Margem Op. - Custo Op.</div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <div style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 700, color: partialProfit >= 0 ? '#c9a84c' : '#ff4d6a' }}>
+            <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 22, fontWeight: 700, color: partialProfit >= 0 ? '#c9a84c' : '#ff4d6a' }}>
               R$ {partialProfit.toFixed(2)}
             </div>
             <div style={{ fontSize: 14, fontWeight: 600, color: partialProfit >= 0 ? '#c9a84c' : '#ff4d6a' }}>

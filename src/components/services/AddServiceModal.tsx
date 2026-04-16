@@ -103,7 +103,7 @@ const AddServiceModal = ({ show, service, materials, onClose, onSave }: AddServi
         `}</style>
 
         <DialogHeader>
-          <DialogTitle style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 600, color: '#f0f0f8' }}>
+          <DialogTitle style={{ fontFamily: 'Sora, sans-serif', fontSize: 22, fontWeight: 600, color: '#f0f0f8' }}>
             {service ? 'Editar Serviço' : 'Adicionar Novo Serviço'}
           </DialogTitle>
           <DialogDescription style={{ fontSize: 13, color: '#9090a8' }}>
@@ -134,10 +134,10 @@ const AddServiceModal = ({ show, service, materials, onClose, onSave }: AddServi
               partialProfitPercentage={costs.partialProfitPercentage}
             />
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 8 }}>
-              <button type="button" onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #2a2a38', borderRadius: 10, padding: '10px 20px', fontSize: 13, color: '#9090a8', cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}>
+              <button type="button" onClick={onClose} style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid #2a2a38', borderRadius: 10, padding: '10px 20px', fontSize: 13, color: '#9090a8', cursor: 'pointer', fontFamily: 'Sora, sans-serif' }}>
                 Cancelar
               </button>
-              <button type="submit" style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', border: 'none', borderRadius: 10, padding: '10px 24px', fontSize: 13, fontWeight: 600, color: '#0a0a0f', cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}>
+              <button type="submit" style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', border: 'none', borderRadius: 10, padding: '10px 24px', fontSize: 13, fontWeight: 600, color: '#0a0a0f', cursor: 'pointer', fontFamily: 'Sora, sans-serif' }}>
                 {service ? 'Salvar Alterações' : 'Adicionar Serviço'}
               </button>
             </div>

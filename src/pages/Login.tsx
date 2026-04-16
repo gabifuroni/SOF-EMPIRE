@@ -73,7 +73,7 @@ const Login = () => {
   return (
     <div style={{
       position: 'fixed', inset: 0, display: 'flex',
-      background: '#0a0a0f', fontFamily: "'Inter', sans-serif", zIndex: 9999,
+      background: '#0a0a0f', fontFamily: "'Sora', sans-serif", zIndex: 9999,
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
@@ -86,7 +86,7 @@ const Login = () => {
           width: 100%; background: #13131a; border: 1.5px solid #2a2a38;
           border-radius: 10px; padding: 14px 16px; font-size: 15px;
           color: #f0f0f8; outline: none; box-sizing: border-box;
-          font-family: 'Inter', sans-serif; transition: border-color 0.2s, box-shadow 0.2s;
+          font-family: 'Sora', sans-serif; transition: border-color 0.2s, box-shadow 0.2s;
         }
         .login-input:focus { border-color: #c9a84c; box-shadow: 0 0 0 3px rgba(201,168,76,0.15); }
         .login-input::placeholder { color: #505068; }
@@ -97,7 +97,7 @@ const Login = () => {
         }
         .role-btn {
           flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer;
-          font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+          font-family: 'Sora', sans-serif; font-size: 13px; font-weight: 500;
           transition: all 0.2s; letter-spacing: 0.01em;
         }
         .role-btn.active { background: #c9a84c; color: #0a0a0f; }
@@ -105,7 +105,7 @@ const Login = () => {
         .btn-submit {
           width: 100%; padding: 15px; border: none; border-radius: 12px; cursor: pointer;
           background: linear-gradient(135deg, #c9a84c, #8a6520);
-          color: #0a0a0f; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 600;
+          color: #0a0a0f; font-family: 'Sora', sans-serif; font-size: 15px; font-weight: 600;
           margin-top: 8px; box-shadow: 0 4px 20px rgba(201,168,76,0.3);
           display: flex; align-items: center; justify-content: center; gap: 10px;
           transition: opacity 0.2s;

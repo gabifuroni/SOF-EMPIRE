@@ -70,7 +70,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
 
   const paymentMethods = ['Dinheiro', 'Pix', 'Cartão de Débito', 'Cartão de Crédito', 'Crédito Parcelado', 'Transferência Bancária'];
 
-  const inputStyle: React.CSSProperties = { width: '100%', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '10px 14px', color: '#f0f0f8', fontSize: 14, outline: 'none', fontFamily: 'Inter,sans-serif', boxSizing: 'border-box' };
+  const inputStyle: React.CSSProperties = { width: '100%', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '10px 14px', color: '#f0f0f8', fontSize: 14, outline: 'none', fontFamily: 'Sora, sans-serif', boxSizing: 'border-box' };
   const labelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 };
 
   return (
@@ -85,7 +85,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
         `}</style>
 
         <DialogHeader>
-          <DialogTitle style={{ fontFamily: 'serif', fontSize: 20, fontWeight: 600, color: '#f0f0f8' }}>
+          <DialogTitle style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, fontWeight: 600, color: '#f0f0f8' }}>
             {entry ? 'Editar Entrada Financeira' : 'Adicionar Nova Entrada Financeira'}
           </DialogTitle>
         </DialogHeader>
@@ -164,10 +164,10 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
 
           {/* Botões */}
           <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
-            <button type="submit" style={{ flex: 1, background: 'linear-gradient(135deg,#00c896,#00a07a)', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 600, color: '#0a0a0f', cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}>
+            <button type="submit" style={{ flex: 1, background: 'linear-gradient(135deg,#00c896,#00a07a)', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 600, color: '#0a0a0f', cursor: 'pointer', fontFamily: 'Sora, sans-serif' }}>
               {entry ? 'Salvar Alterações' : 'Salvar Entrada'}
             </button>
-            <button type="button" onClick={onClose} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid #2a2a38', borderRadius: 10, padding: '12px', fontSize: 14, color: '#9090a8', cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}>
+            <button type="button" onClick={onClose} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid #2a2a38', borderRadius: 10, padding: '12px', fontSize: 14, color: '#9090a8', cursor: 'pointer', fontFamily: 'Sora, sans-serif' }}>
               Cancelar
             </button>
           </div>

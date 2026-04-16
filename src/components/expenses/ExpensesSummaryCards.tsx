@@ -27,7 +27,7 @@ const ExpensesSummaryCards = ({ totalCategories, monthTotal, fixedExpensesTotal,
             {card.icon}
           </div>
           <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 4 }}>{card.label}</div>
-          <div style={{ fontFamily: 'serif', fontSize: 18, fontWeight: 600, color: '#f0f0f8' }}>
+          <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 18, fontWeight: 600, color: '#f0f0f8' }}>
             {card.isNumber ? card.value : `R$ ${(card.value as number).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
           </div>
         </div>

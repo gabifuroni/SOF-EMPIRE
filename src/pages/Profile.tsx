@@ -67,7 +67,7 @@ const Profile = () => {
   const pwColor = passwordStrength === 'Forte' ? '#00c896' : passwordStrength === 'Média' ? '#fbbf24' : '#ff4d6a';
   const pwWidth = passwordStrength === 'Forte' ? '100%' : passwordStrength === 'Média' ? '66%' : '33%';
 
-  const inputStyle: React.CSSProperties = { width: '100%', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '11px 14px', color: '#f0f0f8', fontSize: 14, outline: 'none', fontFamily: 'Inter,sans-serif', boxSizing: 'border-box', transition: 'border-color 0.15s' };
+  const inputStyle: React.CSSProperties = { width: '100%', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '11px 14px', color: '#f0f0f8', fontSize: 14, outline: 'none', fontFamily: 'Sora, sans-serif', boxSizing: 'border-box', transition: 'border-color 0.15s' };
   const labelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 8, display: 'block' };
   const cardStyle: React.CSSProperties = { background: '#13131a', border: '1px solid #2a2a38', borderRadius: 12, padding: '24px 28px' };
 
@@ -76,16 +76,16 @@ const Profile = () => {
       <style>{`
         .prof-input:focus { border-color: #c9a84c !important; box-shadow: 0 0 0 3px rgba(201,168,76,0.1); }
         .prof-input:disabled { opacity: 0.5; cursor: not-allowed; }
-        .prof-textarea { width:100%; background:#1c1c26; border:1px solid #2a2a38; border-radius:8px; padding:11px 14px; color:#f0f0f8; font-size:14px; outline:none; font-family:Inter,sans-serif; box-sizing:border-box; resize:vertical; min-height:80px; }
+        .prof-textarea { width:100%; background:#1c1c26; border:1px solid #2a2a38; border-radius:8px; padding:11px 14px; color:#f0f0f8; font-size:14px; outline:none; font-family:Sora, sans-serif; box-sizing:border-box; resize:vertical; min-height:80px; }
         .prof-textarea:focus { border-color:#c9a84c; }
-        .save-btn { background:linear-gradient(135deg,#c9a84c,#8a6520); color:#0a0a0f; border:none; borderRadius:12px; padding:14px 32px; font-size:14px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:10px; font-family:Inter,sans-serif; transition:opacity 0.15s; }
+        .save-btn { background:linear-gradient(135deg,#c9a84c,#8a6520); color:#0a0a0f; border:none; borderRadius:12px; padding:14px 32px; font-size:14px; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:10px; font-family:Sora, sans-serif; transition:opacity 0.15s; }
         .save-btn:hover:not(:disabled) { opacity:0.9; }
         .save-btn:disabled { opacity:0.6; cursor:not-allowed; }
       `}</style>
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontFamily: 'serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Meu Perfil</h1>
+        <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Meu Perfil</h1>
         <div style={{ width: 36, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 6 }} />
         <p style={{ fontSize: 13, color: '#9090a8' }}>Gerencie suas informações pessoais e segurança</p>
       </div>
@@ -100,7 +100,7 @@ const Profile = () => {
           <div key={i} style={{ background: '#13131a', border: '1px solid #2a2a38', borderRadius: 12, padding: '18px 20px' }}>
             <div style={{ width: 32, height: 32, borderRadius: 8, background: item.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>{item.icon}</div>
             <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 4 }}>{item.label}</div>
-            <div style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.value}</div>
+            <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.value}</div>
           </div>
         ))}
       </div>
@@ -110,7 +110,7 @@ const Profile = () => {
         <div style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
             <User size={18} style={{ color: '#9090a8' }} />
-            <h2 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Dados Cadastrais</h2>
+            <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Dados Cadastrais</h2>
           </div>
           <div style={{ width: 28, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 24 }} />
 
@@ -118,7 +118,7 @@ const Profile = () => {
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, paddingBottom: 20, borderBottom: '1px solid #2a2a38', marginBottom: 20 }}>
             <div style={{ position: 'relative' }}>
               <div style={{ width: 80, height: 80, borderRadius: 16, background: profileImage ? 'transparent' : 'linear-gradient(135deg,#c9a84c,#8a6520)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid rgba(201,168,76,0.3)' }}>
-                {profileImage ? <img src={profileImage} alt="Perfil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 28, fontWeight: 700, color: '#0a0a0f', fontFamily: 'serif' }}>{formData.name?.charAt(0)?.toUpperCase() || 'U'}</span>}
+                {profileImage ? <img src={profileImage} alt="Perfil" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <span style={{ fontSize: 28, fontWeight: 700, color: '#0a0a0f', fontFamily: 'Sora, sans-serif' }}>{formData.name?.charAt(0)?.toUpperCase() || 'U'}</span>}
               </div>
               <label htmlFor="profile-image" style={{ position: 'absolute', bottom: -4, right: -4, background: '#c9a84c', borderRadius: 8, padding: '5px', cursor: 'pointer', display: 'flex' }}>
                 <Camera size={13} style={{ color: '#0a0a0f' }} />
@@ -159,7 +159,7 @@ const Profile = () => {
         <div style={cardStyle}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
             <Shield size={18} style={{ color: '#9090a8' }} />
-            <h2 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Segurança</h2>
+            <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Segurança</h2>
           </div>
           <div style={{ width: 28, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 24 }} />
 
@@ -202,7 +202,7 @@ const Profile = () => {
 
       {/* Save button */}
       <div style={{ display: 'flex', justifyContent: 'center', marginTop: 28 }}>
-        <button className="save-btn" onClick={handleSaveProfile} disabled={isSaving || isLoading} style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', color: '#0a0a0f', border: 'none', borderRadius: 12, padding: '14px 32px', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'Inter,sans-serif', opacity: (isSaving || isLoading) ? 0.6 : 1 }}>
+        <button className="save-btn" onClick={handleSaveProfile} disabled={isSaving || isLoading} style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', color: '#0a0a0f', border: 'none', borderRadius: 12, padding: '14px 32px', fontSize: 14, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'Sora, sans-serif', opacity: (isSaving || isLoading) ? 0.6 : 1 }}>
           <Save size={18} />
           {isSaving ? 'Salvando...' : 'Salvar Alterações'}
         </button>

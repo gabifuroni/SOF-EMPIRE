@@ -23,7 +23,7 @@ const MaterialCostSection = ({ materialCosts, materials, onMaterialCostsChange }
     onMaterialCostsChange(updated);
   };
 
-  const inputStyle: React.CSSProperties = { background: '#13131a', border: '1px solid #2a2a38', borderRadius: 8, padding: '9px 12px', color: '#f0f0f8', fontSize: 13, outline: 'none', width: '100%', fontFamily: 'Inter,sans-serif', boxSizing: 'border-box' };
+  const inputStyle: React.CSSProperties = { background: '#13131a', border: '1px solid #2a2a38', borderRadius: 8, padding: '9px 12px', color: '#f0f0f8', fontSize: 13, outline: 'none', width: '100%', fontFamily: 'Sora, sans-serif', boxSizing: 'border-box' };
   const labelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6, display: 'block' };
 
   return (
@@ -36,14 +36,14 @@ const MaterialCostSection = ({ materialCosts, materials, onMaterialCostsChange }
       `}</style>
 
       {/* Title */}
-      <h3 style={{ fontFamily: 'serif', fontSize: 15, fontWeight: 600, color: '#f0f0f8', marginBottom: 10 }}>Matéria-Prima Utilizada</h3>
+      <h3 style={{ fontFamily: 'Sora, sans-serif', fontSize: 15, fontWeight: 600, color: '#f0f0f8', marginBottom: 10 }}>Matéria-Prima Utilizada</h3>
 
       {/* Add button — always at top, above all materials */}
       <button
         type="button"
         className="mat-add-btn"
         onClick={addMaterial}
-        style={{ background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 500, color: '#9090a8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: 'Inter,sans-serif', width: '100%', marginBottom: 8, transition: 'all 0.15s' }}
+        style={{ background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 10, padding: '11px', fontSize: 13, fontWeight: 500, color: '#9090a8', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, fontFamily: 'Sora, sans-serif', width: '100%', marginBottom: 8, transition: 'all 0.15s' }}
       >
         <Plus size={14} /> Adicionar Material
       </button>

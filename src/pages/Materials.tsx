@@ -48,11 +48,11 @@ const Materials = () => {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16, marginBottom: 28, animation: 'fadeUp 0.4s ease both' }}>
         <div>
-          <h1 style={{ fontFamily: 'serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Matéria-Prima</h1>
+          <h1 style={{ fontFamily: 'Sora, sans-serif', fontSize: 26, fontWeight: 600, color: '#f0f0f8', marginBottom: 6 }}>Matéria-Prima</h1>
           <div style={{ width: 36, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2, marginBottom: 6 }} />
           <p style={{ fontSize: 13, color: '#9090a8' }}>Gerencie os materiais utilizados em seus serviços</p>
         </div>
-        <button onClick={() => setIsAddModalOpen(true)} style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', color: '#0a0a0f', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Inter,sans-serif' }}>
+        <button onClick={() => setIsAddModalOpen(true)} style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', color: '#0a0a0f', border: 'none', borderRadius: 10, padding: '10px 20px', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'Sora, sans-serif' }}>
           <Plus size={16} /> Nova Matéria-Prima
         </button>
       </div>
@@ -61,14 +61,14 @@ const Materials = () => {
       <div style={{ background: '#13131a', border: '1px solid #2a2a38', borderRadius: 12, overflow: 'hidden', animation: 'fadeUp 0.4s 0.05s ease both' }}>
         <div style={{ padding: '18px 20px', borderBottom: '1px solid #2a2a38', display: 'flex', alignItems: 'center', gap: 10 }}>
           <Package size={16} style={{ color: '#c9a84c' }} />
-          <h2 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Lista de Matérias-Primas</h2>
+          <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8' }}>Lista de Matérias-Primas</h2>
           <span style={{ marginLeft: 'auto', fontSize: 11, color: '#9090a8', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 20, padding: '2px 10px' }}>{materials.length} itens</span>
         </div>
 
         {materials.length === 0 ? (
           <div style={{ padding: '48px 24px', textAlign: 'center' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>🧴</div>
-            <h3 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8', marginBottom: 8 }}>Nenhuma matéria-prima cadastrada</h3>
+            <h3 style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8', marginBottom: 8 }}>Nenhuma matéria-prima cadastrada</h3>
             <p style={{ fontSize: 13, color: '#9090a8' }}>Adicione os materiais utilizados nos seus serviços</p>
           </div>
         ) : (
@@ -79,7 +79,7 @@ const Materials = () => {
               {materials.map(m => (
                 <div key={m.id} className="mat-mobile-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                    <span style={{ fontFamily: 'serif', fontSize: 15, fontWeight: 600, color: '#f0f0f8' }}>{m.name}</span>
+                    <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 15, fontWeight: 600, color: '#f0f0f8' }}>{m.name}</span>
                     <div style={{ display: 'flex', gap: 6 }}>
                       <button className="mat-btn" onClick={() => setEditingMaterial(m)}><Edit size={13} /></button>
                       <button className="mat-btn danger" onClick={() => handleDeleteMaterial(m.id)}><Trash2 size={13} /></button>

@@ -12,7 +12,7 @@ export const ExecutiveSummary = ({ reportData, formatCurrency }: ExecutiveSummar
       <div style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, background: 'radial-gradient(circle,rgba(201,168,76,0.06) 0%,transparent 70%)', borderRadius: '50%', pointerEvents: 'none' }} />
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
         <Award size={24} style={{ color }} />
-        <h2 style={{ fontFamily: 'serif', fontSize: 18, fontWeight: 600, color: '#f0f0f8' }}>Resumo Executivo</h2>
+        <h2 style={{ fontFamily: 'Sora, sans-serif', fontSize: 18, fontWeight: 600, color: '#f0f0f8' }}>Resumo Executivo</h2>
         <div style={{ width: 28, height: 2, background: 'linear-gradient(90deg,#c9a84c,transparent)', borderRadius: 2 }} />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 20 }}>
@@ -23,7 +23,7 @@ export const ExecutiveSummary = ({ reportData, formatCurrency }: ExecutiveSummar
         ].map((item, i) => (
           <div key={i}>
             <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>{item.label}</div>
-            <div style={{ fontFamily: 'serif', fontSize: 22, fontWeight: 600, color: item.color, marginBottom: item.badge ? 6 : 0 }}>{item.value}</div>
+            <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 22, fontWeight: 600, color: item.color, marginBottom: item.badge ? 6 : 0 }}>{item.value}</div>
             {item.badge && <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 99, background: `${color}15`, color }}>{item.badge}</span>}
           </div>
         ))}

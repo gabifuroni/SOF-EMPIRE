@@ -16,7 +16,7 @@ const DailyCashFlowTable = ({ todayEntries, today, onDeleteEntry }: DailyCashFlo
     return (
       <div style={{ padding: '48px 24px', textAlign: 'center' }}>
         <div style={{ fontSize: 40, marginBottom: 16 }}>💰</div>
-        <h3 style={{ fontFamily: 'serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8', marginBottom: 8 }}>
+        <h3 style={{ fontFamily: 'Sora, sans-serif', fontSize: 16, fontWeight: 600, color: '#f0f0f8', marginBottom: 8 }}>
           Nenhum lançamento hoje
         </h3>
         <p style={{ fontSize: 13, color: '#9090a8' }}>
@@ -61,7 +61,7 @@ const DailyCashFlowTable = ({ todayEntries, today, onDeleteEntry }: DailyCashFlo
                   </span>
                 </td>
                 <td style={{ color: '#9090a8', fontSize: 12 }}>{entry.payment_method || entry.category || '—'}</td>
-                <td style={{ textAlign: 'right', fontFamily: 'serif', fontWeight: 600, color: entry.tipo_transacao === 'ENTRADA' ? '#00c896' : '#ff4d6a' }}>
+                <td style={{ textAlign: 'right', fontFamily: 'Sora, sans-serif', fontWeight: 600, color: entry.tipo_transacao === 'ENTRADA' ? '#00c896' : '#ff4d6a' }}>
                   R$ {Number(entry.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </td>
                 <td style={{ textAlign: 'right', fontSize: 12 }}>
