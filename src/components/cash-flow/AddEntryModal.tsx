@@ -1,14 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Checkbox } from '@/components/ui/checkbox';
 import { CashFlowEntry } from '@/types';
 import { format, parse } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import { Calendar, DollarSign, Tag, User, CreditCard, Percent } from 'lucide-react';
 
 interface AddEntryModalProps {
   show: boolean;
@@ -18,295 +13,163 @@ interface AddEntryModalProps {
   defaultDate?: Date;
 }
 
-interface Service {
-  id: string;
-  name: string;
-  sale_price: number;
-}
+interface Service { id: string; name: string; sale_price: number; }
 
-const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryModalProps) => {  const [formData, setFormData] = useState({
-    date: format(defaultDate || new Date(), 'yyyy-MM-dd'),
-    description: '',
-    amount: '',
-    paymentMethod: '',
-    client: '',
-    commission: ''
-  });
-
+const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryModalProps) => {
+  const [formData, setFormData] = useState({ date: format(defaultDate || new Date(), 'yyyy-MM-dd'), description: '', amount: '', paymentMethod: '', client: '', commission: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [services, setServices] = useState<Service[]>([]);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [loadingServices, setLoadingServices] = useState(false);
 
-  // Load services from database
   useEffect(() => {
     const loadServices = async () => {
       if (!show) return;
-      
       setLoadingServices(true);
       try {
         const { data: user } = await supabase.auth.getUser();
         if (!user.user) return;
-
-        const { data, error } = await supabase
-          .from('servicos')
-          .select('id, name, sale_price')
-          .eq('user_id', user.user.id)
-          .order('name');
-
-        if (error) {
-          console.error('Error loading services:', error);
-          return;
-        }
-
-        setServices(data || []);
-      } catch (error) {
-        console.error('Error loading services:', error);
-      } finally {
-        setLoadingServices(false);
-      }
+        const { data, error } = await supabase.from('servicos').select('id, name, sale_price').eq('user_id', user.user.id).order('name');
+        if (!error) setServices(data || []);
+      } catch {} finally { setLoadingServices(false); }
     };
-
     loadServices();
-  }, [show]);  useEffect(() => {
+  }, [show]);
+
+  useEffect(() => {
     if (entry) {
-      setFormData({
-        date: format(new Date(entry.date), 'yyyy-MM-dd'),
-        description: entry.description,
-        amount: entry.amount.toString(),
-        paymentMethod: entry.paymentMethod || '',
-        client: entry.client || '',
-        commission: entry.commission && entry.amount > 0 ? ((entry.commission / entry.amount) * 100).toString() : ''
-      });
-  } else {
-      setFormData({
-        date: format(defaultDate || new Date(), 'yyyy-MM-dd'),
-        description: '',
-        amount: '',
-        paymentMethod: '',
-        client: '',
-        commission: ''
-      });
+      setFormData({ date: format(new Date(entry.date), 'yyyy-MM-dd'), description: entry.description, amount: entry.amount.toString(), paymentMethod: entry.paymentMethod || '', client: entry.client || '', commission: entry.commission && entry.amount > 0 ? ((entry.commission / entry.amount) * 100).toString() : '' });
+    } else {
+      setFormData({ date: format(defaultDate || new Date(), 'yyyy-MM-dd'), description: '', amount: '', paymentMethod: '', client: '', commission: '' });
       setSelectedServices([]);
     }
     setErrors({});
   }, [entry, show, defaultDate]);
 
-  const handleServiceToggle = (serviceId: string, serviceName: string, servicePrice: number) => {
+  const handleServiceToggle = (serviceId: string) => {
     setSelectedServices(prev => {
       const isSelected = prev.includes(serviceId);
-      let newSelection;
-      
-      if (isSelected) {
-        newSelection = prev.filter(id => id !== serviceId);
-      } else {
-        newSelection = [...prev, serviceId];
-      }
-
-      // Update description and amount based on selected services
-      const selectedServicesList = services.filter(s => newSelection.includes(s.id));
-      const totalAmount = selectedServicesList.reduce((sum, s) => sum + s.sale_price, 0);
-      const serviceNames = selectedServicesList.map(s => s.name).join(', ');
-
-      setFormData(prev => ({
-        ...prev,
-        description: serviceNames || prev.description,
-        amount: totalAmount > 0 ? totalAmount.toString() : prev.amount
-      }));
-
+      const newSelection = isSelected ? prev.filter(id => id !== serviceId) : [...prev, serviceId];
+      const selectedList = services.filter(s => newSelection.includes(s.id));
+      const totalAmount = selectedList.reduce((sum, s) => sum + s.sale_price, 0);
+      setFormData(prev => ({ ...prev, description: selectedList.map(s => s.name).join(', ') || prev.description, amount: totalAmount > 0 ? totalAmount.toString() : prev.amount }));
       return newSelection;
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     const newErrors: Record<string, string> = {};
-    
-    if (!formData.description.trim()) {
-      newErrors.description = 'Descrição é obrigatória';
-    }
-    
-    if (!formData.amount || parseFloat(formData.amount) <= 0) {
-      newErrors.amount = 'Valor deve ser maior que zero';
-    }
-    
-    if (!formData.paymentMethod) {
-      newErrors.paymentMethod = 'Forma de pagamento é obrigatória';
-    }
-    
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    // Parse the date as local to avoid timezone shifts (e.g., -1 day)
-    const parsedDate = parse(formData.date, 'yyyy-MM-dd', new Date());
-
-    const entryData: Omit<CashFlowEntry, 'id'> = {
-      date: parsedDate,
-      description: formData.description.trim(),
-      type: 'entrada',
-      amount: parseFloat(formData.amount),
-      paymentMethod: formData.paymentMethod,
-      client: formData.client.trim() || undefined,
-      commission: formData.commission ? parseFloat(formData.commission) : undefined
-    };
-
-    onSave(entryData);
+    if (!formData.description.trim()) newErrors.description = 'Descrição é obrigatória';
+    if (!formData.amount || parseFloat(formData.amount) <= 0) newErrors.amount = 'Valor deve ser maior que zero';
+    if (!formData.paymentMethod) newErrors.paymentMethod = 'Forma de pagamento é obrigatória';
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+    onSave({ date: parse(formData.date, 'yyyy-MM-dd', new Date()), description: formData.description.trim(), type: 'entrada', amount: parseFloat(formData.amount), paymentMethod: formData.paymentMethod, client: formData.client.trim() || undefined, commission: formData.commission ? parseFloat(formData.commission) : undefined });
     onClose();
   };
-  // Lista de métodos de pagamento disponíveis
-  // Importante: Os nomes 'Cartão de Crédito' e 'Cartão de Débito' devem corresponder exatamente
-  // aos nomes usados na lógica de ajuste de taxas no componente CashFlow
-  const paymentMethods = [
-    'Dinheiro',
-    'Pix',
-    'Cartão de Débito',
-    'Cartão de Crédito',
-    'Crédito Parcelado',
-    'Transferência Bancária'
-  ];
+
+  const paymentMethods = ['Dinheiro', 'Pix', 'Cartão de Débito', 'Cartão de Crédito', 'Crédito Parcelado', 'Transferência Bancária'];
+
+  const inputStyle: React.CSSProperties = { width: '100%', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '10px 14px', color: '#f0f0f8', fontSize: 14, outline: 'none', fontFamily: 'Inter,sans-serif', boxSizing: 'border-box' };
+  const labelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 };
 
   return (
     <Dialog open={show} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" style={{ background: '#13131a', border: '1px solid #2a2a38', borderRadius: 16, color: '#f0f0f8' }}>
+        <style>{`
+          .entry-input:focus { border-color: #c9a84c !important; box-shadow: 0 0 0 2px rgba(201,168,76,0.15) !important; }
+          .entry-input::placeholder { color: #606078 !important; }
+          .entry-select option { background: #1c1c26; color: #f0f0f8; }
+          .svc-item:hover { background: rgba(255,255,255,0.04) !important; }
+          .svc-item.selected { background: rgba(201,168,76,0.08) !important; border-color: rgba(201,168,76,0.25) !important; }
+        `}</style>
+
         <DialogHeader>
-          <DialogTitle className="brand-heading text-xl text-symbol-black">
+          <DialogTitle style={{ fontFamily: 'serif', fontSize: 20, fontWeight: 600, color: '#f0f0f8' }}>
             {entry ? 'Editar Entrada Financeira' : 'Adicionar Nova Entrada Financeira'}
           </DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">          
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 8 }}>
+          
+          {/* Data */}
           <div>
-            <Label htmlFor="date" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Data</Label>
-            <Input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-              className="mt-1 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-              title={"Selecione a data"}
-            />
-            {/* Mantém a data sugerida, mas permite alteração */}
+            <label style={labelStyle}><Calendar size={12} /> Data</label>
+            <input className="entry-input" style={inputStyle} type="date" value={formData.date} onChange={e => setFormData(p => ({ ...p, date: e.target.value }))} />
           </div>
 
-          {/* Services Selection */}
+          {/* Serviços */}
           {services.length > 0 && (
             <div>
-              <Label className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Serviços Prestados (Opcional)</Label>
-              {loadingServices ? (
-                <div className="mt-2 text-sm text-symbol-gray-600">Carregando serviços...</div>
-              ) : (
-                <div className="mt-2 space-y-2 max-h-32 overflow-y-auto border border-symbol-gray-300 rounded p-3 bg-symbol-gray-50">
-                  {services.map((service) => (
-                    <div key={service.id} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={service.id}
-                        checked={selectedServices.includes(service.id)}
-                        onCheckedChange={() => handleServiceToggle(service.id, service.name, service.sale_price)}
-                        className="data-[state=checked]:bg-symbol-gold data-[state=checked]:border-symbol-gold"
-                      />
-                      <Label htmlFor={service.id} className="text-sm text-symbol-black cursor-pointer flex-1">
-                        {service.name} - R$ {service.sale_price.toFixed(2)}
-                      </Label>
+              <label style={labelStyle}><Tag size={12} /> Serviços Prestados (Opcional)</label>
+              <div style={{ background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 10, maxHeight: 140, overflowY: 'auto', padding: 4 }}>
+                {loadingServices ? (
+                  <div style={{ padding: '12px', textAlign: 'center', color: '#9090a8', fontSize: 13 }}>Carregando...</div>
+                ) : (
+                  services.map(service => (
+                    <div
+                      key={service.id}
+                      className={`svc-item ${selectedServices.includes(service.id) ? 'selected' : ''}`}
+                      onClick={() => handleServiceToggle(service.id)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, cursor: 'pointer', border: '1px solid transparent', marginBottom: 2, transition: 'all 0.15s' }}
+                    >
+                      <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${selectedServices.includes(service.id) ? '#c9a84c' : '#3a3a4a'}`, background: selectedServices.includes(service.id) ? '#c9a84c' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
+                        {selectedServices.includes(service.id) && <span style={{ color: '#0a0a0f', fontSize: 10, fontWeight: 700 }}>✓</span>}
+                      </div>
+                      <span style={{ fontSize: 13, color: selectedServices.includes(service.id) ? '#c9a84c' : '#f0f0f8', flex: 1 }}>{service.name}</span>
+                      <span style={{ fontSize: 12, color: '#00c896', fontWeight: 500 }}>R$ {service.sale_price.toFixed(2)}</span>
                     </div>
-                  ))}
-                </div>
-              )}
+                  ))
+                )}
+              </div>
             </div>
           )}
 
+          {/* Descrição */}
           <div>
-            <Label htmlFor="description" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Descrição *</Label>
-            <Input
-              id="description"
-              placeholder="Ex: Serviço de Manicure - Ana Paula"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              className="mt-1 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-            />
-            {errors.description && (
-              <p className="text-red-500 text-sm mt-1">{errors.description}</p>
-            )}
-          </div>          <div>
-            <Label htmlFor="amount" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Valor (R$) *</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="0,00"
-              value={formData.amount}
-              onChange={(e) => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-              className="mt-1 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-            />
-            {errors.amount && (
-              <p className="text-red-500 text-sm mt-1">{errors.amount}</p>
-            )}
-          </div>          <div>
-            <Label htmlFor="commission" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Comissão (%) - Opcional</Label>
-            <Input
-              id="commission"
-              type="number"
-              step="0.1"
-              min="0"
-              max="100"
-              placeholder="0,0"
-              value={formData.commission}
-              onChange={(e) => setFormData(prev => ({ ...prev, commission: e.target.value }))}
-              className="mt-1 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-            />
-            <p className="text-xs text-symbol-gray-600 mt-1">
-              Se não informado, será usado o percentual dos parâmetros do negócio
-            </p>
+            <label style={labelStyle}><Tag size={12} /> Descrição *</label>
+            <input className="entry-input" style={{ ...inputStyle, borderColor: errors.description ? '#ff4d6a' : '#2a2a38' }} placeholder="Ex: Serviço de Manicure - Ana Paula" value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} />
+            {errors.description && <p style={{ fontSize: 12, color: '#ff4d6a', marginTop: 4 }}>{errors.description}</p>}
           </div>
 
+          {/* Valor */}
           <div>
-            <Label className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Forma de Pagamento *</Label>
-            <Select value={formData.paymentMethod} onValueChange={(value) => setFormData(prev => ({ ...prev, paymentMethod: value }))}>
-              <SelectTrigger className="mt-1 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige">
-                <SelectValue placeholder="Selecione a forma de pagamento" />
-              </SelectTrigger>
-              <SelectContent>
-                {paymentMethods.map((method) => (
-                  <SelectItem key={method} value={method}>
-                    {method}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.paymentMethod && (
-              <p className="text-red-500 text-sm mt-1">{errors.paymentMethod}</p>
-            )}
+            <label style={labelStyle}><DollarSign size={12} /> Valor (R$) *</label>
+            <input className="entry-input" style={{ ...inputStyle, borderColor: errors.amount ? '#ff4d6a' : '#2a2a38' }} type="number" step="0.01" min="0" placeholder="0,00" value={formData.amount} onChange={e => setFormData(p => ({ ...p, amount: e.target.value }))} />
+            {errors.amount && <p style={{ fontSize: 12, color: '#ff4d6a', marginTop: 4 }}>{errors.amount}</p>}
           </div>
 
+          {/* Comissão */}
           <div>
-            <Label htmlFor="client" className="brand-body text-symbol-gray-700 text-sm uppercase tracking-wide">Cliente (Opcional)</Label>
-            <Input
-              id="client"
-              placeholder="Nome do cliente"
-              value={formData.client}
-              onChange={(e) => setFormData(prev => ({ ...prev, client: e.target.value }))}
-              className="mt-1 bg-symbol-gray-50 border-symbol-gray-300 focus:border-symbol-beige"
-            />
+            <label style={labelStyle}><Percent size={12} /> Comissão (%) — Opcional</label>
+            <input className="entry-input" style={inputStyle} type="number" step="0.1" min="0" max="100" placeholder="0,0" value={formData.commission} onChange={e => setFormData(p => ({ ...p, commission: e.target.value }))} />
+            <p style={{ fontSize: 11, color: '#606078', marginTop: 4 }}>Se não informado, será usado o percentual dos parâmetros do negócio</p>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            <Button 
-              type="submit" 
-              className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
-            >
+          {/* Forma de Pagamento */}
+          <div>
+            <label style={labelStyle}><CreditCard size={12} /> Forma de Pagamento *</label>
+            <select className="entry-input entry-select" style={{ ...inputStyle, borderColor: errors.paymentMethod ? '#ff4d6a' : '#2a2a38', cursor: 'pointer' }} value={formData.paymentMethod} onChange={e => setFormData(p => ({ ...p, paymentMethod: e.target.value }))}>
+              <option value="">Selecione a forma de pagamento</option>
+              {paymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+            {errors.paymentMethod && <p style={{ fontSize: 12, color: '#ff4d6a', marginTop: 4 }}>{errors.paymentMethod}</p>}
+          </div>
+
+          {/* Cliente */}
+          <div>
+            <label style={labelStyle}><User size={12} /> Cliente — Opcional</label>
+            <input className="entry-input" style={inputStyle} placeholder="Nome do cliente" value={formData.client} onChange={e => setFormData(p => ({ ...p, client: e.target.value }))} />
+          </div>
+
+          {/* Botões */}
+          <div style={{ display: 'flex', gap: 10, paddingTop: 4 }}>
+            <button type="submit" style={{ flex: 1, background: 'linear-gradient(135deg,#00c896,#00a07a)', border: 'none', borderRadius: 10, padding: '12px', fontSize: 14, fontWeight: 600, color: '#0a0a0f', cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}>
               {entry ? 'Salvar Alterações' : 'Salvar Entrada'}
-            </Button>
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={onClose} 
-              className="flex-1 border-symbol-gray-300 text-symbol-gray-700 hover:bg-symbol-gray-50"
-            >
+            </button>
+            <button type="button" onClick={onClose} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', border: '1px solid #2a2a38', borderRadius: 10, padding: '12px', fontSize: 14, color: '#9090a8', cursor: 'pointer', fontFamily: 'Inter,sans-serif' }}>
               Cancelar
-            </Button>
+            </button>
           </div>
         </form>
       </DialogContent>
