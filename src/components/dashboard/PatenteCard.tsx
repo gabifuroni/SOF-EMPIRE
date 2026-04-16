@@ -72,8 +72,8 @@ const PatenteCard = ({ currentRevenue }: PatenteCardProps) => {
             {currentPatente?.icon || '🌱'}
           </div>
           <div>
-            <div style={{ fontFamily: 'serif', fontSize: 18, fontWeight: 600, color: '#f0f0f8', marginBottom: 3 }}>
-              {currentPatente?.nome_patente || 'Iniciante'}
+            <div style={{ fontSize: 18, fontWeight: 600, color: '#f0f0f8', marginBottom: 3 }}>
+              <span className="font-feminine" style={{ fontSize: 20 }}>{currentPatente?.nome_patente || 'Iniciante'}</span>
             </div>
             <div style={{ fontSize: 12, color: '#9090a8' }}>Sua patente atual</div>
           </div>
@@ -92,8 +92,8 @@ const PatenteCard = ({ currentRevenue }: PatenteCardProps) => {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 16 }}>{nextPatente.icon}</span>
-              <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9090a8' }}>
-                Próxima: {nextPatente.nome_patente}
+              <span style={{ fontSize: 11, color: '#9090a8' }}>
+                Próxima: <span className="font-feminine" style={{ fontSize: 13, letterSpacing: 0 }}>{nextPatente.nome_patente}</span>
               </span>
             </div>
             <span style={{ fontSize: 12, color: '#c9a84c', fontWeight: 500 }}>
