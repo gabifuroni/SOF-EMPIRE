@@ -8,7 +8,7 @@ interface MaterialCostSectionProps {
 }
 
 const MaterialCostSection = ({ materialCosts, materials, onMaterialCostsChange }: MaterialCostSectionProps) => {
-  const addMaterial = () => onMaterialCostsChange([...materialCosts, { materialId: '', quantity: 1, cost: 0 }]);
+  const addMaterial = () => onMaterialCostsChange([{ materialId: "", quantity: 1, cost: 0 }, ...materialCosts]);
 
   const removeMaterial = (index: number) => onMaterialCostsChange(materialCosts.filter((_, i) => i !== index));
 
@@ -34,21 +34,9 @@ const MaterialCostSection = ({ materialCosts, materials, onMaterialCostsChange }
       `}</style>
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <h3 style={{ fontFamily: 'serif', fontSize: 15, fontWeight: 600, color: '#f0f0f8' }}>Matéria-Prima Utilizada</h3>
-        <button type="button" onClick={addMaterial} style={{ background: 'linear-gradient(135deg,#c9a84c,#8a6520)', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 12, fontWeight: 600, color: '#0a0a0f', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'Inter,sans-serif' }}>
-          <Plus size={14} /> Adicionar Material
-        </button>
-      </div>
+      <h3 style={{ fontFamily: 'serif', fontSize: 15, fontWeight: 600, color: '#f0f0f8', marginBottom: 12 }}>Matéria-Prima Utilizada</h3>
 
-      {/* Empty state */}
-      {materialCosts.length === 0 && (
-        <div style={{ background: '#1c1c26', border: '1px dashed #2a2a38', borderRadius: 10, padding: '20px', textAlign: 'center', color: '#606078', fontSize: 13 }}>
-          Nenhuma matéria-prima adicionada. Clique em "Adicionar Material" para incluir.
-        </div>
-      )}
-
-      {/* Material rows */}
+      {/* Material rows - newest first */}
       {materialCosts.map((mc, index) => (
         <div key={index} style={{ background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 10, padding: '14px 16px', marginBottom: 8, display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: 12, alignItems: 'end' }}>
           <div>
@@ -99,6 +87,18 @@ const MaterialCostSection = ({ materialCosts, materials, onMaterialCostsChange }
           </button>
         </div>
       ))}
+
+      {/* Empty state */}
+      {materialCosts.length === 0 && (
+        <div style={{ background: '#1c1c26', border: '1px dashed #2a2a38', borderRadius: 10, padding: '16px', textAlign: 'center', color: '#606078', fontSize: 13, marginBottom: 10 }}>
+          Nenhuma matéria-prima adicionada.
+        </div>
+      )}
+
+      {/* Add button - always at bottom of list */}
+      <button type="button" onClick={addMaterial} style={{ background: 'rgba(201,168,76,0.08)', border: '1px dashed rgba(201,168,76,0.3)', borderRadius: 10, padding: '10px', fontSize: 12, fontWeight: 600, color: '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontFamily: 'Inter,sans-serif', width: '100%', marginTop: 4 }}>
+        <Plus size={14} /> Adicionar Material
+      </button>
     </div>
   );
 };
