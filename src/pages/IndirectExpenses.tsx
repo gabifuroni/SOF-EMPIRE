@@ -7,6 +7,7 @@ import ExpensesHeader from "@/components/expenses/ExpensesHeader";
 import ExpensesSummaryCards from "@/components/expenses/ExpensesSummaryCards";
 import IndirectExpensesTable from "@/components/expenses/IndirectExpensesTable";
 import DirectExpensesTable from "@/components/expenses/DirectExpensesTable";
+import ContaControlTab from "@/components/expenses/ContaControlTab";
 import { useIndirectExpenseCategories, useIndirectExpenseValues } from "@/hooks/useIndirectExpenses";
 import { useDirectExpenseCategories, useDirectExpenseValues } from "@/hooks/useDirectExpenses";
 import { useTransactions } from "@/hooks/useTransactions";
@@ -242,6 +243,28 @@ const IndirectExpenses = () => {
   }, 0);
   const variableExpenses = totalMonthExpenses - fixedExpensesTotal;
 
+  // Computa mes_referencia para ContaControlTab
+  const mesReferenciaAtual = (() => {
+    const monthNumber = MONTHS.findIndex((m) => m.key === selectedMonth) + 1;
+    return `${selectedYear}-${monthNumber.toString().padStart(2, "0")}-01`;
+  })();
+
+  // Sincroniza pagamento de conta com Despesas Indiretas ou Diretas
+  const handlePagarConta = async (categoriaId: string, tipoDespesa: 'indireta' | 'direta', valor: number) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    if (tipoDespesa === 'indireta') {
+      const existing = expenses.find(e => e.categoria_id === categoriaId && e.mes_referencia === mesReferenciaAtual);
+      if (existing) {
+        await updateExpenseValue.mutateAsync({ id: existing.id, valor_mensal: valor });
+      } else {
+        await addExpenseValue.mutateAsync({ categoria_id: categoriaId, mes_referencia: mesReferenciaAtual, valor_mensal: valor });
+      }
+    } else {
+      await upsertDirectExpenseValue.mutateAsync({ categoria_id: categoriaId, mes_referencia: mesReferenciaAtual, valor_mensal: valor });
+    }
+  };
+
   return (
     <div style={{ padding: '24px 28px', background: '#0f0f17', minHeight: '100%' }}>
       <style>{`
@@ -290,11 +313,23 @@ const IndirectExpenses = () => {
       <ExpensesHeader selectedYear={selectedYear} selectedMonth={selectedMonth} onYearChange={setSelectedYear} onMonthChange={setSelectedMonth} />
       <ExpensesSummaryCards totalCategories={convertedCategories.length + directCategories.length} monthTotal={totalMonthExpenses} fixedExpensesTotal={fixedExpensesTotal} variableExpenses={variableExpenses} directExpensesTotal={directMonthTotal} indirectExpensesTotal={indirectMonthTotal} />
 
-      <Tabs defaultValue="indirect" className="w-full">
-        <TabsList className="exp-tab-list grid w-full grid-cols-2">
+      <Tabs defaultValue="controle" className="w-full">
+        <TabsList className="exp-tab-list grid w-full grid-cols-3">
+          <TabsTrigger value="controle" className="exp-tab-trigger">Controle de Contas</TabsTrigger>
           <TabsTrigger value="indirect" className="exp-tab-trigger">Despesas Indiretas</TabsTrigger>
           <TabsTrigger value="direct" className="exp-tab-trigger">Despesas Diretas</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="controle">
+          <div style={{ marginTop: 16 }}>
+            <ContaControlTab
+              mesReferencia={mesReferenciaAtual}
+              indiretasCategorias={categories.map(c => ({ id: c.id, nome: c.nome_categoria_despesa }))}
+              diretasCategorias={directCategories.map(c => ({ id: c.id, nome: c.nome_categoria }))}
+              onPagarConta={handlePagarConta}
+            />
+          </div>
+        </TabsContent>
 
         <TabsContent value="indirect">
           <div style={{ background: '#13131a', border: '1px solid #2a2a38', borderRadius: 12, marginTop: 16, overflow: 'hidden' }}>
