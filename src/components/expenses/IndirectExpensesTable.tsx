@@ -5,7 +5,6 @@ import { useState, useEffect, useRef } from "react";
 interface IndirectExpensesTableProps {
   categories: ExpenseCategory[];
   expenses: MonthlyExpense[];
-  fixedExpenses: Record<string, boolean>;
   selectedMonth: string;
   selectedYear: string;
   newCategoryName: string;
@@ -13,16 +12,18 @@ interface IndirectExpensesTableProps {
   hasUnsavedChanges: boolean;
   onUpdateExpense: (categoryId: string, value: number) => void;
   onSaveExpenseValues: () => void;
-  onToggleFixedExpense: (categoryId: string, isFixed: boolean) => void;
   onRemoveCategory: (categoryId: string) => void;
   onAddNewCategory: () => void;
   onEditCategory: (categoryId: string, newName: string) => void;
   onSetNewCategoryName: (name: string) => void;
   onSetShowAddCategory: (show: boolean) => void;
-  getExpenseForCategory: (categoryId: string) => MonthlyExpense;
   getTempExpenseValue: (categoryId: string) => number;
-  calculateYearlyTotal: (categoryId: string) => number;
   calculateMonthTotal: () => number;
+  // kept for compatibility but unused
+  fixedExpenses?: Record<string, boolean>;
+  onToggleFixedExpense?: (categoryId: string, isFixed: boolean) => void;
+  getExpenseForCategory?: (categoryId: string) => MonthlyExpense;
+  calculateYearlyTotal?: (categoryId: string) => number;
 }
 
 const MONTHS = [
@@ -40,8 +41,8 @@ const inputStyle: React.CSSProperties = {
   fontFamily: 'Sora, sans-serif', width: '100%', boxSizing: 'border-box',
 };
 
-const ExpenseInput = ({ categoryId, initialValue, isDisabled, onValueChange, hasChanges }: {
-  categoryId: string; initialValue: number; isDisabled: boolean;
+const ExpenseInput = ({ categoryId, initialValue, onValueChange, hasChanges }: {
+  categoryId: string; initialValue: number;
   onValueChange: (value: number) => void; hasChanges: boolean;
 }) => {
   const [localValue, setLocalValue] = useState(() => initialValue === 0 ? "" : initialValue.toString());
@@ -81,14 +82,10 @@ const ExpenseInput = ({ categoryId, initialValue, isDisabled, onValueChange, has
         onFocus={() => setIsFocused(true)}
         onBlur={handleBlur}
         placeholder="0,00"
-        disabled={isDisabled}
         style={{
-          ...inputStyle,
-          width: 110, textAlign: 'right',
+          ...inputStyle, width: 110, textAlign: 'right',
           borderColor: hasChanges ? '#c9a84c' : '#2a2a38',
           background: hasChanges ? 'rgba(201,168,76,0.08)' : '#1c1c26',
-          opacity: isDisabled ? 0.4 : 1,
-          cursor: isDisabled ? 'not-allowed' : 'text',
         }}
       />
       {hasChanges && (
@@ -99,12 +96,11 @@ const ExpenseInput = ({ categoryId, initialValue, isDisabled, onValueChange, has
 };
 
 const IndirectExpensesTable = ({
-  categories, expenses, fixedExpenses, selectedMonth, selectedYear,
+  categories, expenses, selectedMonth, selectedYear,
   newCategoryName, showAddCategory, hasUnsavedChanges,
-  onUpdateExpense, onSaveExpenseValues, onToggleFixedExpense,
-  onRemoveCategory, onAddNewCategory, onEditCategory,
-  onSetNewCategoryName, onSetShowAddCategory,
-  getExpenseForCategory, getTempExpenseValue, calculateYearlyTotal, calculateMonthTotal,
+  onUpdateExpense, onSaveExpenseValues, onRemoveCategory,
+  onAddNewCategory, onEditCategory, onSetNewCategoryName,
+  onSetShowAddCategory, getTempExpenseValue, calculateMonthTotal,
 }: IndirectExpensesTableProps) => {
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState("");
@@ -116,6 +112,11 @@ const IndirectExpensesTable = ({
       setEditingCategoryId(null);
       setEditingCategoryName("");
     }
+  };
+
+  const getSavedValue = (categoryId: string) => {
+    const exp = expenses.find(e => (e as any).categoria_id === categoryId);
+    return exp ? ((exp as any).valor_mensal || 0) : 0;
   };
 
   const th: React.CSSProperties = {
@@ -161,20 +162,15 @@ const IndirectExpensesTable = ({
             <thead>
               <tr style={{ background: '#0f0f18', borderBottom: '1px solid #1e1e2a' }}>
                 <th style={th}>Categoria</th>
-                <th style={{ ...th, textAlign: 'center' }}>Valor Fixo</th>
                 <th style={{ ...th, textAlign: 'right' }}>Valor do Mês (R$)</th>
-                <th style={{ ...th, textAlign: 'right' }}>Total Anual (R$)</th>
                 <th style={{ ...th, textAlign: 'center' }}>Ações</th>
               </tr>
             </thead>
             <tbody>
               {categories.map((category) => {
-                const expense = getExpenseForCategory(category.id);
-                const savedValue = (expense[selectedMonth as keyof MonthlyExpense] as number) || 0;
+                const savedValue = getSavedValue(category.id);
                 const currentValue = getTempExpenseValue(category.id);
                 const hasChanges = currentValue !== savedValue;
-                const yearlyTotal = calculateYearlyTotal(category.id);
-                const isFixed = fixedExpenses[category.id] || false;
 
                 return (
                   <tr key={category.id} style={{ borderBottom: '1px solid #1a1a24' }}>
@@ -194,36 +190,14 @@ const IndirectExpensesTable = ({
                       ) : category.name}
                     </td>
 
-                    {/* Valor Fixo */}
-                    <td style={{ padding: '11px 16px', textAlign: 'center' }}>
-                      <div
-                        onClick={() => onToggleFixedExpense(category.id, !isFixed)}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '5px 10px', background: isFixed ? 'rgba(201,168,76,0.1)' : 'rgba(255,255,255,0.03)', border: `1px solid ${isFixed ? 'rgba(201,168,76,0.3)' : '#2a2a38'}`, borderRadius: 8, cursor: 'pointer' }}
-                      >
-                        <div style={{ width: 14, height: 14, borderRadius: 3, background: isFixed ? '#c9a84c' : 'transparent', border: `2px solid ${isFixed ? '#c9a84c' : '#3a3a4a'}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {isFixed && <Check size={9} color="#0a0a0f" strokeWidth={3} />}
-                        </div>
-                        <span style={{ fontSize: 10, fontWeight: 600, color: isFixed ? '#c9a84c' : '#606078', letterSpacing: '0.05em' }}>FIXO</span>
-                      </div>
-                    </td>
-
                     {/* Valor do Mês */}
                     <td style={{ padding: '11px 16px', textAlign: 'right' }}>
                       <ExpenseInput
                         categoryId={category.id}
                         initialValue={currentValue}
-                        isDisabled={isFixed && selectedMonth !== "january"}
                         onValueChange={(value) => onUpdateExpense(category.id, value)}
                         hasChanges={hasChanges}
                       />
-                      {isFixed && selectedMonth !== "january" && (
-                        <div style={{ fontSize: 10, color: '#606078', marginTop: 3 }}>Valor fixo definido</div>
-                      )}
-                    </td>
-
-                    {/* Total Anual */}
-                    <td style={{ padding: '11px 16px', textAlign: 'right', fontSize: 13, color: '#9090a8', fontWeight: 500 }}>
-                      R$ {yearlyTotal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                     </td>
 
                     {/* Ações */}
@@ -272,7 +246,7 @@ const IndirectExpensesTable = ({
                       autoFocus
                     />
                   </td>
-                  <td /><td /><td />
+                  <td />
                   <td style={{ padding: '10px 16px', textAlign: 'center' }}>
                     <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
                       <button onClick={onAddNewCategory} style={{ background: 'linear-gradient(135deg,#c9a84c,#a8852e)', border: 'none', borderRadius: 6, padding: '5px 10px', fontSize: 11, fontWeight: 600, color: '#0a0a0f', cursor: 'pointer' }}>
@@ -286,7 +260,7 @@ const IndirectExpensesTable = ({
                 </tr>
               ) : (
                 <tr>
-                  <td colSpan={5} style={{ padding: '12px 16px', textAlign: 'center' }}>
+                  <td colSpan={3} style={{ padding: '12px 16px', textAlign: 'center' }}>
                     <button
                       onClick={() => onSetShowAddCategory(true)}
                       style={{ background: 'transparent', border: '1px dashed #2a2a38', borderRadius: 8, padding: '7px 16px', fontSize: 12, color: '#606078', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Sora, sans-serif' }}
