@@ -33,7 +33,6 @@ const ContaControlTab = ({ mesReferencia, indiretasCategorias, diretasCategorias
           : undefined,
       });
       setPagandoId(null);
-      toast.success(`"${conta.nome}" marcado como pago! ${conta.categoria_id ? 'Valor atualizado nas Despesas automaticamente.' : ''}`);
     } catch {
       toast.error('Erro ao marcar como pago');
     }
@@ -184,7 +183,6 @@ const ContaControlTab = ({ mesReferencia, indiretasCategorias, diretasCategorias
                             <div
                               onClick={() => {
                                 desmarcarPagamento.mutate(conta.id);
-                                toast.success(`"${conta.nome}" desmarcado como não pago`);
                               }}
                               title="Clique para desmarcar pagamento"
                               style={{ width: 20, height: 20, borderRadius: 5, background: '#00c896', border: '2px solid #00c896', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#0a0a0f', cursor: 'pointer' }}

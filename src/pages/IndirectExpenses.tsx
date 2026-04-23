@@ -80,7 +80,6 @@ const IndirectExpenses = () => {
       await Promise.all(savePromises);
       setTempExpenseValues({});
       await cleanOrphanTransactions();
-      toast.success("Despesas indiretas salvas com sucesso!");
     } catch { toast.error("Erro ao salvar despesas indiretas."); }
   };
 
@@ -114,7 +113,7 @@ const IndirectExpenses = () => {
 
   const addNewCategory = async () => {
     if (!newCategoryName.trim()) return;
-    try { await addCategory.mutateAsync(newCategoryName.trim()); setNewCategoryName(""); setShowAddCategory(false); toast.success("Nova categoria adicionada!"); } catch { toast.error("Erro ao adicionar categoria"); }
+    try { await addCategory.mutateAsync(newCategoryName.trim()); setNewCategoryName(""); setShowAddCategory(false); } catch { toast.error("Erro ao adicionar categoria"); }
   };
 
   const removeCategory = async (categoryId: string) => {
@@ -123,12 +122,11 @@ const IndirectExpenses = () => {
       const categoryName = categories.find(cat => cat.id === categoryId)?.nome_categoria_despesa;
       await supabase.from('transacoes_financeiras').delete().eq('user_id', user.id).eq('category', 'Despesas Indiretas').ilike('description', `%Despesa Indireta: ${categoryName}%`);
       await deleteCategory.mutateAsync(categoryId);
-      toast.success("Categoria removida!");
     } catch { toast.error("Erro ao remover categoria"); }
   };
 
   const editCategory = async (categoryId: string, newName: string) => {
-    try { await updateCategory.mutateAsync({ id: categoryId, categoryName: newName }); toast.success("Categoria atualizada!"); } catch { toast.error("Erro ao atualizar categoria"); }
+    try { await updateCategory.mutateAsync({ id: categoryId, categoryName: newName }); } catch { toast.error("Erro ao atualizar categoria"); }
   };
 
   const toggleFixedExpense = async (categoryId: string, isFixed: boolean) => {
@@ -153,13 +151,12 @@ const IndirectExpenses = () => {
       await Promise.all(savePromises);
       setTempDirectExpenseValues({});
       await cleanOrphanTransactions();
-      toast.success("Despesas diretas salvas com sucesso!");
     } catch { toast.error("Erro ao salvar despesas diretas."); }
   };
 
   const addNewDirectCategory = async () => {
     if (!newDirectCategoryName.trim()) return;
-    try { await addDirectCategory.mutateAsync(newDirectCategoryName.trim()); setNewDirectCategoryName(""); setShowAddDirectCategory(false); toast.success("Nova categoria adicionada!"); } catch { toast.error("Erro ao adicionar categoria"); }
+    try { await addDirectCategory.mutateAsync(newDirectCategoryName.trim()); setNewDirectCategoryName(""); setShowAddDirectCategory(false); } catch { toast.error("Erro ao adicionar categoria"); }
   };
 
   const removeDirectCategory = async (categoryId: string) => {
@@ -168,7 +165,6 @@ const IndirectExpenses = () => {
       const categoryName = directCategories.find(cat => cat.id === categoryId)?.nome_categoria;
       await supabase.from('transacoes_financeiras').delete().eq('user_id', user.id).eq('category', 'Despesas Diretas').ilike('description', `%Despesa Direta: ${categoryName}%`);
       await deleteDirectCategory.mutateAsync(categoryId);
-      toast.success("Categoria removida!");
     } catch { toast.error("Erro ao remover categoria"); }
   };
 
@@ -181,7 +177,6 @@ const IndirectExpenses = () => {
         const { data: related } = await supabase.from('transacoes_financeiras').select('id').eq('user_id', user.id).eq('category', 'Despesas Diretas').ilike('description', `%Despesa Direta: ${oldName}%`);
         if (related && related.length > 0) { await supabase.from('transacoes_financeiras').update({ description: `Despesa Direta: ${newName}` }).in('id', related.map(t => t.id)); }
       }
-      toast.success("Categoria atualizada!");
     } catch { toast.error("Erro ao atualizar categoria"); }
   };
 
