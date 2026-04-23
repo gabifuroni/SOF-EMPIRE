@@ -59,12 +59,12 @@ export const TeamSection = ({
         <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9090a8', display: 'flex', alignItems: 'center', gap: 8 }}>
           Colaboradoras
           <span style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 700 }}>
-            {nomesProfissionais.length}
+            {nomesProfissionais.filter(c => c.nome?.trim()).length}
           </span>
         </div>
 
         {/* Lista */}
-        {nomesProfissionais.length > 0 && (
+        {nomesProfissionais.filter(c => c.nome?.trim()).length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {nomesProfissionais.filter(c => c.nome?.trim()).map((col) => (
               <div key={col.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '8px 12px' }}>

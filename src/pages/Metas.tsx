@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
 import { useMetasColaboradoras, MetaColaboradora } from '@/hooks/useMetasColaboradoras';
 import { Target, Save, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -19,12 +19,12 @@ const normalizeColaboradoras = (raw: unknown): Colaboradora[] => {
       const nome = item.trim();
       if (!nome || seenNames.has(nome.toLowerCase())) return null;
       seenNames.add(nome.toLowerCase());
-      return { id: crypto.randomUUID(), nome };
+      return { id: nome, nome }; // use name as stable ID for legacy string format
     }
     if (typeof item === 'object' && item !== null) {
       const obj = item as Record<string, unknown>;
       const nome = ((obj.nome as string) || '').trim();
-      const id = (obj.id as string) || crypto.randomUUID();
+      const id = (obj.id as string) || nome; // fall back to nome as ID if no id
       if (!nome || seenIds.has(id) || seenNames.has(nome.toLowerCase())) return null;
       seenIds.add(id);
       seenNames.add(nome.toLowerCase());
@@ -37,32 +37,49 @@ const normalizeColaboradoras = (raw: unknown): Colaboradora[] => {
 const Metas = () => {
   const { params } = useBusinessParams();
   const now = new Date();
-  const [month, setMonth] = useState(now.getMonth()); // 0-indexed
+  const [month, setMonth] = useState(now.getMonth());
   const [year, setYear] = useState(now.getFullYear());
 
   const mesReferencia = `${year}-${String(month + 1).padStart(2, '0')}`;
   const { metas, upsertAllMetas } = useMetasColaboradoras(mesReferencia);
 
-  const colaboradoras = normalizeColaboradoras(params.equipeNomesProfissionais);
+  // Memoize by value (not reference) to avoid spurious resets
+  const colaboradoras = useMemo(
+    () => normalizeColaboradoras(params.equipeNomesProfissionais),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [JSON.stringify(params.equipeNomesProfissionais)]
+  );
 
-  // Local state for editing
   const [localMetas, setLocalMetas] = useState<Record<string, { faturamento: number; atendimentos: number }>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [savedOk, setSavedOk] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Sync when metas from DB load
+  // Step 1: when month or collaborators change → reset to zeros
   useEffect(() => {
     const map: Record<string, { faturamento: number; atendimentos: number }> = {};
     colaboradoras.forEach(col => {
-      const saved = metas.find(m => m.colaboradora_id === col.id);
-      map[col.id] = {
-        faturamento: saved?.meta_faturamento ?? 0,
-        atendimentos: saved?.meta_atendimentos ?? 0,
-      };
+      map[col.id] = { faturamento: 0, atendimentos: 0 };
     });
     setLocalMetas(map);
-  }, [metas, params.equipeNomesProfissionais]);
+  }, [mesReferencia, colaboradoras]);
+
+  // Step 2: when DB data arrives → fill in saved values (without wiping user edits for unsaved cols)
+  useEffect(() => {
+    if (metas.length === 0) return;
+    setLocalMetas(prev => {
+      const map = { ...prev };
+      metas.forEach(m => {
+        if (map[m.colaboradora_id] !== undefined) {
+          map[m.colaboradora_id] = {
+            faturamento: m.meta_faturamento ?? 0,
+            atendimentos: m.meta_atendimentos ?? 0,
+          };
+        }
+      });
+      return map;
+    });
+  }, [metas]);
 
   const handleChange = (id: string, field: 'faturamento' | 'atendimentos', value: number) => {
     setLocalMetas(prev => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
@@ -85,9 +102,10 @@ const Metas = () => {
     } catch (e: any) {
       console.error('Erro ao salvar metas:', e);
       setSaveError(e?.message || 'Erro ao salvar. Tente novamente.');
-      setTimeout(() => setSaveError(null), 5000);
+      setTimeout(() => setSaveError(null), 6000);
+    } finally {
+      setIsSaving(false);
     }
-    finally { setIsSaving(false); }
   };
 
   const prevMonth = () => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); };
@@ -114,7 +132,6 @@ const Metas = () => {
           <p style={{ fontSize: 13, color: '#9090a8', margin: 0 }}>Defina metas mensais individuais de faturamento e atendimentos</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          {/* Seletor de mês */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: '#13131a', border: '1px solid #1e1e2a', borderRadius: 10, padding: '6px 10px' }}>
             <button onClick={prevMonth} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#9090a8', display: 'flex', padding: 2 }}><ChevronLeft size={14} /></button>
             <span style={{ fontSize: 13, fontWeight: 600, color: '#f0f0f8', minWidth: 120, textAlign: 'center' }}>{MONTHS[month]} {year}</span>
@@ -132,7 +149,7 @@ const Metas = () => {
         </div>
       </div>
 
-      {/* Erro de salvamento */}
+      {/* Erro */}
       {saveError && (
         <div style={{ background: 'rgba(255,77,106,0.1)', border: '1px solid rgba(255,77,106,0.3)', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#ff8fa3' }}>
           ⚠️ {saveError}
@@ -186,9 +203,8 @@ const Metas = () => {
                     <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#606078', marginBottom: 5, textAlign: 'right' }}>Faturamento (R$)</div>
                     <input
                       type="number" min="0" step="100"
-                      value={localMetas[col.id]?.faturamento || ''}
+                      value={localMetas[col.id]?.faturamento ?? 0}
                       onChange={e => handleChange(col.id, 'faturamento', parseFloat(e.target.value) || 0)}
-                      placeholder="0,00"
                       style={inputStyle('#c9a84c')}
                     />
                   </div>
@@ -196,9 +212,8 @@ const Metas = () => {
                     <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#606078', marginBottom: 5, textAlign: 'right' }}>Atendimentos</div>
                     <input
                       type="number" min="0" step="1"
-                      value={localMetas[col.id]?.atendimentos || ''}
+                      value={localMetas[col.id]?.atendimentos ?? 0}
                       onChange={e => handleChange(col.id, 'atendimentos', parseInt(e.target.value) || 0)}
-                      placeholder="0"
                       style={inputStyle('#9090a8')}
                     />
                   </div>
