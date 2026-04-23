@@ -1,9 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Calendar, TrendingUp, FileText, Target, Edit, AlertTriangle, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
+import { Calendar, TrendingUp, FileText, Target, AlertTriangle, ChevronRight } from 'lucide-react';
 import PatenteCard from '@/components/dashboard/PatenteCard';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Link, useNavigate } from 'react-router-dom';
@@ -13,7 +9,7 @@ import { useTransactions } from '@/hooks/useTransactions';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
 import { usePatentes } from '@/hooks/usePatentes';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
-import { useUserGoals } from '@/hooks/useUserGoals';
+import { useMetasColaboradoras } from '@/hooks/useMetasColaboradoras';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -23,18 +19,14 @@ const Dashboard = () => {
     if (!adminLoading && isAdmin) navigate('/admin', { replace: true });
   }, [isAdmin, adminLoading, navigate]);
 
-  const [monthlyGoal, setMonthlyGoal] = useState(10000);
-  const [goalType, setGoalType] = useState<'financial' | 'attendance'>('financial');
-  const [attendanceGoal, setAttendanceGoal] = useState(50);
-  const [isEditingGoal, setIsEditingGoal] = useState(false);
-  const [goalInput, setGoalInput] = useState(monthlyGoal.toString());
-  const [attendanceGoalInput, setAttendanceGoalInput] = useState(attendanceGoal.toString());
-
   const { profile, isLoading: profileLoading } = useProfile();
   const { transactions, isLoading: transactionsLoading } = useTransactions();
-  const { params: businessParams, updateParams, isLoading: businessParamsLoading } = useBusinessParams();
+  const { params: businessParams, isLoading: businessParamsLoading } = useBusinessParams();
   const { getCurrentPatente, getNextPatente, isLoading: patentesLoading } = usePatentes();
-  const { goals: userGoals, saveGoals, isLoading: goalsLoading } = useUserGoals();
+
+  const now = new Date();
+  const mesReferencia = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const { metas } = useMetasColaboradoras(mesReferencia);
 
   const currentMonth = new Date();
   const monthStart = startOfMonth(currentMonth);
@@ -70,84 +62,12 @@ const Dashboard = () => {
     monthlyData.push({ month: format(date, 'MMM'), revenue: rev });
   }
 
-  const getCurrentValue = () => goalType === 'financial' ? monthlyRevenue : monthlyAttendance;
-  const getCurrentGoal = () => goalType === 'financial' ? monthlyGoal : attendanceGoal;
-  const goalProgress = getCurrentGoal() > 0 ? (getCurrentValue() / getCurrentGoal()) * 100 : 0;
-  const remainingToGoal = Math.max(0, getCurrentGoal() - getCurrentValue());
-
-  const handleSaveGoal = async () => {
-    try {
-      let goalData;
-      if (goalType === 'financial') {
-        const newGoal = parseFloat(goalInput) || 0;
-        setMonthlyGoal(newGoal);
-        goalData = { tipoMeta: 'financeira' as const, valorMetaMensal: newGoal, metaAtendimentosMensal: attendanceGoal || null };
-      } else {
-        const newGoal = parseInt(attendanceGoalInput) || 0;
-        setAttendanceGoal(newGoal);
-        goalData = { tipoMeta: 'atendimentos' as const, valorMetaMensal: monthlyGoal, metaAtendimentosMensal: newGoal };
-      }
-      await saveGoals.mutateAsync(goalData);
-      updateParams({
-        monthlyGoal: goalType === 'financial' ? goalData.valorMetaMensal : monthlyGoal,
-        attendanceGoal: goalType === 'attendance' ? goalData.metaAtendimentosMensal : attendanceGoal,
-        goalType,
-      });
-      setIsEditingGoal(false);
-    } catch {
-      alert('Erro ao salvar meta. Tente novamente.');
-    }
-  };
-
-  const handleGoalTypeChange = async (newGoalType: 'financial' | 'attendance') => {
-    try {
-      setGoalType(newGoalType);
-      const goalData = {
-        tipoMeta: newGoalType === 'financial' ? 'financeira' as const : 'atendimentos' as const,
-        valorMetaMensal: monthlyGoal,
-        metaAtendimentosMensal: attendanceGoal || null,
-      };
-      await saveGoals.mutateAsync(goalData);
-      updateParams({ goalType: newGoalType });
-    } catch {
-      alert('Erro ao alterar tipo de meta. Tente novamente.');
-    }
-  };
-
-  useEffect(() => {
-    if (userGoals && !goalsLoading) {
-      setGoalType(userGoals.tipoMeta === 'financeira' ? 'financial' : 'attendance');
-      setMonthlyGoal(userGoals.valorMetaMensal);
-      setGoalInput(userGoals.valorMetaMensal.toString());
-      if (userGoals.metaAtendimentosMensal) {
-        setAttendanceGoal(userGoals.metaAtendimentosMensal);
-        setAttendanceGoalInput(userGoals.metaAtendimentosMensal.toString());
-      } else {
-        setAttendanceGoal(30);
-        setAttendanceGoalInput('30');
-      }
-    } else if (!goalsLoading && !userGoals) {
-      setGoalType('financial');
-      setMonthlyGoal(15000);
-      setGoalInput('15000');
-      setAttendanceGoal(30);
-      setAttendanceGoalInput('30');
-    }
-  }, [userGoals, goalsLoading]);
-
-  useEffect(() => {
-    if (businessParams.monthlyGoal && businessParams.monthlyGoal !== monthlyGoal && !userGoals) {
-      setMonthlyGoal(businessParams.monthlyGoal);
-      setGoalInput(businessParams.monthlyGoal.toString());
-    }
-    if (businessParams.attendanceGoal && businessParams.attendanceGoal !== attendanceGoal && !userGoals) {
-      setAttendanceGoal(businessParams.attendanceGoal);
-      setAttendanceGoalInput(businessParams.attendanceGoal.toString());
-    }
-    if (businessParams.goalType && businessParams.goalType !== goalType && !userGoals) {
-      setGoalType(businessParams.goalType);
-    }
-  }, [businessParams, userGoals]);
+  // Totais vindos das metas cadastradas na aba Metas
+  const totalMetaFaturamento = metas.reduce((s, m) => s + (m.meta_faturamento ?? 0), 0);
+  const totalMetaAtendimentos = metas.reduce((s, m) => s + (m.meta_atendimentos ?? 0), 0);
+  const progressFaturamento = totalMetaFaturamento > 0 ? Math.min((monthlyRevenue / totalMetaFaturamento) * 100, 100) : 0;
+  const progressAtendimentos = totalMetaAtendimentos > 0 ? Math.min((monthlyAttendance / totalMetaAtendimentos) * 100, 100) : 0;
+  const hasMetas = totalMetaFaturamento > 0 || totalMetaAtendimentos > 0;
 
   if (profileLoading || transactionsLoading || businessParamsLoading || patentesLoading) {
     return (
@@ -181,8 +101,6 @@ const Dashboard = () => {
         .dash-card { animation: fadeUp 0.4s ease both; }
         .dash-card:hover { border-color: #3a3a4a !important; }
         .action-card:hover { border-color: rgba(201,168,76,0.3) !important; background: rgba(201,168,76,0.05) !important; }
-        .goal-input { background: #1c1c26; border: 1px solid #2a2a38; border-radius: 8px; padding: 8px 12px; color: #f0f0f8; font-size: 13px; outline: none; width: 100%; }
-        .goal-input:focus { border-color: #c9a84c; }
       `}</style>
 
       {/* Alerts */}
@@ -278,60 +196,56 @@ const Dashboard = () => {
             <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(201,168,76,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Target size={16} style={{ color: '#c9a84c' }} />
             </div>
-            {!isEditingGoal && (
-              <button onClick={() => setIsEditingGoal(true)} style={{ background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 6, padding: '4px 6px', cursor: 'pointer', color: '#c9a84c', display: 'flex' }}>
-                <Edit size={12} />
-              </button>
-            )}
+            <Link to="/metas" style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, color: '#c9a84c', background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 6, padding: '4px 8px', textDecoration: 'none', fontWeight: 600, letterSpacing: '0.04em' }}>
+              Configurar <ChevronRight size={10} />
+            </Link>
           </div>
-          <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6 }}>Meta do Mês</div>
+          <div style={{ fontSize: 10, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 10 }}>Metas do Mês</div>
 
-          {isEditingGoal ? (
-            <div>
-              <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-                <button
-                  type="button"
-                  onClick={() => handleGoalTypeChange('financial')}
-                  style={{ flex: 1, padding: '6px 10px', borderRadius: 8, border: `1px solid ${goalType === 'financial' ? '#c9a84c' : '#2a2a38'}`, background: goalType === 'financial' ? 'rgba(201,168,76,0.15)' : 'transparent', color: goalType === 'financial' ? '#c9a84c' : '#9090a8', fontSize: 11, fontWeight: goalType === 'financial' ? 700 : 400, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'Sora, sans-serif' }}
-                >
-                  Financeira
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleGoalTypeChange('attendance')}
-                  style={{ flex: 1, padding: '6px 10px', borderRadius: 8, border: `1px solid ${goalType === 'attendance' ? '#c9a84c' : '#2a2a38'}`, background: goalType === 'attendance' ? 'rgba(201,168,76,0.15)' : 'transparent', color: goalType === 'attendance' ? '#c9a84c' : '#9090a8', fontSize: 11, fontWeight: goalType === 'attendance' ? 700 : 400, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'Sora, sans-serif' }}
-                >
-                  Atendimentos
-                </button>
-              </div>
-              <input
-                className="goal-input"
-                type="number"
-                value={goalType === 'financial' ? goalInput : attendanceGoalInput}
-                onChange={e => goalType === 'financial' ? setGoalInput(e.target.value) : setAttendanceGoalInput(e.target.value)}
-                placeholder={goalType === 'financial' ? 'Meta financeira' : 'Nº de atendimentos'}
-              />
-              <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
-                <button onClick={handleSaveGoal} style={{ flex: 1, background: '#c9a84c', color: '#0a0a0f', border: 'none', borderRadius: 6, padding: '7px', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>Salvar</button>
-                <button onClick={() => { setIsEditingGoal(false); setGoalInput(monthlyGoal.toString()); setAttendanceGoalInput(attendanceGoal.toString()); }} style={{ flex: 1, background: 'rgba(255,255,255,0.05)', color: '#9090a8', border: '1px solid #2a2a38', borderRadius: 6, padding: '7px', fontSize: 11, cursor: 'pointer' }}>Cancelar</button>
-              </div>
+          {!hasMetas ? (
+            <div style={{ textAlign: 'center', padding: '8px 0' }}>
+              <div style={{ fontSize: 12, color: '#606078', marginBottom: 6 }}>Nenhuma meta definida</div>
+              <Link to="/metas" style={{ fontSize: 11, color: '#c9a84c', textDecoration: 'none', fontWeight: 600 }}>
+                Definir metas →
+              </Link>
             </div>
           ) : (
-            <>
-              <div style={{ fontFamily: 'Sora, sans-serif', fontSize: 20, fontWeight: 600, color: '#f0f0f8', marginBottom: 4 }}>
-                {goalType === 'financial' ? `R$ ${getCurrentGoal().toLocaleString('pt-BR')}` : `${getCurrentGoal()} atendimentos`}
-              </div>
-              <div style={{ fontSize: 10, color: '#c9a84c', marginBottom: 8 }}>
-                {goalType === 'financial' ? 'Meta Financeira' : 'Meta de Atendimentos'}
-              </div>
-              <div style={{ height: 5, background: '#1c1c26', borderRadius: 99, overflow: 'hidden', marginBottom: 6 }}>
-                <div style={{ height: '100%', width: `${Math.min(goalProgress, 100)}%`, background: 'linear-gradient(90deg, #c9a84c, #e8c96a)', borderRadius: 99, transition: 'width 0.5s ease' }} />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10 }}>
-                <span style={{ color: '#c9a84c', fontWeight: 500 }}>{goalProgress.toFixed(1)}%</span>
-                <span style={{ color: '#9090a8' }}>Faltam: {goalType === 'financial' ? `R$ ${remainingToGoal.toLocaleString('pt-BR')}` : `${remainingToGoal} atendimentos`}</span>
-              </div>
-            </>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {/* Faturamento */}
+              {totalMetaFaturamento > 0 && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginBottom: 4 }}>
+                    <span style={{ color: '#9090a8' }}>Faturamento</span>
+                    <span style={{ color: '#c9a84c', fontWeight: 600 }}>
+                      {progressFaturamento.toFixed(0)}% · R$ {totalMetaFaturamento.toLocaleString('pt-BR')}
+                    </span>
+                  </div>
+                  <div style={{ height: 5, background: '#1c1c26', borderRadius: 99, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${progressFaturamento}%`, background: 'linear-gradient(90deg,#c9a84c,#e8c96a)', borderRadius: 99, transition: 'width 0.5s ease' }} />
+                  </div>
+                  <div style={{ fontSize: 10, color: '#606078', marginTop: 3 }}>
+                    R$ {monthlyRevenue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} alcançados
+                  </div>
+                </div>
+              )}
+              {/* Atendimentos */}
+              {totalMetaAtendimentos > 0 && (
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, marginBottom: 4 }}>
+                    <span style={{ color: '#9090a8' }}>Atendimentos</span>
+                    <span style={{ color: '#9090a8', fontWeight: 600 }}>
+                      {progressAtendimentos.toFixed(0)}% · {totalMetaAtendimentos} meta
+                    </span>
+                  </div>
+                  <div style={{ height: 5, background: '#1c1c26', borderRadius: 99, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${progressAtendimentos}%`, background: 'linear-gradient(90deg,#6a9fff,#a0c4ff)', borderRadius: 99, transition: 'width 0.5s ease' }} />
+                  </div>
+                  <div style={{ fontSize: 10, color: '#606078', marginTop: 3 }}>
+                    {monthlyAttendance} atendimentos realizados
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
