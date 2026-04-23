@@ -2,11 +2,6 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import type { ContaControlInsert } from '@/hooks/useContaControl';
 
-interface Category {
-  id: string;
-  nome: string;
-}
-
 export interface AddContaData extends Omit<ContaControlInsert, 'mes_referencia'> {
   recorrente: boolean;
 }
@@ -16,8 +11,8 @@ interface AddContaModalProps {
   onClose: () => void;
   onSave: (data: AddContaData) => void;
   mesReferencia: string;
-  indiretasCategorias: Category[];
-  diretasCategorias: Category[];
+  indiretasCategorias?: unknown[];
+  diretasCategorias?: unknown[];
 }
 
 const inputStyle: React.CSSProperties = {
@@ -30,18 +25,15 @@ const labelStyle: React.CSSProperties = {
   textTransform: 'uppercase' as const, color: '#9090a8', marginBottom: 6, display: 'block',
 };
 
-const AddContaModal = ({ isOpen, onClose, onSave, mesReferencia, indiretasCategorias, diretasCategorias }: AddContaModalProps) => {
+const AddContaModal = ({ isOpen, onClose, onSave }: AddContaModalProps) => {
   const [form, setForm] = useState({
     nome: '',
     observacao: '',
     valor_planejado: '',
     data_vencimento: '',
     tipo_despesa: 'indireta' as 'indireta' | 'direta',
-    categoria_id: '',
   });
   const [recorrente, setRecorrente] = useState(false);
-
-  const categorias = form.tipo_despesa === 'indireta' ? indiretasCategorias : diretasCategorias;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,12 +45,12 @@ const AddContaModal = ({ isOpen, onClose, onSave, mesReferencia, indiretasCatego
       valor_planejado: parseFloat(form.valor_planejado),
       data_vencimento: form.data_vencimento || undefined,
       tipo_despesa: form.tipo_despesa,
-      categoria_id: form.categoria_id || undefined,
+      categoria_id: undefined,
       pago: false,
       recorrente,
     });
 
-    setForm({ nome: '', observacao: '', valor_planejado: '', data_vencimento: '', tipo_despesa: 'indireta', categoria_id: '' });
+    setForm({ nome: '', observacao: '', valor_planejado: '', data_vencimento: '', tipo_despesa: 'indireta' });
     setRecorrente(false);
     onClose();
   };
@@ -72,7 +64,6 @@ const AddContaModal = ({ isOpen, onClose, onSave, mesReferencia, indiretasCatego
         <style>{`
           .conta-input:focus { border-color: #c9a84c !important; box-shadow: 0 0 0 2px rgba(201,168,76,0.15) !important; }
           .conta-input::placeholder { color: #606078 !important; }
-          .conta-input option { background: #1c1c26; color: #f0f0f8; }
           .tipo-btn { flex: 1; padding: 9px; border-radius: 8px; border: 1px solid #2a2a38; background: transparent; color: #9090a8; font-family: Sora, sans-serif; font-size: 13px; cursor: pointer; transition: all 0.15s; }
           .tipo-btn.active { background: rgba(201,168,76,0.12); border-color: rgba(201,168,76,0.3); color: #c9a84c; font-weight: 600; }
         `}</style>
@@ -105,37 +96,18 @@ const AddContaModal = ({ isOpen, onClose, onSave, mesReferencia, indiretasCatego
               <button
                 type="button"
                 className={`tipo-btn ${form.tipo_despesa === 'indireta' ? 'active' : ''}`}
-                onClick={() => setForm(p => ({ ...p, tipo_despesa: 'indireta', categoria_id: '' }))}
+                onClick={() => setForm(p => ({ ...p, tipo_despesa: 'indireta' }))}
               >
                 ↗ Despesa Indireta
               </button>
               <button
                 type="button"
                 className={`tipo-btn ${form.tipo_despesa === 'direta' ? 'active' : ''}`}
-                onClick={() => setForm(p => ({ ...p, tipo_despesa: 'direta', categoria_id: '' }))}
+                onClick={() => setForm(p => ({ ...p, tipo_despesa: 'direta' }))}
               >
                 ↗ Despesa Direta
               </button>
             </div>
-          </div>
-
-          {/* Categoria vinculada */}
-          <div>
-            <label style={labelStyle}>Categoria Vinculada</label>
-            <select
-              className="conta-input"
-              style={{ ...inputStyle, cursor: 'pointer' }}
-              value={form.categoria_id}
-              onChange={e => setForm(p => ({ ...p, categoria_id: e.target.value }))}
-            >
-              <option value="">Sem vínculo (opcional)</option>
-              {categorias.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.nome}</option>
-              ))}
-            </select>
-            <p style={{ fontSize: 11, color: '#606078', marginTop: 4 }}>
-              Quando pago, o valor real vai automaticamente para esta categoria
-            </p>
           </div>
 
           {/* Valor planejado + Vencimento */}
