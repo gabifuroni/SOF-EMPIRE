@@ -151,10 +151,35 @@ const IndirectExpensesTable = ({
 
       {/* Table */}
       {categories.length === 0 ? (
-        <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+        <div style={{ padding: '30px 20px', textAlign: 'center' }}>
           <div style={{ fontSize: 32, marginBottom: 12 }}>📊</div>
           <div style={{ fontSize: 14, color: '#f0f0f8', marginBottom: 6 }}>Sem categorias no momento</div>
-          <div style={{ fontSize: 12, color: '#606078' }}>Adicione uma nova categoria para começar</div>
+          <div style={{ fontSize: 12, color: '#606078', marginBottom: 16 }}>Adicione uma nova categoria para começar</div>
+          {showAddCategory ? (
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', maxWidth: 360, margin: '0 auto' }}>
+              <input
+                value={newCategoryName}
+                onChange={(e) => onSetNewCategoryName(e.target.value)}
+                placeholder="Nome da nova categoria"
+                onKeyDown={(e) => e.key === 'Enter' && onAddNewCategory()}
+                style={{ ...inputStyle, borderColor: '#c9a84c', borderStyle: 'dashed' }}
+                autoFocus
+              />
+              <button onClick={onAddNewCategory} style={{ background: 'linear-gradient(135deg,#c9a84c,#a8852e)', border: 'none', borderRadius: 6, padding: '7px 12px', fontSize: 11, fontWeight: 600, color: '#0a0a0f', cursor: 'pointer' }}>
+                <Plus size={12} />
+              </button>
+              <button onClick={() => { onSetShowAddCategory(false); onSetNewCategoryName(''); }} style={{ background: 'transparent', border: '1px solid #2a2a38', borderRadius: 6, padding: '7px 10px', fontSize: 11, color: '#9090a8', cursor: 'pointer' }}>
+                ✕
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => onSetShowAddCategory(true)}
+              style={{ background: 'transparent', border: '1px dashed #2a2a38', borderRadius: 8, padding: '7px 16px', fontSize: 12, color: '#606078', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'Sora, sans-serif' }}
+            >
+              <Plus size={12} /> Adicionar Nova Categoria
+            </button>
+          )}
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
