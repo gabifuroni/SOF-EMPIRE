@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CashFlowEntry } from '@/types';
+import { CashFlowEntry, ServicoRealizado } from '@/types';
 import { format, parse } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
-import { Calendar, DollarSign, Tag } from 'lucide-react';
+import { Calendar, DollarSign, Tag, User, Minus, Plus } from 'lucide-react';
+import { useBusinessParams } from '@/hooks/useBusinessParams';
 
 interface AddEntryModalProps {
   show: boolean;
@@ -16,11 +17,23 @@ interface AddEntryModalProps {
 interface Service { id: string; name: string; sale_price: number; }
 
 const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryModalProps) => {
-  const [formData, setFormData] = useState({ date: format(defaultDate || new Date(), 'yyyy-MM-dd'), description: '', amount: '' });
+  const { params } = useBusinessParams();
+
+  // Active collaborators for the dropdown
+  const colaboradoras = (params.equipeNomesProfissionais || [])
+    .filter((c: any) => c.ativo !== false && c.nome?.trim());
+
+  const [formData, setFormData] = useState({
+    date: format(defaultDate || new Date(), 'yyyy-MM-dd'),
+    description: '',
+    amount: '',
+    profissionalNome: '',
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [services, setServices] = useState<Service[]>([]);
-  const [selectedServices, setSelectedServices] = useState<string[]>([]);
   const [loadingServices, setLoadingServices] = useState(false);
+  // Map serviceId → quantity (0 = not selected)
+  const [serviceQtd, setServiceQtd] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const loadServices = async () => {
@@ -29,7 +42,11 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
       try {
         const { data: user } = await supabase.auth.getUser();
         if (!user.user) return;
-        const { data, error } = await supabase.from('servicos').select('id, name, sale_price').eq('user_id', user.user.id).order('name');
+        const { data, error } = await supabase
+          .from('servicos')
+          .select('id, name, sale_price')
+          .eq('user_id', user.user.id)
+          .order('name');
         if (!error) setServices(data || []);
       } catch {} finally { setLoadingServices(false); }
     };
@@ -38,23 +55,50 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
 
   useEffect(() => {
     if (entry) {
-      setFormData({ date: format(new Date(entry.date), 'yyyy-MM-dd'), description: entry.description, amount: entry.amount.toString() });
+      setFormData({
+        date: format(new Date(entry.date), 'yyyy-MM-dd'),
+        description: entry.description,
+        amount: entry.amount.toString(),
+        profissionalNome: entry.profissionalNome || '',
+      });
+      // Rebuild serviceQtd from servicosRealizados if editing
+      if (entry.servicosRealizados) {
+        const map: Record<string, number> = {};
+        entry.servicosRealizados.forEach(s => { map[s.id] = s.quantidade; });
+        setServiceQtd(map);
+      } else {
+        setServiceQtd({});
+      }
     } else {
-      setFormData({ date: format(defaultDate || new Date(), 'yyyy-MM-dd'), description: '', amount: '' });
-      setSelectedServices([]);
+      setFormData({ date: format(defaultDate || new Date(), 'yyyy-MM-dd'), description: '', amount: '', profissionalNome: '' });
+      setServiceQtd({});
     }
     setErrors({});
   }, [entry, show, defaultDate]);
 
-  const handleServiceToggle = (serviceId: string) => {
-    setSelectedServices(prev => {
-      const isSelected = prev.includes(serviceId);
-      const newSelection = isSelected ? prev.filter(id => id !== serviceId) : [...prev, serviceId];
-      const selectedList = services.filter(s => newSelection.includes(s.id));
-      const totalAmount = selectedList.reduce((sum, s) => sum + s.sale_price, 0);
-      setFormData(prev => ({ ...prev, description: selectedList.map(s => s.name).join(', ') || prev.description, amount: totalAmount > 0 ? totalAmount.toString() : prev.amount }));
-      return newSelection;
+  // Recalculate total + description whenever serviceQtd changes
+  useEffect(() => {
+    const selected = services.filter(s => (serviceQtd[s.id] || 0) > 0);
+    if (selected.length === 0) return;
+    const total = selected.reduce((sum, s) => sum + s.sale_price * (serviceQtd[s.id] || 1), 0);
+    const desc = selected.map(s => {
+      const q = serviceQtd[s.id] || 1;
+      return q > 1 ? `${s.name} (x${q})` : s.name;
+    }).join(', ');
+    setFormData(p => ({ ...p, description: desc, amount: total.toString() }));
+  }, [serviceQtd, services]);
+
+  const handleQtdChange = (serviceId: string, delta: number) => {
+    setServiceQtd(prev => {
+      const current = prev[serviceId] || 0;
+      const next = Math.max(0, current + delta);
+      return { ...prev, [serviceId]: next };
     });
+  };
+
+  const handleQtdInput = (serviceId: string, val: string) => {
+    const n = parseInt(val) || 0;
+    setServiceQtd(prev => ({ ...prev, [serviceId]: Math.max(0, n) }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -63,7 +107,22 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
     if (!formData.description.trim()) newErrors.description = 'Descrição é obrigatória';
     if (!formData.amount || parseFloat(formData.amount) <= 0) newErrors.amount = 'Valor deve ser maior que zero';
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
-    onSave({ date: parse(formData.date, 'yyyy-MM-dd', new Date()), description: formData.description.trim(), type: 'entrada', amount: parseFloat(formData.amount), paymentMethod: undefined, client: undefined, commission: undefined });
+
+    const servicosRealizados: ServicoRealizado[] = services
+      .filter(s => (serviceQtd[s.id] || 0) > 0)
+      .map(s => ({ id: s.id, nome: s.name, quantidade: serviceQtd[s.id], valor_unitario: s.sale_price }));
+
+    onSave({
+      date: parse(formData.date, 'yyyy-MM-dd', new Date()),
+      description: formData.description.trim(),
+      type: 'entrada',
+      amount: parseFloat(formData.amount),
+      paymentMethod: undefined,
+      client: undefined,
+      commission: undefined,
+      profissionalNome: formData.profissionalNome || undefined,
+      servicosRealizados: servicosRealizados.length > 0 ? servicosRealizados : undefined,
+    });
     onClose();
   };
 
@@ -76,8 +135,8 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
         <style>{`
           .entry-input:focus { border-color: #c9a84c !important; box-shadow: 0 0 0 2px rgba(201,168,76,0.15) !important; }
           .entry-input::placeholder { color: #606078 !important; }
-          .svc-item:hover { background: rgba(255,255,255,0.04) !important; }
-          .svc-item.selected { background: rgba(201,168,76,0.08) !important; border-color: rgba(201,168,76,0.25) !important; }
+          .svc-row:hover { background: rgba(255,255,255,0.03) !important; }
+          .qtd-btn:hover { background: rgba(201,168,76,0.2) !important; }
         `}</style>
 
         <DialogHeader>
@@ -94,28 +153,68 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
             <input className="entry-input" style={inputStyle} type="date" value={formData.date} onChange={e => setFormData(p => ({ ...p, date: e.target.value }))} />
           </div>
 
-          {/* Serviços */}
+          {/* Profissional */}
+          {colaboradoras.length > 0 && (
+            <div>
+              <label style={labelStyle}><User size={12} /> Profissional</label>
+              <select
+                className="entry-input"
+                style={{ ...inputStyle, cursor: 'pointer' }}
+                value={formData.profissionalNome}
+                onChange={e => setFormData(p => ({ ...p, profissionalNome: e.target.value }))}
+              >
+                <option value="">Selecionar profissional...</option>
+                {colaboradoras.map((c: any) => (
+                  <option key={c.id} value={c.nome}>{c.nome}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {/* Serviços com quantidade */}
           {services.length > 0 && (
             <div>
               <label style={labelStyle}><Tag size={12} /> Serviços Prestados (Opcional)</label>
-              <div style={{ background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 10, maxHeight: 140, overflowY: 'auto', padding: 4 }}>
+              <div style={{ background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 10, maxHeight: 200, overflowY: 'auto', padding: 4 }}>
                 {loadingServices ? (
                   <div style={{ padding: '12px', textAlign: 'center', color: '#9090a8', fontSize: 13 }}>Carregando...</div>
                 ) : (
-                  services.map(service => (
-                    <div
-                      key={service.id}
-                      className={`svc-item ${selectedServices.includes(service.id) ? 'selected' : ''}`}
-                      onClick={() => handleServiceToggle(service.id)}
-                      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, cursor: 'pointer', border: '1px solid transparent', marginBottom: 2, transition: 'all 0.15s' }}
-                    >
-                      <div style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${selectedServices.includes(service.id) ? '#c9a84c' : '#3a3a4a'}`, background: selectedServices.includes(service.id) ? '#c9a84c' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.15s' }}>
-                        {selectedServices.includes(service.id) && <span style={{ color: '#0a0a0f', fontSize: 10, fontWeight: 700 }}>✓</span>}
+                  services.map(service => {
+                    const qty = serviceQtd[service.id] || 0;
+                    const selected = qty > 0;
+                    return (
+                      <div
+                        key={service.id}
+                        className="svc-row"
+                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, border: `1px solid ${selected ? 'rgba(201,168,76,0.2)' : 'transparent'}`, background: selected ? 'rgba(201,168,76,0.06)' : 'transparent', marginBottom: 2, transition: 'all 0.15s' }}
+                      >
+                        {/* Nome + preço */}
+                        <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => handleQtdChange(service.id, qty === 0 ? 1 : -qty)}>
+                          <div style={{ fontSize: 13, color: selected ? '#c9a84c' : '#f0f0f8' }}>{service.name}</div>
+                          <div style={{ fontSize: 11, color: '#606078' }}>
+                            R$ {service.sale_price.toFixed(2)}{selected && qty > 1 ? ` × ${qty} = R$ ${(service.sale_price * qty).toFixed(2)}` : ''}
+                          </div>
+                        </div>
+                        {/* Stepper de quantidade */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <button type="button" className="qtd-btn" onClick={() => handleQtdChange(service.id, -1)} style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', color: '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Minus size={10} />
+                          </button>
+                          <input
+                            type="number" min="0"
+                            value={qty || ''}
+                            placeholder="0"
+                            onChange={e => handleQtdInput(service.id, e.target.value)}
+                            onClick={e => e.stopPropagation()}
+                            style={{ width: 36, background: '#13131a', border: '1px solid #2a2a38', borderRadius: 6, padding: '3px 4px', color: '#f0f0f8', fontSize: 13, textAlign: 'center', outline: 'none', fontFamily: 'Sora, sans-serif' }}
+                          />
+                          <button type="button" className="qtd-btn" onClick={() => handleQtdChange(service.id, 1)} style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', color: '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Plus size={10} />
+                          </button>
+                        </div>
                       </div>
-                      <span style={{ fontSize: 13, color: selectedServices.includes(service.id) ? '#c9a84c' : '#f0f0f8', flex: 1 }}>{service.name}</span>
-                      <span style={{ fontSize: 12, color: '#00c896', fontWeight: 500 }}>R$ {service.sale_price.toFixed(2)}</span>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -124,13 +223,13 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
           {/* Descrição */}
           <div>
             <label style={labelStyle}><Tag size={12} /> Descrição *</label>
-            <input className="entry-input" style={{ ...inputStyle, borderColor: errors.description ? '#ff4d6a' : '#2a2a38' }} placeholder="Ex: Serviço de Manicure - Ana Paula" value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} />
+            <input className="entry-input" style={{ ...inputStyle, borderColor: errors.description ? '#ff4d6a' : '#2a2a38' }} placeholder="Ex: Design de sobrancelhas - Ana" value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} />
             {errors.description && <p style={{ fontSize: 12, color: '#ff4d6a', marginTop: 4 }}>{errors.description}</p>}
           </div>
 
           {/* Valor */}
           <div>
-            <label style={labelStyle}><DollarSign size={12} /> Valor (R$) *</label>
+            <label style={labelStyle}><DollarSign size={12} /> Valor Total (R$) *</label>
             <input className="entry-input" style={{ ...inputStyle, borderColor: errors.amount ? '#ff4d6a' : '#2a2a38' }} type="number" step="0.01" min="0" placeholder="0,00" value={formData.amount} onChange={e => setFormData(p => ({ ...p, amount: e.target.value }))} />
             {errors.amount && <p style={{ fontSize: 12, color: '#ff4d6a', marginTop: 4 }}>{errors.amount}</p>}
           </div>

@@ -48,7 +48,16 @@ const DailyCashFlow = () => {
 
   const handleAddEntry = async (entryData: any) => {
     try {
-      await addTransaction.mutateAsync({ description: entryData.description, valor: entryData.amount, tipo_transacao: 'ENTRADA', date: format(entryData.date, 'yyyy-MM-dd'), payment_method: entryData.paymentMethod, commission: entryData.commission ? (entryData.amount * entryData.commission) / 100 : null });
+      await addTransaction.mutateAsync({
+        description: entryData.description,
+        valor: entryData.amount,
+        tipo_transacao: 'ENTRADA',
+        date: format(entryData.date, 'yyyy-MM-dd'),
+        payment_method: entryData.paymentMethod,
+        commission: entryData.commission ? (entryData.amount * entryData.commission) / 100 : null,
+        profissional_nome: entryData.profissionalNome || null,
+        servicos_realizados: entryData.servicosRealizados ? JSON.stringify(entryData.servicosRealizados) : null,
+      } as any);
       setIsAddEntryModalOpen(false);
     } catch {}
   };

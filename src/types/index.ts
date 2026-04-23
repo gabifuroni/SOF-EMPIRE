@@ -62,17 +62,26 @@ export interface Service {
   profitMargin: number;
 }
 
+export interface ServicoRealizado {
+  id: string;
+  nome: string;
+  quantidade: number;
+  valor_unitario: number;
+}
+
 export interface CashFlowEntry {
   id: string;
   date: Date;
   description: string;
   type: 'entrada' | 'saida';
   amount: number;
-  paymentMethod?: string; // For entrada
-  category?: string; // For saida
-  client?: string; // Optional for entrada
-  supplier?: string; // Optional for saida
-  commission?: number; // Optional commission for entrada
+  paymentMethod?: string;
+  category?: string;
+  client?: string;
+  supplier?: string;
+  commission?: number;
+  profissionalNome?: string;
+  servicosRealizados?: ServicoRealizado[];
 }
 
 export interface ExpenseCategory {
