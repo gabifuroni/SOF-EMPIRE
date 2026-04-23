@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { CashFlowEntry } from '@/types';
 import { format, parse } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
-import { Calendar, DollarSign, Tag, User, CreditCard, Percent } from 'lucide-react';
+import { Calendar, DollarSign, Tag } from 'lucide-react';
 
 interface AddEntryModalProps {
   show: boolean;
@@ -16,7 +16,7 @@ interface AddEntryModalProps {
 interface Service { id: string; name: string; sale_price: number; }
 
 const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryModalProps) => {
-  const [formData, setFormData] = useState({ date: format(defaultDate || new Date(), 'yyyy-MM-dd'), description: '', amount: '', paymentMethod: '', client: '', commission: '' });
+  const [formData, setFormData] = useState({ date: format(defaultDate || new Date(), 'yyyy-MM-dd'), description: '', amount: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [services, setServices] = useState<Service[]>([]);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
@@ -38,9 +38,9 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
 
   useEffect(() => {
     if (entry) {
-      setFormData({ date: format(new Date(entry.date), 'yyyy-MM-dd'), description: entry.description, amount: entry.amount.toString(), paymentMethod: entry.paymentMethod || '', client: entry.client || '', commission: entry.commission && entry.amount > 0 ? ((entry.commission / entry.amount) * 100).toString() : '' });
+      setFormData({ date: format(new Date(entry.date), 'yyyy-MM-dd'), description: entry.description, amount: entry.amount.toString() });
     } else {
-      setFormData({ date: format(defaultDate || new Date(), 'yyyy-MM-dd'), description: '', amount: '', paymentMethod: '', client: '', commission: '' });
+      setFormData({ date: format(defaultDate || new Date(), 'yyyy-MM-dd'), description: '', amount: '' });
       setSelectedServices([]);
     }
     setErrors({});
@@ -62,13 +62,10 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
     const newErrors: Record<string, string> = {};
     if (!formData.description.trim()) newErrors.description = 'Descrição é obrigatória';
     if (!formData.amount || parseFloat(formData.amount) <= 0) newErrors.amount = 'Valor deve ser maior que zero';
-    if (!formData.paymentMethod) newErrors.paymentMethod = 'Forma de pagamento é obrigatória';
     if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
-    onSave({ date: parse(formData.date, 'yyyy-MM-dd', new Date()), description: formData.description.trim(), type: 'entrada', amount: parseFloat(formData.amount), paymentMethod: formData.paymentMethod, client: formData.client.trim() || undefined, commission: formData.commission ? parseFloat(formData.commission) : undefined });
+    onSave({ date: parse(formData.date, 'yyyy-MM-dd', new Date()), description: formData.description.trim(), type: 'entrada', amount: parseFloat(formData.amount), paymentMethod: undefined, client: undefined, commission: undefined });
     onClose();
   };
-
-  const paymentMethods = ['Dinheiro', 'Pix', 'Cartão de Débito', 'Cartão de Crédito', 'Crédito Parcelado', 'Transferência Bancária'];
 
   const inputStyle: React.CSSProperties = { width: '100%', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '10px 14px', color: '#f0f0f8', fontSize: 14, outline: 'none', fontFamily: 'Sora, sans-serif', boxSizing: 'border-box' };
   const labelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 };
@@ -79,7 +76,6 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
         <style>{`
           .entry-input:focus { border-color: #c9a84c !important; box-shadow: 0 0 0 2px rgba(201,168,76,0.15) !important; }
           .entry-input::placeholder { color: #606078 !important; }
-          .entry-select option { background: #1c1c26; color: #f0f0f8; }
           .svc-item:hover { background: rgba(255,255,255,0.04) !important; }
           .svc-item.selected { background: rgba(201,168,76,0.08) !important; border-color: rgba(201,168,76,0.25) !important; }
         `}</style>
@@ -91,7 +87,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
         </DialogHeader>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 8 }}>
-          
+
           {/* Data */}
           <div>
             <label style={labelStyle}><Calendar size={12} /> Data</label>
@@ -137,29 +133,6 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
             <label style={labelStyle}><DollarSign size={12} /> Valor (R$) *</label>
             <input className="entry-input" style={{ ...inputStyle, borderColor: errors.amount ? '#ff4d6a' : '#2a2a38' }} type="number" step="0.01" min="0" placeholder="0,00" value={formData.amount} onChange={e => setFormData(p => ({ ...p, amount: e.target.value }))} />
             {errors.amount && <p style={{ fontSize: 12, color: '#ff4d6a', marginTop: 4 }}>{errors.amount}</p>}
-          </div>
-
-          {/* Comissão */}
-          <div>
-            <label style={labelStyle}><Percent size={12} /> Comissão (%) — Opcional</label>
-            <input className="entry-input" style={inputStyle} type="number" step="0.1" min="0" max="100" placeholder="0,0" value={formData.commission} onChange={e => setFormData(p => ({ ...p, commission: e.target.value }))} />
-            <p style={{ fontSize: 11, color: '#606078', marginTop: 4 }}>Se não informado, será usado o percentual dos parâmetros do negócio</p>
-          </div>
-
-          {/* Forma de Pagamento */}
-          <div>
-            <label style={labelStyle}><CreditCard size={12} /> Forma de Pagamento *</label>
-            <select className="entry-input entry-select" style={{ ...inputStyle, borderColor: errors.paymentMethod ? '#ff4d6a' : '#2a2a38', cursor: 'pointer' }} value={formData.paymentMethod} onChange={e => setFormData(p => ({ ...p, paymentMethod: e.target.value }))}>
-              <option value="">Selecione a forma de pagamento</option>
-              {paymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
-            </select>
-            {errors.paymentMethod && <p style={{ fontSize: 12, color: '#ff4d6a', marginTop: 4 }}>{errors.paymentMethod}</p>}
-          </div>
-
-          {/* Cliente */}
-          <div>
-            <label style={labelStyle}><User size={12} /> Cliente — Opcional</label>
-            <input className="entry-input" style={inputStyle} placeholder="Nome do cliente" value={formData.client} onChange={e => setFormData(p => ({ ...p, client: e.target.value }))} />
           </div>
 
           {/* Botões */}
