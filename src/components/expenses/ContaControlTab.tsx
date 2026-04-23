@@ -17,7 +17,7 @@ interface ContaControlTabProps {
 }
 
 const ContaControlTab = ({ mesReferencia, indiretasCategorias, diretasCategorias, onPagarConta }: ContaControlTabProps) => {
-  const { contas, isLoading, addConta, deleteConta, marcarComoPago, totalPlanejado, totalPago, totalPendente } = useContaControl(mesReferencia);
+  const { contas, isLoading, addConta, deleteConta, marcarComoPago, desmarcarPagamento, totalPlanejado, totalPago, totalPendente } = useContaControl(mesReferencia);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pagandoId, setPagandoId] = useState<string | null>(null);
   const [valorReal, setValorReal] = useState<Record<string, string>>({});
@@ -180,7 +180,23 @@ const ContaControlTab = ({ mesReferencia, indiretasCategorias, diretasCategorias
                     <td style={{ padding: '11px 14px', textAlign: 'center' }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                         {conta.pago ? (
-                          <div style={{ width: 20, height: 20, borderRadius: 5, background: '#00c896', border: '2px solid #00c896', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#0a0a0f' }}>✓</div>
+                          <>
+                            <div
+                              onClick={() => {
+                                desmarcarPagamento.mutate(conta.id);
+                                toast.success(`"${conta.nome}" desmarcado como não pago`);
+                              }}
+                              title="Clique para desmarcar pagamento"
+                              style={{ width: 20, height: 20, borderRadius: 5, background: '#00c896', border: '2px solid #00c896', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: '#0a0a0f', cursor: 'pointer' }}
+                            >✓</div>
+                            <button
+                              onClick={() => deleteConta.mutate(conta.id)}
+                              style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#3a3a4a', padding: 2 }}
+                              title="Remover conta"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </>
                         ) : pagandoId === conta.id ? (
                           <>
                             <button

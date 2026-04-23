@@ -128,6 +128,26 @@ export const useContaControl = (mesReferencia: string) => {
     },
   });
 
+  const desmarcarPagamento = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('controle_contas' as any)
+        .update({
+          pago: false,
+          valor_real: null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['controle-contas', mesReferencia] });
+      queryClient.invalidateQueries({ queryKey: ['indirect-expense-values'] });
+      queryClient.invalidateQueries({ queryKey: ['direct-expense-values'] });
+    },
+  });
+
   const totalPlanejado = contas.reduce((sum, c) => sum + c.valor_planejado, 0);
   const totalPago = contas.filter(c => c.pago).reduce((sum, c) => sum + (c.valor_real || 0), 0);
   const totalPendente = contas.filter(c => !c.pago).reduce((sum, c) => sum + c.valor_planejado, 0);
@@ -139,6 +159,7 @@ export const useContaControl = (mesReferencia: string) => {
     updateConta,
     deleteConta,
     marcarComoPago,
+    desmarcarPagamento,
     totalPlanejado,
     totalPago,
     totalPendente,
