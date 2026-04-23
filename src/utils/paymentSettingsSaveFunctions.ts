@@ -541,15 +541,12 @@ export const createSaveFunctions = ({
     depreciacaoMensal: number,
     numProfessionals: number,
     workingDays: WorkingDays,
-    holidays: Holiday[]
+    holidays: Holiday[],
+    nomesProfissionais?: string[]
   ) => {
     setIsSaving(true);
-    
-    try {
-      console.log('Salvando dados de equipe:', {
-        numProfessionals
-      });
 
+    try {
       await saveSettings.mutateAsync({
         lucroDesejado,
         despesasIndiretasDepreciacao,
@@ -560,6 +557,7 @@ export const createSaveFunctions = ({
         depreciacaoMensal,
         diasTrabalhadosAno: calculateWorkingDaysPerYear(),
         equipeNumeroProfissionais: numProfessionals,
+        equipeNomesProfissionais: nomesProfissionais ?? [],
         trabalhaSegunda: workingDays.segunda,
         trabalhaTerca: workingDays.terca,
         trabalhaQuarta: workingDays.quarta,
@@ -572,6 +570,7 @@ export const createSaveFunctions = ({
 
       updateParams({
         equipeNumeroProfissionais: numProfessionals,
+        equipeNomesProfissionais: nomesProfissionais ?? [],
       });
 
       toast({

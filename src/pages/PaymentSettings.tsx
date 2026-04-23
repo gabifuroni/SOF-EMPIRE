@@ -23,7 +23,8 @@ const PaymentSettings = () => {
   useBusinessParamsInitialization(
     logic.params, logic.setLucroDesejado, logic.setDespesasIndiretasDepreciacao,
     logic.setImpostosRate, logic.setValorMobilizado, logic.setTotalDepreciado,
-    logic.setNumProfessionals, logic.setWorkingDays, logic.setHolidays
+    logic.setNumProfessionals, logic.setWorkingDays, logic.setHolidays,
+    logic.setNomesProfissionais
   );
 
   const saveFunctions = createSaveFunctions({
@@ -129,8 +130,8 @@ const PaymentSettings = () => {
           onSave={() => saveFunctions.handleSaveWorkingDays(logic.lucroDesejado, logic.despesasIndiretasDepreciacao, logic.impostosRate, logic.valorMobilizado, logic.totalDepreciado, logic.depreciacaoMensal, logic.numProfessionals, logic.workingDays, logic.holidays)}
         />
         <TeamSection
-          numProfessionals={logic.numProfessionals} setNumProfessionals={logic.setNumProfessionals} isSaving={logic.isSaving}
-          onSave={() => saveFunctions.handleSaveTeam(logic.lucroDesejado, logic.despesasIndiretasDepreciacao, logic.impostosRate, logic.valorMobilizado, logic.totalDepreciado, logic.depreciacaoMensal, logic.numProfessionals, logic.workingDays, logic.holidays)}
+          nomesProfissionais={logic.nomesProfissionais} setNomesProfissionais={logic.setNomesProfissionais} isSaving={logic.isSaving}
+          onSave={() => saveFunctions.handleSaveTeam(logic.lucroDesejado, logic.despesasIndiretasDepreciacao, logic.impostosRate, logic.valorMobilizado, logic.totalDepreciado, logic.depreciacaoMensal, logic.nomesProfissionais.length || logic.numProfessionals, logic.workingDays, logic.holidays, logic.nomesProfissionais)}
         />
         <PaymentMethodsSection
           paymentMethods={logic.paymentMethods} totalDistribution={logic.totalDistribution}

@@ -13,6 +13,7 @@ interface BusinessSettings {
   depreciacaoMensal: number;
   diasTrabalhadosAno: number;
   equipeNumeroProfissionais: number;
+  equipeNomesProfissionais?: string[];
   trabalhaSegunda?: boolean;
   trabalhaTerca?: boolean;
   trabalhaQuarta?: boolean;
@@ -78,6 +79,13 @@ export const useBusinessSettings = () => {
         depreciacaoMensal: Number(data.depreciacao_mensal),
         diasTrabalhadosAno: data.dias_trabalhados_ano,
         equipeNumeroProfissionais: data.equipe_numero_profissionais,
+        equipeNomesProfissionais: (() => {
+          try {
+            const raw = (data as any).equipe_nomes_profissionais;
+            if (!raw) return [];
+            return Array.isArray(raw) ? raw : JSON.parse(raw);
+          } catch { return []; }
+        })(),
         trabalhaSegunda: (dbData.trabalha_segunda as boolean) ?? true,
         trabalhaTerca: (dbData.trabalha_terca as boolean) ?? true,
         trabalhaQuarta: (dbData.trabalha_quarta as boolean) ?? true,
@@ -109,6 +117,7 @@ export const useBusinessSettings = () => {
           depreciacao_mensal: newSettings.depreciacaoMensal,
           dias_trabalhados_ano: newSettings.diasTrabalhadosAno,
           equipe_numero_profissionais: newSettings.equipeNumeroProfissionais,
+          equipe_nomes_profissionais: JSON.stringify(newSettings.equipeNomesProfissionais ?? []),
           trabalha_segunda: newSettings.trabalhaSegunda ?? true,
           trabalha_terca: newSettings.trabalhaTerca ?? true,
           trabalha_quarta: newSettings.trabalhaQuarta ?? true,

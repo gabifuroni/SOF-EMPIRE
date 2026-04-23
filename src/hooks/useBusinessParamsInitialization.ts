@@ -23,6 +23,7 @@ interface BusinessParams {
   depreciacaoValorMobilizado?: number;
   depreciacaoTotalMesDepreciado?: number;
   equipeNumeroProfissionais?: number;
+  equipeNomesProfissionais?: string[];
   trabalhaSegunda?: boolean;
   trabalhaTerca?: boolean;
   trabalhaQuarta?: boolean;
@@ -42,18 +43,22 @@ export const useBusinessParamsInitialization = (
   setTotalDepreciado: (value: number) => void,
   setNumProfessionals: (value: number) => void,
   setWorkingDays: React.Dispatch<React.SetStateAction<WorkingDays>>,
-  setHolidays: React.Dispatch<React.SetStateAction<Holiday[]>>
-) => {  useEffect(() => {
+  setHolidays: React.Dispatch<React.SetStateAction<Holiday[]>>,
+  setNomesProfissionais?: (names: string[]) => void,
+) => {
+  useEffect(() => {
     if (params) {
-      console.log('Initializing business parameters from context:', params);
-      console.log('despesasIndiretasDepreciacao value:', params.despesasIndiretasDepreciacao);
       setLucroDesejado(params.lucroDesejado || 21.0);
       setDespesasIndiretasDepreciacao(params.despesasIndiretasDepreciacao || 35.0);
       setImpostosRate(params.impostosRate !== undefined ? params.impostosRate : 0.0);
       setValorMobilizado(params.depreciacaoValorMobilizado || 160000);
       setTotalDepreciado(params.depreciacaoTotalMesDepreciado || 87000);
       setNumProfessionals(params.equipeNumeroProfissionais || 2);
-      
+
+      if (setNomesProfissionais && params.equipeNomesProfissionais) {
+        setNomesProfissionais(params.equipeNomesProfissionais);
+      }
+
       if (params.trabalhaSegunda !== undefined) {
         setWorkingDays({
           segunda: params.trabalhaSegunda,
@@ -65,10 +70,10 @@ export const useBusinessParamsInitialization = (
           domingo: params.trabalhaDomingo || false,
         });
       }
-      
+
       if (params.feriados && params.feriados.length > 0) {
         setHolidays(params.feriados);
       }
     }
-  }, [params, setLucroDesejado, setDespesasIndiretasDepreciacao, setImpostosRate, setValorMobilizado, setTotalDepreciado, setNumProfessionals, setWorkingDays, setHolidays]);
+  }, [params, setLucroDesejado, setDespesasIndiretasDepreciacao, setImpostosRate, setValorMobilizado, setTotalDepreciado, setNumProfessionals, setWorkingDays, setHolidays, setNomesProfissionais]);
 };
