@@ -25,32 +25,11 @@ export const useMetasColaboradoras = (mesReferencia: string) => {
         .eq('user_id', user.id)
         .eq('mes_referencia', mesReferencia);
 
-      if (error) { console.warn('metas_colaboradoras error:', error); return []; }
-      return data || [];
-    },
-  });
-
-  const upsertMeta = useMutation({
-    mutationFn: async (meta: MetaColaboradora) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const { error } = await supabase
-        .from('metas_colaboradoras' as any)
-        .upsert({
-          user_id: user.id,
-          colaboradora_id: meta.colaboradora_id,
-          colaboradora_nome: meta.colaboradora_nome,
-          mes_referencia: mesReferencia,
-          meta_faturamento: meta.meta_faturamento,
-          meta_atendimentos: meta.meta_atendimentos,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id,colaboradora_id,mes_referencia' });
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['metas-colaboradoras', mesReferencia] });
+      if (error) {
+        console.warn('metas_colaboradoras query error:', error);
+        return [];
+      }
+      return (data as MetaColaboradora[]) || [];
     },
   });
 
@@ -59,26 +38,44 @@ export const useMetasColaboradoras = (mesReferencia: string) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const inserts = allMetas.map(m => ({
-        user_id: user.id,
-        colaboradora_id: m.colaboradora_id,
-        colaboradora_nome: m.colaboradora_nome,
-        mes_referencia: mesReferencia,
-        meta_faturamento: m.meta_faturamento,
-        meta_atendimentos: m.meta_atendimentos,
-        updated_at: new Date().toISOString(),
-      }));
-
-      const { error } = await supabase
+      // Delete existing records for this user+month, then insert fresh ones
+      const { error: deleteError } = await supabase
         .from('metas_colaboradoras' as any)
-        .upsert(inserts, { onConflict: 'user_id,colaboradora_id,mes_referencia' });
+        .delete()
+        .eq('user_id', user.id)
+        .eq('mes_referencia', mesReferencia);
 
-      if (error) throw error;
+      if (deleteError) {
+        console.error('delete error:', deleteError);
+        throw new Error(`Erro ao limpar metas antigas: ${deleteError.message}`);
+      }
+
+      const inserts = allMetas
+        .filter(m => m.meta_faturamento > 0 || m.meta_atendimentos > 0)
+        .map(m => ({
+          user_id: user.id,
+          colaboradora_id: m.colaboradora_id,
+          colaboradora_nome: m.colaboradora_nome,
+          mes_referencia: mesReferencia,
+          meta_faturamento: m.meta_faturamento,
+          meta_atendimentos: m.meta_atendimentos,
+        }));
+
+      if (inserts.length === 0) return; // nada para inserir
+
+      const { error: insertError } = await supabase
+        .from('metas_colaboradoras' as any)
+        .insert(inserts);
+
+      if (insertError) {
+        console.error('insert error:', insertError);
+        throw new Error(`Erro ao salvar metas: ${insertError.message}`);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['metas-colaboradoras', mesReferencia] });
     },
   });
 
-  return { metas, isLoading, upsertMeta, upsertAllMetas };
+  return { metas, isLoading, upsertAllMetas };
 };
