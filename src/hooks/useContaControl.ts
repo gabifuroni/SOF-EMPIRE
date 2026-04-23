@@ -13,6 +13,7 @@ export interface ContaControl {
   tipo_despesa: 'indireta' | 'direta';
   categoria_id?: string;
   mes_referencia: string;
+  grupo_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -128,6 +129,61 @@ export const useContaControl = (mesReferencia: string) => {
     },
   });
 
+  const addContasRecorrentes = useMutation({
+    mutationFn: async ({ conta, ano }: { conta: Omit<ContaControlInsert, 'mes_referencia' | 'grupo_id'>, ano: number }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      const grupoId = crypto.randomUUID();
+      const diaVencimento = conta.data_vencimento
+        ? parseInt(conta.data_vencimento.split('-')[2])
+        : null;
+
+      const inserts = Array.from({ length: 12 }, (_, i) => {
+        const mes = i + 1;
+        const mesRef = `${ano}-${mes.toString().padStart(2, '0')}-01`;
+        let dataVenc: string | undefined = undefined;
+        if (diaVencimento) {
+          const lastDay = new Date(ano, mes, 0).getDate();
+          const dia = Math.min(diaVencimento, lastDay);
+          dataVenc = `${ano}-${mes.toString().padStart(2, '0')}-${dia.toString().padStart(2, '0')}`;
+        }
+        return {
+          ...conta,
+          user_id: user.id,
+          mes_referencia: mesRef,
+          data_vencimento: dataVenc,
+          grupo_id: grupoId,
+          pago: false,
+        };
+      });
+
+      const { error } = await supabase
+        .from('controle_contas' as any)
+        .insert(inserts);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['controle-contas'] });
+    },
+  });
+
+  const deleteFuturosByGrupo = useMutation({
+    mutationFn: async ({ grupoId, mesAtual }: { grupoId: string; mesAtual: string }) => {
+      const { error } = await supabase
+        .from('controle_contas' as any)
+        .delete()
+        .eq('grupo_id', grupoId)
+        .gte('mes_referencia', mesAtual);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['controle-contas'] });
+    },
+  });
+
   const desmarcarPagamento = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
@@ -160,6 +216,8 @@ export const useContaControl = (mesReferencia: string) => {
     deleteConta,
     marcarComoPago,
     desmarcarPagamento,
+    addContasRecorrentes,
+    deleteFuturosByGrupo,
     totalPlanejado,
     totalPago,
     totalPendente,

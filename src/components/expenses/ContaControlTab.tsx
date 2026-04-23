@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
 import { useContaControl, ContaControl } from '@/hooks/useContaControl';
-import AddContaModal from './AddContaModal';
+import AddContaModal, { AddContaData } from './AddContaModal';
 
 interface Category {
   id: string;
@@ -17,10 +17,22 @@ interface ContaControlTabProps {
 }
 
 const ContaControlTab = ({ mesReferencia, indiretasCategorias, diretasCategorias, onPagarConta }: ContaControlTabProps) => {
-  const { contas, isLoading, addConta, deleteConta, marcarComoPago, desmarcarPagamento, totalPlanejado, totalPago, totalPendente } = useContaControl(mesReferencia);
+  const { contas, isLoading, addConta, deleteConta, marcarComoPago, desmarcarPagamento, addContasRecorrentes, deleteFuturosByGrupo, totalPlanejado, totalPago, totalPendente } = useContaControl(mesReferencia);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pagandoId, setPagandoId] = useState<string | null>(null);
   const [valorReal, setValorReal] = useState<Record<string, string>>({});
+  const [deletandoRecorrenteId, setDeletandoRecorrenteId] = useState<string | null>(null);
+
+  const handleAddConta = (data: AddContaData) => {
+    const ano = parseInt(mesReferencia.split('-')[0]);
+    if (data.recorrente) {
+      const { recorrente: _, ...contaData } = data;
+      addContasRecorrentes.mutate({ conta: contaData, ano });
+    } else {
+      const { recorrente: _, ...contaData } = data;
+      addConta.mutate({ ...contaData, mes_referencia: mesReferencia });
+    }
+  };
 
   const handlePagar = async (conta: ContaControl) => {
     const valor = parseFloat(valorReal[conta.id] || conta.valor_planejado.toString());
@@ -109,7 +121,10 @@ const ContaControlTab = ({ mesReferencia, indiretasCategorias, diretasCategorias
                   <tr key={conta.id} style={{ borderBottom: '1px solid #1a1a24' }}>
                     {/* Nome */}
                     <td style={{ padding: '11px 14px', fontSize: 13, color: '#f0f0f8', fontWeight: 500 }}>
-                      {conta.nome}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {conta.nome}
+                        {conta.grupo_id && <span title="Conta recorrente" style={{ fontSize: 10, color: '#c9a84c', opacity: 0.7 }}>↻</span>}
+                      </div>
                     </td>
 
                     {/* Categoria */}
@@ -210,6 +225,24 @@ const ContaControlTab = ({ mesReferencia, indiretasCategorias, diretasCategorias
                               ✕
                             </button>
                           </>
+                        ) : deletandoRecorrenteId === conta.id ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+                            <span style={{ fontSize: 10, color: '#9090a8', whiteSpace: 'nowrap' }}>Remover:</span>
+                            <div style={{ display: 'flex', gap: 4 }}>
+                              <button
+                                onClick={() => { deleteConta.mutate(conta.id); setDeletandoRecorrenteId(null); }}
+                                style={{ background: 'rgba(255,77,106,0.12)', border: '1px solid rgba(255,77,106,0.3)', borderRadius: 5, padding: '3px 6px', fontSize: 9, fontWeight: 600, color: '#ff4d6a', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                              >Só este</button>
+                              <button
+                                onClick={() => { deleteFuturosByGrupo.mutate({ grupoId: conta.grupo_id!, mesAtual: mesReferencia }); setDeletandoRecorrenteId(null); }}
+                                style={{ background: 'rgba(255,77,106,0.12)', border: '1px solid rgba(255,77,106,0.3)', borderRadius: 5, padding: '3px 6px', fontSize: 9, fontWeight: 600, color: '#ff4d6a', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                              >Futuros</button>
+                              <button
+                                onClick={() => setDeletandoRecorrenteId(null)}
+                                style={{ background: 'transparent', border: '1px solid #2a2a38', borderRadius: 5, padding: '3px 6px', fontSize: 9, color: '#9090a8', cursor: 'pointer' }}
+                              >✕</button>
+                            </div>
+                          </div>
                         ) : (
                           <>
                             <div
@@ -217,9 +250,9 @@ const ContaControlTab = ({ mesReferencia, indiretasCategorias, diretasCategorias
                               style={{ width: 20, height: 20, borderRadius: 5, border: '2px solid #3a3a4a', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                             />
                             <button
-                              onClick={() => deleteConta.mutate(conta.id)}
+                              onClick={() => conta.grupo_id ? setDeletandoRecorrenteId(conta.id) : deleteConta.mutate(conta.id)}
                               style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#3a3a4a', padding: 2 }}
-                              title="Remover conta"
+                              title={conta.grupo_id ? 'Remover conta recorrente' : 'Remover conta'}
                             >
                               <Trash2 size={13} />
                             </button>
@@ -249,7 +282,7 @@ const ContaControlTab = ({ mesReferencia, indiretasCategorias, diretasCategorias
       <AddContaModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSave={data => addConta.mutate(data)}
+        onSave={handleAddConta}
         mesReferencia={mesReferencia}
         indiretasCategorias={indiretasCategorias}
         diretasCategorias={diretasCategorias}

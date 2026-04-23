@@ -7,10 +7,14 @@ interface Category {
   nome: string;
 }
 
+export interface AddContaData extends Omit<ContaControlInsert, 'mes_referencia'> {
+  recorrente: boolean;
+}
+
 interface AddContaModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (data: ContaControlInsert) => void;
+  onSave: (data: AddContaData) => void;
   mesReferencia: string;
   indiretasCategorias: Category[];
   diretasCategorias: Category[];
@@ -35,6 +39,7 @@ const AddContaModal = ({ isOpen, onClose, onSave, mesReferencia, indiretasCatego
     tipo_despesa: 'indireta' as 'indireta' | 'direta',
     categoria_id: '',
   });
+  const [recorrente, setRecorrente] = useState(false);
 
   const categorias = form.tipo_despesa === 'indireta' ? indiretasCategorias : diretasCategorias;
 
@@ -50,10 +55,11 @@ const AddContaModal = ({ isOpen, onClose, onSave, mesReferencia, indiretasCatego
       tipo_despesa: form.tipo_despesa,
       categoria_id: form.categoria_id || undefined,
       pago: false,
-      mes_referencia: mesReferencia,
+      recorrente,
     });
 
     setForm({ nome: '', observacao: '', valor_planejado: '', data_vencimento: '', tipo_despesa: 'indireta', categoria_id: '' });
+    setRecorrente(false);
     onClose();
   };
 
@@ -170,6 +176,20 @@ const AddContaModal = ({ isOpen, onClose, onSave, mesReferencia, indiretasCatego
               value={form.observacao}
               onChange={e => setForm(p => ({ ...p, observacao: e.target.value }))}
             />
+          </div>
+
+          {/* Recorrente */}
+          <div
+            onClick={() => setRecorrente(p => !p)}
+            style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: recorrente ? 'rgba(201,168,76,0.08)' : 'rgba(255,255,255,0.03)', border: `1px solid ${recorrente ? 'rgba(201,168,76,0.3)' : '#2a2a38'}`, borderRadius: 10, cursor: 'pointer', transition: 'all 0.15s' }}
+          >
+            <div style={{ width: 36, height: 20, borderRadius: 99, background: recorrente ? '#c9a84c' : '#2a2a38', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+              <div style={{ position: 'absolute', top: 2, left: recorrente ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: recorrente ? '#c9a84c' : '#9090a8' }}>Repetir em todos os meses</div>
+              <div style={{ fontSize: 11, color: '#606078', marginTop: 2 }}>Conta aparece automaticamente em jan–dez</div>
+            </div>
           </div>
 
           {/* Botões */}
