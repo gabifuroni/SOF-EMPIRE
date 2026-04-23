@@ -83,7 +83,22 @@ export const useBusinessSettings = () => {
           try {
             const raw = (data as any).equipe_nomes_profissionais;
             if (!raw) return [];
-            return Array.isArray(raw) ? raw : JSON.parse(raw);
+            const parsed = Array.isArray(raw) ? raw : JSON.parse(raw);
+            // Deduplicate by name (case-insensitive), keeping first occurrence
+            const seenNames = new Set<string>();
+            const seenIds = new Set<string>();
+            return parsed.filter((item: any) => {
+              if (!item) return false;
+              const nome = typeof item === 'string' ? item.trim() : (item.nome || '').trim();
+              const id = typeof item === 'object' ? (item.id || '') : '';
+              if (!nome) return false;
+              const nameKey = nome.toLowerCase();
+              if (seenNames.has(nameKey)) return false;
+              if (id && seenIds.has(id)) return false;
+              seenNames.add(nameKey);
+              if (id) seenIds.add(id);
+              return true;
+            });
           } catch { return []; }
         })(),
         trabalhaSegunda: (dbData.trabalha_segunda as boolean) ?? true,

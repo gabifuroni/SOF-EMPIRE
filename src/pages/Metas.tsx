@@ -12,20 +12,22 @@ const MONTHS = [
 
 const normalizeColaboradoras = (raw: unknown): Colaboradora[] => {
   if (!Array.isArray(raw)) return [];
-  const seen = new Set<string>();
+  const seenIds = new Set<string>();
+  const seenNames = new Set<string>();
   return raw.map((item) => {
     if (typeof item === 'string') {
       const nome = item.trim();
-      if (!nome || seen.has(nome)) return null;
-      seen.add(nome);
+      if (!nome || seenNames.has(nome.toLowerCase())) return null;
+      seenNames.add(nome.toLowerCase());
       return { id: crypto.randomUUID(), nome };
     }
     if (typeof item === 'object' && item !== null) {
       const obj = item as Record<string, unknown>;
       const nome = ((obj.nome as string) || '').trim();
       const id = (obj.id as string) || crypto.randomUUID();
-      if (!nome || seen.has(id)) return null;
-      seen.add(id);
+      if (!nome || seenIds.has(id) || seenNames.has(nome.toLowerCase())) return null;
+      seenIds.add(id);
+      seenNames.add(nome.toLowerCase());
       return { id, nome };
     }
     return null;
