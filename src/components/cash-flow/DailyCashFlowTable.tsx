@@ -1,9 +1,12 @@
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Trash2 } from 'lucide-react';
+import { Trash2, User } from 'lucide-react';
 import type { Tables } from '@/integrations/supabase/types';
 
-type Transaction = Tables<'transacoes_financeiras'>;
+type Transaction = Tables<'transacoes_financeiras'> & {
+  profissional_nome?: string | null;
+  servicos_realizados?: any;
+};
 
 interface DailyCashFlowTableProps {
   todayEntries: Transaction[];
@@ -42,9 +45,8 @@ const DailyCashFlowTable = ({ todayEntries, today, onDeleteEntry }: DailyCashFlo
           <tr>
             <th>Descrição</th>
             <th>Tipo</th>
-            <th>Método/Categoria</th>
+            <th>Profissional</th>
             <th style={{ textAlign: 'right' }}>Valor (R$)</th>
-            <th style={{ textAlign: 'right' }}>Comissão</th>
             <th style={{ textAlign: 'center' }}>Horário</th>
             <th style={{ textAlign: 'center' }}>Ações</th>
           </tr>
@@ -52,36 +54,44 @@ const DailyCashFlowTable = ({ todayEntries, today, onDeleteEntry }: DailyCashFlo
         <tbody>
           {[...todayEntries]
             .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-            .map(entry => (
-              <tr key={entry.id}>
-                <td style={{ fontWeight: 500 }}>{entry.description}</td>
-                <td>
-                  <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 99, background: entry.tipo_transacao === 'ENTRADA' ? 'rgba(0,200,150,0.12)' : 'rgba(255,77,106,0.12)', color: entry.tipo_transacao === 'ENTRADA' ? '#00c896' : '#ff4d6a' }}>
-                    {entry.tipo_transacao === 'ENTRADA' ? 'Entrada' : 'Saída'}
-                  </span>
-                </td>
-                <td style={{ color: '#9090a8', fontSize: 12 }}>{entry.payment_method || entry.category || '—'}</td>
-                <td style={{ textAlign: 'right', fontFamily: 'Sora, sans-serif', fontWeight: 600, color: entry.tipo_transacao === 'ENTRADA' ? '#00c896' : '#ff4d6a' }}>
-                  R$ {Number(entry.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </td>
-                <td style={{ textAlign: 'right', fontSize: 12 }}>
-                  {entry.tipo_transacao === 'ENTRADA' && entry.commission ? (
-                    <span style={{ color: '#4d9fff' }}>
-                      {((Number(entry.commission) / Number(entry.valor)) * 100).toFixed(1)}%
-                      <div style={{ fontSize: 10, color: '#606078' }}>R$ {Number(entry.commission).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+            .map(entry => {
+              const profissional = (entry as any).profissional_nome;
+              return (
+                <tr key={entry.id}>
+                  <td style={{ fontWeight: 500, maxWidth: 280 }}>
+                    <div>{entry.description}</div>
+                  </td>
+                  <td>
+                    <span style={{ fontSize: 11, fontWeight: 600, padding: '3px 10px', borderRadius: 99, background: entry.tipo_transacao === 'ENTRADA' ? 'rgba(0,200,150,0.12)' : 'rgba(255,77,106,0.12)', color: entry.tipo_transacao === 'ENTRADA' ? '#00c896' : '#ff4d6a' }}>
+                      {entry.tipo_transacao === 'ENTRADA' ? 'Entrada' : 'Saída'}
                     </span>
-                  ) : '—'}
-                </td>
-                <td style={{ textAlign: 'center', color: '#9090a8', fontSize: 12 }}>
-                  {format(new Date(entry.created_at), 'HH:mm', { locale: ptBR })}
-                </td>
-                <td style={{ textAlign: 'center' }}>
-                  <button className="dcf-del-btn" onClick={() => onDeleteEntry(entry.id)}>
-                    <Trash2 size={13} />
-                  </button>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td>
+                    {profissional ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, color: '#c9a84c', fontWeight: 700, flexShrink: 0 }}>
+                          {profissional.charAt(0).toUpperCase()}
+                        </div>
+                        <span style={{ fontSize: 12, color: '#f0f0f8' }}>{profissional}</span>
+                      </div>
+                    ) : (
+                      <span style={{ color: '#3a3a4a', fontSize: 12 }}>—</span>
+                    )}
+                  </td>
+                  <td style={{ textAlign: 'right', fontFamily: 'Sora, sans-serif', fontWeight: 600, color: entry.tipo_transacao === 'ENTRADA' ? '#00c896' : '#ff4d6a' }}>
+                    R$ {Number(entry.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </td>
+                  <td style={{ textAlign: 'center', color: '#9090a8', fontSize: 12 }}>
+                    {format(new Date(entry.created_at), 'HH:mm', { locale: ptBR })}
+                  </td>
+                  <td style={{ textAlign: 'center' }}>
+                    <button className="dcf-del-btn" onClick={() => onDeleteEntry(entry.id)}>
+                      <Trash2 size={13} />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
         </tbody>
       </table>
     </div>
