@@ -19,6 +19,7 @@ import IndirectExpenses from "./pages/IndirectExpenses";
 import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
 import PaymentSettings from "./pages/PaymentSettings";
+import Metas from "./pages/Metas";
 import Index from "./pages/Index";
 import AdminRoute from "./components/layout/AdminRoute";
 import AdminRedirect from "./components/layout/AdminRedirect";
@@ -110,6 +111,7 @@ const AppContent = () => {
                         <Route path="/reports" element={<Reports />} />
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/payment-settings" element={<PaymentSettings />} />
+                        <Route path="/metas" element={<Metas />} />
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />
                       </Routes>
                     </main>

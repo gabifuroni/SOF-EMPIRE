@@ -26,7 +26,7 @@ interface BusinessParams {
   depreciacaoTotalMesDepreciado: number;
   depreciacaoMensal: number;
   equipeNumeroProfissionais: number;
-  equipeNomesProfissionais: string[];
+  equipeNomesProfissionais: Array<{id: string; nome: string; meta: number}>;
   trabalhaSegunda: boolean;
   trabalhaTerca: boolean;
   trabalhaQuarta: boolean;

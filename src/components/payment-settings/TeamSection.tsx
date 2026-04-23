@@ -2,9 +2,15 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Users, Save, Plus, X } from 'lucide-react';
 
+export interface Colaboradora {
+  id: string;
+  nome: string;
+  meta: number;
+}
+
 interface TeamSectionProps {
-  nomesProfissionais: string[];
-  setNomesProfissionais: (names: string[]) => void;
+  nomesProfissionais: Colaboradora[];
+  setNomesProfissionais: (names: Colaboradora[]) => void;
   isSaving: boolean;
   onSave: () => void;
 }
@@ -20,12 +26,16 @@ export const TeamSection = ({
   const handleAdd = () => {
     const nome = novoNome.trim();
     if (!nome) return;
-    setNomesProfissionais([...nomesProfissionais, nome]);
+    setNomesProfissionais([...nomesProfissionais, { id: crypto.randomUUID(), nome, meta: 0 }]);
     setNovoNome('');
   };
 
-  const handleRemove = (index: number) => {
-    setNomesProfissionais(nomesProfissionais.filter((_, i) => i !== index));
+  const handleRemove = (id: string) => {
+    setNomesProfissionais(nomesProfissionais.filter(c => c.id !== id));
+  };
+
+  const handleMetaChange = (id: string, meta: number) => {
+    setNomesProfissionais(nomesProfissionais.map(c => c.id === id ? { ...c, meta } : c));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -35,7 +45,7 @@ export const TeamSection = ({
   const inputStyle: React.CSSProperties = {
     background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8,
     padding: '9px 13px', color: '#f0f0f8', fontSize: 13, outline: 'none',
-    fontFamily: 'Sora, sans-serif', flex: 1,
+    fontFamily: 'Sora, sans-serif',
   };
 
   return (
@@ -48,7 +58,7 @@ export const TeamSection = ({
         <div className="w-8 h-px bg-symbol-beige"></div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 420 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 520 }}>
         {/* Contador */}
         <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9090a8', display: 'flex', alignItems: 'center', gap: 8 }}>
           Colaboradoras
@@ -57,15 +67,30 @@ export const TeamSection = ({
           </span>
         </div>
 
-        {/* Lista de nomes */}
+        {/* Lista */}
         {nomesProfissionais.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {nomesProfissionais.map((nome, index) => (
-              <div key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '8px 12px' }}>
-                <span style={{ fontSize: 13, color: '#f0f0f8', fontFamily: 'Sora, sans-serif' }}>{nome}</span>
+            {/* Header */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 140px 32px', gap: 8, padding: '0 4px' }}>
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#606078', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Nome</span>
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#606078', letterSpacing: '0.08em', textTransform: 'uppercase', textAlign: 'right' }}>Meta Mensal (R$)</span>
+              <span />
+            </div>
+            {nomesProfissionais.map((col) => (
+              <div key={col.id} style={{ display: 'grid', gridTemplateColumns: '1fr 140px 32px', gap: 8, alignItems: 'center', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '8px 12px' }}>
+                <span style={{ fontSize: 13, color: '#f0f0f8', fontFamily: 'Sora, sans-serif' }}>{col.nome}</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="100"
+                  value={col.meta || ''}
+                  onChange={e => handleMetaChange(col.id, parseFloat(e.target.value) || 0)}
+                  placeholder="0,00"
+                  style={{ ...inputStyle, padding: '6px 10px', textAlign: 'right', width: '100%' }}
+                />
                 <button
-                  onClick={() => handleRemove(index)}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#606078', padding: 2, display: 'flex', borderRadius: 4 }}
+                  onClick={() => handleRemove(col.id)}
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#606078', padding: 2, display: 'flex', borderRadius: 4, justifyContent: 'center' }}
                   title="Remover"
                 >
                   <X size={14} />
@@ -78,7 +103,7 @@ export const TeamSection = ({
         {/* Input para adicionar */}
         <div style={{ display: 'flex', gap: 8 }}>
           <input
-            style={inputStyle}
+            style={{ ...inputStyle, flex: 1 }}
             placeholder="Nome da colaboradora"
             value={novoNome}
             onChange={e => setNovoNome(e.target.value)}

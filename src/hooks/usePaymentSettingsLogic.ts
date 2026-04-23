@@ -72,7 +72,7 @@ export const usePaymentSettingsLogic = () => {
   const [newHolidayDate, setNewHolidayDate] = useState('');
   const [newHolidayName, setNewHolidayName] = useState('');
   const [numProfessionals, setNumProfessionals] = useState(2);
-  const [nomesProfissionais, setNomesProfissionais] = useState<string[]>([]);
+  const [nomesProfissionais, setNomesProfissionais] = useState<Array<{id: string; nome: string; meta: number}>>([]);
 
   // Margins state
   const [lucroDesejado, setLucroDesejado] = useState(0);

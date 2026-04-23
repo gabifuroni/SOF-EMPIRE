@@ -3,7 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import {
   Home, DollarSign, User, Package, Scissors,
   TrendingUp, Receipt, BarChart3, Settings,
-  ChevronLeft, ChevronRight, X
+  ChevronLeft, ChevronRight, X, Target
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -32,6 +32,7 @@ const Sidebar = ({ userRole, isMobileMenuOpen = false, onCloseMobileMenu }: Side
         { icon: Scissors, label: 'Serviços & Preços', href: '/services' },
         { icon: TrendingUp, label: 'Fluxo de Caixa', href: '/cash-flow' },
         { icon: Receipt, label: 'Despesas', href: '/expenses' },
+        { icon: Target, label: 'Metas', href: '/metas' },
         { icon: BarChart3, label: 'Relatório Mensal', href: '/reports' },
       ],
     },
