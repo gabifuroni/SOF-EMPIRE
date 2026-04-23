@@ -6,6 +6,7 @@ export interface Colaboradora {
   id: string;
   nome: string;
   meta: number;
+  ativo: boolean;
 }
 
 interface TeamSectionProps {
@@ -23,15 +24,23 @@ export const TeamSection = ({
 }: TeamSectionProps) => {
   const [novoNome, setNovoNome] = useState('');
 
+  const valid = nomesProfissionais.filter(c => c.nome?.trim());
+
   const handleAdd = () => {
     const nome = novoNome.trim();
     if (!nome) return;
-    setNomesProfissionais([...nomesProfissionais, { id: crypto.randomUUID(), nome, meta: 0 }]);
+    setNomesProfissionais([...nomesProfissionais, { id: crypto.randomUUID(), nome, meta: 0, ativo: true }]);
     setNovoNome('');
   };
 
   const handleRemove = (id: string) => {
     setNomesProfissionais(nomesProfissionais.filter(c => c.id !== id));
+  };
+
+  const handleToggleAtivo = (id: string) => {
+    setNomesProfissionais(
+      nomesProfissionais.map(c => c.id === id ? { ...c, ativo: !c.ativo } : c)
+    );
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -55,29 +64,56 @@ export const TeamSection = ({
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 520 }}>
+
         {/* Contador */}
         <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9090a8', display: 'flex', alignItems: 'center', gap: 8 }}>
           Colaboradoras
           <span style={{ background: 'rgba(201,168,76,0.15)', color: '#c9a84c', border: '1px solid rgba(201,168,76,0.25)', borderRadius: 20, padding: '2px 10px', fontSize: 11, fontWeight: 700 }}>
-            {nomesProfissionais.filter(c => c.nome?.trim()).length}
+            {valid.length}
           </span>
         </div>
 
         {/* Lista */}
-        {nomesProfissionais.filter(c => c.nome?.trim()).length > 0 && (
+        {valid.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {nomesProfissionais.filter(c => c.nome?.trim()).map((col) => (
-              <div key={col.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '8px 12px' }}>
-                <span style={{ fontSize: 13, color: '#f0f0f8', fontFamily: 'Sora, sans-serif' }}>{col.nome}</span>
-                <button
-                  onClick={() => handleRemove(col.id)}
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#606078', padding: 2, display: 'flex', borderRadius: 4 }}
-                  title="Remover"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-            ))}
+            {valid.map(col => {
+              const ativa = col.ativo !== false;
+              return (
+                <div key={col.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1c1c26', border: `1px solid ${ativa ? '#2a2a38' : '#222230'}`, borderRadius: 8, padding: '8px 12px', opacity: ativa ? 1 : 0.65 }}>
+                  {/* Nome + status dot */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: ativa ? '#00c896' : '#606078', flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, color: ativa ? '#f0f0f8' : '#9090a8', fontFamily: 'Sora, sans-serif' }}>{col.nome}</span>
+                  </div>
+                  {/* Ações */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    {/* Toggle ativo/inativo */}
+                    <button
+                      onClick={() => handleToggleAtivo(col.id)}
+                      title={ativa ? 'Inativar' : 'Ativar'}
+                      style={{
+                        background: ativa ? 'rgba(0,200,150,0.08)' : 'rgba(201,168,76,0.08)',
+                        border: `1px solid ${ativa ? 'rgba(0,200,150,0.25)' : 'rgba(201,168,76,0.25)'}`,
+                        borderRadius: 6, padding: '3px 10px', cursor: 'pointer',
+                        color: ativa ? '#00c896' : '#c9a84c',
+                        fontSize: 10, fontWeight: 700, fontFamily: 'Sora, sans-serif',
+                        letterSpacing: '0.06em', textTransform: 'uppercase',
+                      }}
+                    >
+                      {ativa ? 'Ativa' : 'Inativa'}
+                    </button>
+                    {/* Remover */}
+                    <button
+                      onClick={() => handleRemove(col.id)}
+                      title="Remover"
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#606078', padding: 2, display: 'flex', borderRadius: 4 }}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
 

@@ -3,7 +3,7 @@ import { useBusinessParams } from '@/hooks/useBusinessParams';
 import { useMetasColaboradoras, MetaColaboradora } from '@/hooks/useMetasColaboradoras';
 import { Target, Save, ChevronLeft, ChevronRight } from 'lucide-react';
 
-interface Colaboradora { id: string; nome: string; }
+interface Colaboradora { id: string; nome: string; ativo?: boolean; }
 
 const MONTHS = [
   'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -24,11 +24,12 @@ const normalizeColaboradoras = (raw: unknown): Colaboradora[] => {
     if (typeof item === 'object' && item !== null) {
       const obj = item as Record<string, unknown>;
       const nome = ((obj.nome as string) || '').trim();
-      const id = (obj.id as string) || nome; // fall back to nome as ID if no id
+      const id = (obj.id as string) || nome;
+      const ativo = (obj.ativo as boolean) !== false; // default true
       if (!nome || seenIds.has(id) || seenNames.has(nome.toLowerCase())) return null;
       seenIds.add(id);
       seenNames.add(nome.toLowerCase());
-      return { id, nome };
+      return { id, nome, ativo };
     }
     return null;
   }).filter(Boolean) as Colaboradora[];
@@ -49,6 +50,16 @@ const Metas = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [JSON.stringify(params.equipeNomesProfissionais)]
   );
+
+  // Para meses passados: mostrar ativas + inativas que têm dados salvos
+  // Para mês atual e futuros: mostrar apenas ativas
+  const nowRef = new Date();
+  const currentMesRef = `${nowRef.getFullYear()}-${String(nowRef.getMonth() + 1).padStart(2, '0')}`;
+  const isPastMonth = mesReferencia < currentMesRef;
+
+  const colaboradorasVisiveis = isPastMonth
+    ? colaboradoras.filter(c => c.ativo !== false || metas.some(m => m.colaboradora_id === c.id))
+    : colaboradoras.filter(c => c.ativo !== false);
 
   const [localMetas, setLocalMetas] = useState<Record<string, { faturamento: number; atendimentos: number }>>({});
   const [isSaving, setIsSaving] = useState(false);
@@ -111,8 +122,8 @@ const Metas = () => {
   const prevMonth = () => { if (month === 0) { setMonth(11); setYear(y => y - 1); } else setMonth(m => m - 1); };
   const nextMonth = () => { if (month === 11) { setMonth(0); setYear(y => y + 1); } else setMonth(m => m + 1); };
 
-  const totalFaturamento = colaboradoras.reduce((s, c) => s + (localMetas[c.id]?.faturamento ?? 0), 0);
-  const totalAtendimentos = colaboradoras.reduce((s, c) => s + (localMetas[c.id]?.atendimentos ?? 0), 0);
+  const totalFaturamento = colaboradorasVisiveis.reduce((s, c) => s + (localMetas[c.id]?.faturamento ?? 0), 0);
+  const totalAtendimentos = colaboradorasVisiveis.reduce((s, c) => s + (localMetas[c.id]?.atendimentos ?? 0), 0);
 
   const inputStyle = (color = '#c9a84c'): React.CSSProperties => ({
     background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8,
@@ -137,7 +148,7 @@ const Metas = () => {
             <span style={{ fontSize: 13, fontWeight: 600, color: '#f0f0f8', minWidth: 120, textAlign: 'center' }}>{MONTHS[month]} {year}</span>
             <button onClick={nextMonth} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#9090a8', display: 'flex', padding: 2 }}><ChevronRight size={14} /></button>
           </div>
-          {colaboradoras.length > 0 && (
+          {colaboradorasVisiveis.length > 0 && (
             <button
               onClick={handleSave}
               disabled={isSaving}
@@ -157,7 +168,7 @@ const Metas = () => {
       )}
 
       {/* Resumo */}
-      {colaboradoras.length > 0 && (
+      {colaboradorasVisiveis.length > 0 && (
         <div style={{ background: '#13131a', border: '1px solid #1e1e2a', borderRadius: 12, padding: '16px 20px', marginBottom: 20, display: 'flex', gap: 32, alignItems: 'center', flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#606078', marginBottom: 4 }}>Meta de Faturamento Total</div>
@@ -169,13 +180,13 @@ const Metas = () => {
             <div style={{ fontSize: 20, fontWeight: 600, color: '#9090a8' }}>{totalAtendimentos} atend.</div>
           </div>
           <div style={{ marginLeft: 'auto', background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', borderRadius: 20, padding: '4px 14px', fontSize: 12, color: '#c9a84c', fontWeight: 600 }}>
-            {colaboradoras.length} colaboradora{colaboradoras.length !== 1 ? 's' : ''}
+            {colaboradorasVisiveis.length} colaboradora{colaboradorasVisiveis.length !== 1 ? 's' : ''}
           </div>
         </div>
       )}
 
       {/* Lista */}
-      {colaboradoras.length === 0 ? (
+      {colaboradorasVisiveis.length === 0 ? (
         <div style={{ background: '#13131a', border: '1px solid #1e1e2a', borderRadius: 12, padding: '48px 24px', textAlign: 'center' }}>
           <div style={{ fontSize: 36, marginBottom: 12 }}>👥</div>
           <div style={{ fontSize: 15, color: '#f0f0f8', marginBottom: 6 }}>Nenhuma colaboradora cadastrada</div>
@@ -183,7 +194,7 @@ const Metas = () => {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {colaboradoras.map((col) => (
+          {colaboradorasVisiveis.map((col) => (
             <div key={col.id} style={{ background: '#13131a', border: '1px solid #1e1e2a', borderRadius: 12, padding: '16px 20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
                 {/* Avatar + Nome */}

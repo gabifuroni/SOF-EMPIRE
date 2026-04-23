@@ -87,18 +87,23 @@ export const useBusinessSettings = () => {
             // Deduplicate by name (case-insensitive), keeping first occurrence
             const seenNames = new Set<string>();
             const seenIds = new Set<string>();
-            return parsed.filter((item: any) => {
-              if (!item) return false;
-              const nome = typeof item === 'string' ? item.trim() : (item.nome || '').trim();
-              const id = typeof item === 'object' ? (item.id || '') : '';
-              if (!nome) return false;
-              const nameKey = nome.toLowerCase();
-              if (seenNames.has(nameKey)) return false;
-              if (id && seenIds.has(id)) return false;
-              seenNames.add(nameKey);
-              if (id) seenIds.add(id);
-              return true;
-            });
+            return parsed
+              .filter((item: any) => {
+                if (!item) return false;
+                const nome = typeof item === 'string' ? item.trim() : (item.nome || '').trim();
+                const id = typeof item === 'object' ? (item.id || '') : '';
+                if (!nome) return false;
+                const nameKey = nome.toLowerCase();
+                if (seenNames.has(nameKey)) return false;
+                if (id && seenIds.has(id)) return false;
+                seenNames.add(nameKey);
+                if (id) seenIds.add(id);
+                return true;
+              })
+              .map((item: any) => ({
+                ...item,
+                ativo: item.ativo !== false, // default true for existing records without the field
+              }));
           } catch { return []; }
         })(),
         trabalhaSegunda: (dbData.trabalha_segunda as boolean) ?? true,
