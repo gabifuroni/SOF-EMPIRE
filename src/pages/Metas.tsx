@@ -51,15 +51,20 @@ const Metas = () => {
     [JSON.stringify(params.equipeNomesProfissionais)]
   );
 
-  // Para meses passados: mostrar ativas + inativas que têm dados salvos
-  // Para mês atual e futuros: mostrar apenas ativas
+  // Regra de visibilidade por mês:
+  // - Meses passados: mostrar apenas quem tinha meta salva (histórico)
+  // - Mês atual: mostrar todas (ativas + inativas — ela estava ativa neste mês)
+  // - Meses futuros: mostrar apenas ativas
   const nowRef = new Date();
   const currentMesRef = `${nowRef.getFullYear()}-${String(nowRef.getMonth() + 1).padStart(2, '0')}`;
+  const isCurrentMonth = mesReferencia === currentMesRef;
   const isPastMonth = mesReferencia < currentMesRef;
 
   const colaboradorasVisiveis = isPastMonth
-    ? colaboradoras.filter(c => c.ativo !== false || metas.some(m => m.colaboradora_id === c.id))
-    : colaboradoras.filter(c => c.ativo !== false);
+    ? colaboradoras.filter(c => metas.some(m => m.colaboradora_id === c.id))
+    : isCurrentMonth
+      ? colaboradoras // mês atual: todas aparecem
+      : colaboradoras.filter(c => c.ativo !== false); // futuros: só ativas
 
   const [localMetas, setLocalMetas] = useState<Record<string, { faturamento: number; atendimentos: number }>>({});
   const [isSaving, setIsSaving] = useState(false);
