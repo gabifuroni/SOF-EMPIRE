@@ -66,7 +66,7 @@ export const TeamSection = ({
         {/* Lista */}
         {nomesProfissionais.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {nomesProfissionais.map((col) => (
+            {nomesProfissionais.filter(c => c.nome?.trim()).map((col) => (
               <div key={col.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '8px 12px' }}>
                 <span style={{ fontSize: 13, color: '#f0f0f8', fontFamily: 'Sora, sans-serif' }}>{col.nome}</span>
                 <button

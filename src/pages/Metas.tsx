@@ -12,14 +12,12 @@ interface Colaboradora {
 const normalizeColaboradoras = (raw: unknown): Colaboradora[] => {
   if (!Array.isArray(raw)) return [];
   return raw.map((item) => {
-    if (typeof item === 'string') return { id: crypto.randomUUID(), nome: item, meta: 0 };
+    if (typeof item === 'string') return item.trim() ? { id: crypto.randomUUID(), nome: item.trim(), meta: 0 } : null;
     if (typeof item === 'object' && item !== null) {
       const obj = item as Record<string, unknown>;
-      return {
-        id: (obj.id as string) || crypto.randomUUID(),
-        nome: (obj.nome as string) || '',
-        meta: Number(obj.meta) || 0,
-      };
+      const nome = ((obj.nome as string) || '').trim();
+      if (!nome) return null;
+      return { id: (obj.id as string) || crypto.randomUUID(), nome, meta: Number(obj.meta) || 0 };
     }
     return null;
   }).filter(Boolean) as Colaboradora[];
