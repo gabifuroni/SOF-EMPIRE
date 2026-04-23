@@ -154,9 +154,9 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
           </div>
 
           {/* Profissional */}
-          {colaboradoras.length > 0 && (
-            <div>
-              <label style={labelStyle}><User size={12} /> Profissional</label>
+          <div>
+            <label style={labelStyle}><User size={12} /> Profissional</label>
+            {colaboradoras.length > 0 ? (
               <select
                 className="entry-input"
                 style={{ ...inputStyle, cursor: 'pointer' }}
@@ -168,8 +168,21 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
                   <option key={c.id} value={c.nome}>{c.nome}</option>
                 ))}
               </select>
-            </div>
-          )}
+            ) : (
+              <input
+                className="entry-input"
+                style={inputStyle}
+                placeholder="Nome da profissional"
+                value={formData.profissionalNome}
+                onChange={e => setFormData(p => ({ ...p, profissionalNome: e.target.value }))}
+              />
+            )}
+            {colaboradoras.length === 0 && (
+              <p style={{ fontSize: 11, color: '#606078', marginTop: 4 }}>
+                Cadastre colaboradoras em <strong style={{ color: '#9090a8' }}>Parâmetros do Negócio → Equipe</strong> para ter um dropdown
+              </p>
+            )}
+          </div>
 
           {/* Serviços com quantidade */}
           {services.length > 0 && (
