@@ -26,6 +26,7 @@ interface BusinessParams {
   depreciacaoTotalMesDepreciado: number;
   depreciacaoMensal: number;
   equipeNumeroProfissionais: number;
+  equipeNomesProfissionais: string[];
   trabalhaSegunda: boolean;
   trabalhaTerca: boolean;
   trabalhaQuarta: boolean;
@@ -71,6 +72,7 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
     depreciacaoTotalMesDepreciado: 87000,
     depreciacaoMensal: 1450,
     equipeNumeroProfissionais: 2,
+    equipeNomesProfissionais: [],
     // Valores padrão para dias da semana
     trabalhaSegunda: true,
     trabalhaTerca: true,
@@ -122,6 +124,7 @@ export const BusinessParamsProvider = ({ children }: { children: ReactNode }) =>
         depreciacaoTotalMesDepreciado: businessSettings.depreciacaoTotalMesDepreciado,
         depreciacaoMensal: businessSettings.depreciacaoMensal,
         equipeNumeroProfissionais: businessSettings.equipeNumeroProfissionais,
+        equipeNomesProfissionais: businessSettings.equipeNomesProfissionais ?? [],
         // Novos campos
         trabalhaSegunda: businessSettings.trabalhaSegunda,
         trabalhaTerca: businessSettings.trabalhaTerca,
