@@ -288,18 +288,22 @@ const Dashboard = () => {
 
           {isEditingGoal ? (
             <div>
-              <RadioGroup value={goalType} onValueChange={handleGoalTypeChange} style={{ marginBottom: 10 }}>
-                <div style={{ display: 'flex', gap: 12, marginBottom: 6 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <RadioGroupItem value="financial" id="financial" />
-                    <Label htmlFor="financial" style={{ fontSize: 11, color: '#f0f0f8', cursor: 'pointer' }}>Financeira</Label>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <RadioGroupItem value="attendance" id="attendance" />
-                    <Label htmlFor="attendance" style={{ fontSize: 11, color: '#f0f0f8', cursor: 'pointer' }}>Atendimentos</Label>
-                  </div>
-                </div>
-              </RadioGroup>
+              <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+                <button
+                  type="button"
+                  onClick={() => handleGoalTypeChange('financial')}
+                  style={{ flex: 1, padding: '6px 10px', borderRadius: 8, border: `1px solid ${goalType === 'financial' ? '#c9a84c' : '#2a2a38'}`, background: goalType === 'financial' ? 'rgba(201,168,76,0.15)' : 'transparent', color: goalType === 'financial' ? '#c9a84c' : '#9090a8', fontSize: 11, fontWeight: goalType === 'financial' ? 700 : 400, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'Sora, sans-serif' }}
+                >
+                  Financeira
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleGoalTypeChange('attendance')}
+                  style={{ flex: 1, padding: '6px 10px', borderRadius: 8, border: `1px solid ${goalType === 'attendance' ? '#c9a84c' : '#2a2a38'}`, background: goalType === 'attendance' ? 'rgba(201,168,76,0.15)' : 'transparent', color: goalType === 'attendance' ? '#c9a84c' : '#9090a8', fontSize: 11, fontWeight: goalType === 'attendance' ? 700 : 400, cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'Sora, sans-serif' }}
+                >
+                  Atendimentos
+                </button>
+              </div>
               <input
                 className="goal-input"
                 type="number"
