@@ -49,6 +49,7 @@ const Metas = () => {
   const [localMetas, setLocalMetas] = useState<Record<string, { faturamento: number; atendimentos: number }>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [savedOk, setSavedOk] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Sync when metas from DB load
   useEffect(() => {
@@ -69,6 +70,7 @@ const Metas = () => {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSaveError(null);
     try {
       const allMetas: MetaColaboradora[] = colaboradoras.map(col => ({
         colaboradora_id: col.id,
@@ -80,7 +82,11 @@ const Metas = () => {
       await upsertAllMetas.mutateAsync(allMetas);
       setSavedOk(true);
       setTimeout(() => setSavedOk(false), 2500);
-    } catch (e) { console.error(e); }
+    } catch (e: any) {
+      console.error('Erro ao salvar metas:', e);
+      setSaveError(e?.message || 'Erro ao salvar. Tente novamente.');
+      setTimeout(() => setSaveError(null), 5000);
+    }
     finally { setIsSaving(false); }
   };
 
@@ -125,6 +131,13 @@ const Metas = () => {
           )}
         </div>
       </div>
+
+      {/* Erro de salvamento */}
+      {saveError && (
+        <div style={{ background: 'rgba(255,77,106,0.1)', border: '1px solid rgba(255,77,106,0.3)', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#ff8fa3' }}>
+          ⚠️ {saveError}
+        </div>
+      )}
 
       {/* Resumo */}
       {colaboradoras.length > 0 && (
