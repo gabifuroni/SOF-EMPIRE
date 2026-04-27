@@ -103,6 +103,7 @@ export const useBusinessSettings = () => {
               .map((item: any) => ({
                 ...item,
                 ativo: item.ativo !== false, // default true for existing records without the field
+                comissao_percentual: item.comissao_percentual ?? 0, // default 0 for existing records
               }));
           } catch { return []; }
         })(),

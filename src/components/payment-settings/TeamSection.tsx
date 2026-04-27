@@ -7,6 +7,7 @@ export interface Colaboradora {
   nome: string;
   meta: number;
   ativo: boolean;
+  comissao_percentual?: number;
 }
 
 interface TeamSectionProps {
@@ -29,7 +30,7 @@ export const TeamSection = ({
   const handleAdd = () => {
     const nome = novoNome.trim();
     if (!nome) return;
-    setNomesProfissionais([...nomesProfissionais, { id: crypto.randomUUID(), nome, meta: 0, ativo: true }]);
+    setNomesProfissionais([...nomesProfissionais, { id: crypto.randomUUID(), nome, meta: 0, ativo: true, comissao_percentual: 0 }]);
     setNovoNome('');
   };
 
@@ -40,6 +41,13 @@ export const TeamSection = ({
   const handleToggleAtivo = (id: string) => {
     setNomesProfissionais(
       nomesProfissionais.map(c => c.id === id ? { ...c, ativo: !c.ativo } : c)
+    );
+  };
+
+  const handleComissaoChange = (id: string, val: string) => {
+    const num = Math.min(100, Math.max(0, parseFloat(val) || 0));
+    setNomesProfissionais(
+      nomesProfissionais.map(c => c.id === id ? { ...c, comissao_percentual: num } : c)
     );
   };
 
@@ -79,11 +87,28 @@ export const TeamSection = ({
             {valid.map(col => {
               const ativa = col.ativo !== false;
               return (
-                <div key={col.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1c1c26', border: `1px solid ${ativa ? '#2a2a38' : '#222230'}`, borderRadius: 8, padding: '8px 12px', opacity: ativa ? 1 : 0.65 }}>
+                <div key={col.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1c1c26', border: `1px solid ${ativa ? '#2a2a38' : '#222230'}`, borderRadius: 8, padding: '8px 12px', opacity: ativa ? 1 : 0.65, flexWrap: 'wrap', gap: 8 }}>
                   {/* Nome + status dot */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 120 }}>
                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: ativa ? '#00c896' : '#606078', flexShrink: 0 }} />
                     <span style={{ fontSize: 13, color: ativa ? '#f0f0f8' : '#9090a8', fontFamily: 'Sora, sans-serif' }}>{col.nome}</span>
+                  </div>
+                  {/* Campo de comissão */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ fontSize: 10, color: '#9090a8', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>Comissão</span>
+                    <div style={{ display: 'flex', alignItems: 'center', background: '#13131a', border: '1px solid #2a2a38', borderRadius: 6, overflow: 'hidden' }}>
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.5"
+                        value={col.comissao_percentual ?? 0}
+                        onChange={e => handleComissaoChange(col.id, e.target.value)}
+                        onClick={e => e.stopPropagation()}
+                        style={{ width: 44, background: 'transparent', border: 'none', outline: 'none', color: '#c9a84c', fontSize: 13, fontWeight: 600, padding: '4px 6px', fontFamily: 'Sora, sans-serif', textAlign: 'right' }}
+                      />
+                      <span style={{ fontSize: 12, color: '#9090a8', paddingRight: 6 }}>%</span>
+                    </div>
                   </div>
                   {/* Ações */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
