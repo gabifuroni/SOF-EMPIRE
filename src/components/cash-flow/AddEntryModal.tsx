@@ -218,7 +218,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
               >
                 <option value="">Selecionar profissional...</option>
                 {colaboradoras.map((c: any) => (
-                  <option key={c.id} value={c.nome}>{c.nome} {(c.comissao_percentual ?? 0) > 0 ? `(${c.comissao_percentual}%)` : ''}</option>
+                  <option key={c.id} value={c.nome}>{c.nome}</option>
                 ))}
               </select>
             ) : (
