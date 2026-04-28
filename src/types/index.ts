@@ -67,6 +67,8 @@ export interface ServicoRealizado {
   nome: string;
   quantidade: number;
   valor_unitario: number;
+  comissao_percentual?: number;
+  comissao_valor?: number;
 }
 
 export interface CashFlowEntry {

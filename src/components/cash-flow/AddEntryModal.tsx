@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { CashFlowEntry, ServicoRealizado } from '@/types';
 import { format, parse } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
-import { Calendar, DollarSign, Tag, User, Minus, Plus } from 'lucide-react';
+import { Calendar, DollarSign, Tag, User, Minus, Plus, Percent } from 'lucide-react';
 import { useBusinessParams } from '@/hooks/useBusinessParams';
 
 interface AddEntryModalProps {
@@ -19,7 +19,6 @@ interface Service { id: string; name: string; sale_price: number; }
 const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryModalProps) => {
   const { params } = useBusinessParams();
 
-  // Active collaborators for the dropdown
   const colaboradoras = (params.equipeNomesProfissionais || [])
     .filter((c: any) => c.ativo !== false && c.nome?.trim());
 
@@ -32,8 +31,9 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [services, setServices] = useState<Service[]>([]);
   const [loadingServices, setLoadingServices] = useState(false);
-  // Map serviceId → quantity (0 = not selected)
   const [serviceQtd, setServiceQtd] = useState<Record<string, number>>({});
+  // comissão % por serviço (pode ser editada individualmente)
+  const [serviceComissao, setServiceComissao] = useState<Record<string, number>>({});
 
   useEffect(() => {
     const loadServices = async () => {
@@ -61,22 +61,41 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
         amount: entry.amount.toString(),
         profissionalNome: entry.profissionalNome || '',
       });
-      // Rebuild serviceQtd from servicosRealizados if editing
       if (entry.servicosRealizados) {
-        const map: Record<string, number> = {};
-        entry.servicosRealizados.forEach(s => { map[s.id] = s.quantidade; });
-        setServiceQtd(map);
+        const qtdMap: Record<string, number> = {};
+        const comMap: Record<string, number> = {};
+        entry.servicosRealizados.forEach(s => {
+          qtdMap[s.id] = s.quantidade;
+          comMap[s.id] = s.comissao_percentual ?? 0;
+        });
+        setServiceQtd(qtdMap);
+        setServiceComissao(comMap);
       } else {
         setServiceQtd({});
+        setServiceComissao({});
       }
     } else {
       setFormData({ date: format(defaultDate || new Date(), 'yyyy-MM-dd'), description: '', amount: '', profissionalNome: '' });
       setServiceQtd({});
+      setServiceComissao({});
     }
     setErrors({});
   }, [entry, show, defaultDate]);
 
-  // Recalculate total + description whenever serviceQtd changes
+  // Quando profissional muda → atualiza % de comissão padrão em todos os serviços
+  useEffect(() => {
+    if (!formData.profissionalNome) return;
+    const col = colaboradoras.find((c: any) => c.nome === formData.profissionalNome);
+    const pct = (col as any)?.comissao_percentual ?? 0;
+    if (pct === 0) return;
+    setServiceComissao(prev => {
+      const updated = { ...prev };
+      services.forEach(s => { updated[s.id] = pct; });
+      return updated;
+    });
+  }, [formData.profissionalNome, services]);
+
+  // Recalcula total + descrição quando serviceQtd muda
   useEffect(() => {
     const selected = services.filter(s => (serviceQtd[s.id] || 0) > 0);
     if (selected.length === 0) return;
@@ -90,16 +109,35 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
 
   const handleQtdChange = (serviceId: string, delta: number) => {
     setServiceQtd(prev => {
-      const current = prev[serviceId] || 0;
-      const next = Math.max(0, current + delta);
+      const next = Math.max(0, (prev[serviceId] || 0) + delta);
+      // Se adicionado pela primeira vez, preenche comissão padrão da profissional
+      if (next > 0 && !prev[serviceId]) {
+        const col = colaboradoras.find((c: any) => c.nome === formData.profissionalNome);
+        const pct = (col as any)?.comissao_percentual ?? 0;
+        setServiceComissao(pc => ({ ...pc, [serviceId]: pc[serviceId] ?? pct }));
+      }
       return { ...prev, [serviceId]: next };
     });
   };
 
   const handleQtdInput = (serviceId: string, val: string) => {
-    const n = parseInt(val) || 0;
-    setServiceQtd(prev => ({ ...prev, [serviceId]: Math.max(0, n) }));
+    const n = Math.max(0, parseInt(val) || 0);
+    setServiceQtd(prev => ({ ...prev, [serviceId]: n }));
   };
+
+  const handleComissaoInput = (serviceId: string, val: string) => {
+    const n = Math.min(100, Math.max(0, parseFloat(val) || 0));
+    setServiceComissao(prev => ({ ...prev, [serviceId]: n }));
+  };
+
+  // Calcula total de comissão dos serviços selecionados
+  const totalComissao = services
+    .filter(s => (serviceQtd[s.id] || 0) > 0)
+    .reduce((sum, s) => {
+      const valor = s.sale_price * (serviceQtd[s.id] || 1);
+      const pct = serviceComissao[s.id] ?? 0;
+      return sum + (valor * pct) / 100;
+    }, 0);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -110,7 +148,19 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
 
     const servicosRealizados: ServicoRealizado[] = services
       .filter(s => (serviceQtd[s.id] || 0) > 0)
-      .map(s => ({ id: s.id, nome: s.name, quantidade: serviceQtd[s.id], valor_unitario: s.sale_price }));
+      .map(s => {
+        const qty = serviceQtd[s.id];
+        const pct = serviceComissao[s.id] ?? 0;
+        const valorTotal = s.sale_price * qty;
+        return {
+          id: s.id,
+          nome: s.name,
+          quantidade: qty,
+          valor_unitario: s.sale_price,
+          comissao_percentual: pct,
+          comissao_valor: (valorTotal * pct) / 100,
+        };
+      });
 
     onSave({
       date: parse(formData.date, 'yyyy-MM-dd', new Date()),
@@ -119,7 +169,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
       amount: parseFloat(formData.amount),
       paymentMethod: undefined,
       client: undefined,
-      commission: undefined,
+      commission: totalComissao > 0 ? totalComissao : undefined,
       profissionalNome: formData.profissionalNome || undefined,
       servicosRealizados: servicosRealizados.length > 0 ? servicosRealizados : undefined,
     });
@@ -129,6 +179,8 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
   const inputStyle: React.CSSProperties = { width: '100%', background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 8, padding: '10px 14px', color: '#f0f0f8', fontSize: 14, outline: 'none', fontFamily: 'Sora, sans-serif', boxSizing: 'border-box' };
   const labelStyle: React.CSSProperties = { fontSize: 11, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#9090a8', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 };
 
+  const selectedServices = services.filter(s => (serviceQtd[s.id] || 0) > 0);
+
   return (
     <Dialog open={show} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" style={{ background: '#13131a', border: '1px solid #2a2a38', borderRadius: 16, color: '#f0f0f8' }}>
@@ -137,6 +189,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
           .entry-input::placeholder { color: #606078 !important; }
           .svc-row:hover { background: rgba(255,255,255,0.03) !important; }
           .qtd-btn:hover { background: rgba(201,168,76,0.2) !important; }
+          .com-input:focus { border-color: #c9a84c !important; outline: none; }
         `}</style>
 
         <DialogHeader>
@@ -165,7 +218,7 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
               >
                 <option value="">Selecionar profissional...</option>
                 {colaboradoras.map((c: any) => (
-                  <option key={c.id} value={c.nome}>{c.nome}</option>
+                  <option key={c.id} value={c.nome}>{c.nome} {(c.comissao_percentual ?? 0) > 0 ? `(${c.comissao_percentual}%)` : ''}</option>
                 ))}
               </select>
             ) : (
@@ -177,41 +230,40 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
                 onChange={e => setFormData(p => ({ ...p, profissionalNome: e.target.value }))}
               />
             )}
-            {colaboradoras.length === 0 && (
-              <p style={{ fontSize: 11, color: '#606078', marginTop: 4 }}>
-                Cadastre colaboradoras em <strong style={{ color: '#9090a8' }}>Parâmetros do Negócio → Equipe</strong> para ter um dropdown
-              </p>
-            )}
           </div>
 
-          {/* Serviços com quantidade */}
+          {/* Serviços com quantidade + comissão */}
           {services.length > 0 && (
             <div>
               <label style={labelStyle}><Tag size={12} /> Serviços Prestados (Opcional)</label>
-              <div style={{ background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 10, maxHeight: 200, overflowY: 'auto', padding: 4 }}>
+              <div style={{ background: '#1c1c26', border: '1px solid #2a2a38', borderRadius: 10, maxHeight: 220, overflowY: 'auto', padding: 4 }}>
                 {loadingServices ? (
                   <div style={{ padding: '12px', textAlign: 'center', color: '#9090a8', fontSize: 13 }}>Carregando...</div>
                 ) : (
                   services.map(service => {
                     const qty = serviceQtd[service.id] || 0;
                     const selected = qty > 0;
+                    const comPct = serviceComissao[service.id] ?? 0;
+                    const comValor = selected ? (service.sale_price * qty * comPct) / 100 : 0;
                     return (
                       <div
                         key={service.id}
                         className="svc-row"
-                        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, border: `1px solid ${selected ? 'rgba(201,168,76,0.2)' : 'transparent'}`, background: selected ? 'rgba(201,168,76,0.06)' : 'transparent', marginBottom: 2, transition: 'all 0.15s' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, border: `1px solid ${selected ? 'rgba(201,168,76,0.2)' : 'transparent'}`, background: selected ? 'rgba(201,168,76,0.06)' : 'transparent', marginBottom: 2, transition: 'all 0.15s', flexWrap: 'wrap' }}
                       >
                         {/* Nome + preço */}
-                        <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => handleQtdChange(service.id, qty === 0 ? 1 : -qty)}>
+                        <div style={{ flex: 1, minWidth: 100, cursor: 'pointer' }} onClick={() => handleQtdChange(service.id, qty === 0 ? 1 : -qty)}>
                           <div style={{ fontSize: 13, color: selected ? '#c9a84c' : '#f0f0f8' }}>{service.name}</div>
                           <div style={{ fontSize: 11, color: '#606078' }}>
                             R$ {service.sale_price.toFixed(2)}{selected && qty > 1 ? ` × ${qty} = R$ ${(service.sale_price * qty).toFixed(2)}` : ''}
+                            {selected && comPct > 0 && <span style={{ color: '#c9a84c', marginLeft: 4 }}>· com R$ {comValor.toFixed(2)}</span>}
                           </div>
                         </div>
-                        {/* Stepper de quantidade */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <button type="button" className="qtd-btn" onClick={() => handleQtdChange(service.id, -1)} style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', color: '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Minus size={10} />
+
+                        {/* Stepper quantidade */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <button type="button" className="qtd-btn" onClick={() => handleQtdChange(service.id, -1)} style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', color: '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Minus size={9} />
                           </button>
                           <input
                             type="number" min="0"
@@ -219,17 +271,49 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
                             placeholder="0"
                             onChange={e => handleQtdInput(service.id, e.target.value)}
                             onClick={e => e.stopPropagation()}
-                            style={{ width: 36, background: '#13131a', border: '1px solid #2a2a38', borderRadius: 6, padding: '3px 4px', color: '#f0f0f8', fontSize: 13, textAlign: 'center', outline: 'none', fontFamily: 'Sora, sans-serif' }}
+                            style={{ width: 32, background: '#13131a', border: '1px solid #2a2a38', borderRadius: 6, padding: '3px 4px', color: '#f0f0f8', fontSize: 12, textAlign: 'center', outline: 'none', fontFamily: 'Sora, sans-serif' }}
                           />
-                          <button type="button" className="qtd-btn" onClick={() => handleQtdChange(service.id, 1)} style={{ width: 24, height: 24, borderRadius: 6, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', color: '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                            <Plus size={10} />
+                          <button type="button" className="qtd-btn" onClick={() => handleQtdChange(service.id, 1)} style={{ width: 22, height: 22, borderRadius: 6, background: 'rgba(201,168,76,0.1)', border: '1px solid rgba(201,168,76,0.2)', color: '#c9a84c', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <Plus size={9} />
                           </button>
                         </div>
+
+                        {/* Campo comissão % — só aparece quando selecionado */}
+                        {selected && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <Percent size={10} style={{ color: '#9090a8', flexShrink: 0 }} />
+                            <div style={{ display: 'flex', alignItems: 'center', background: '#13131a', border: '1px solid #2a2a38', borderRadius: 6, overflow: 'hidden' }}>
+                              <input
+                                type="number"
+                                min="0" max="100" step="0.5"
+                                value={comPct || ''}
+                                placeholder="0"
+                                className="com-input"
+                                onChange={e => handleComissaoInput(service.id, e.target.value)}
+                                onClick={e => e.stopPropagation()}
+                                style={{ width: 38, background: 'transparent', border: 'none', outline: 'none', color: '#c9a84c', fontSize: 12, fontWeight: 600, padding: '3px 5px', fontFamily: 'Sora, sans-serif', textAlign: 'right' }}
+                              />
+                              <span style={{ fontSize: 11, color: '#9090a8', paddingRight: 5 }}>%</span>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })
                 )}
               </div>
+
+              {/* Resumo de comissão */}
+              {totalComissao > 0 && (
+                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8, padding: '8px 12px' }}>
+                  <span style={{ fontSize: 11, color: '#9090a8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Total comissão ({formData.profissionalNome || 'profissional'})
+                  </span>
+                  <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 14, fontWeight: 700, color: '#c9a84c' }}>
+                    R$ {totalComissao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
