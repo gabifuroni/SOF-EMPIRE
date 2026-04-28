@@ -303,17 +303,6 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
                 )}
               </div>
 
-              {/* Resumo de comissão */}
-              {totalComissao > 0 && (
-                <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(201,168,76,0.06)', border: '1px solid rgba(201,168,76,0.15)', borderRadius: 8, padding: '8px 12px' }}>
-                  <span style={{ fontSize: 11, color: '#9090a8', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                    Total comissão ({formData.profissionalNome || 'profissional'})
-                  </span>
-                  <span style={{ fontFamily: 'Sora, sans-serif', fontSize: 14, fontWeight: 700, color: '#c9a84c' }}>
-                    R$ {totalComissao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </span>
-                </div>
-              )}
             </div>
           )}
 
