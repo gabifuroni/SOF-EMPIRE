@@ -256,7 +256,6 @@ const AddEntryModal = ({ show, onClose, onSave, entry, defaultDate }: AddEntryMo
                           <div style={{ fontSize: 13, color: selected ? '#c9a84c' : '#f0f0f8' }}>{service.name}</div>
                           <div style={{ fontSize: 11, color: '#606078' }}>
                             R$ {service.sale_price.toFixed(2)}{selected && qty > 1 ? ` × ${qty} = R$ ${(service.sale_price * qty).toFixed(2)}` : ''}
-                            {selected && comPct > 0 && <span style={{ color: '#c9a84c', marginLeft: 4 }}>· com R$ {comValor.toFixed(2)}</span>}
                           </div>
                         </div>
 
