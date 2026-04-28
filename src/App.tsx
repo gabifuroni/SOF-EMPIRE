@@ -20,6 +20,7 @@ import Reports from "./pages/Reports";
 import Profile from "./pages/Profile";
 import PaymentSettings from "./pages/PaymentSettings";
 import Metas from "./pages/Metas";
+import ComissoesColaboradoras from "./pages/ComissoesColaboradoras";
 import Index from "./pages/Index";
 import AdminRoute from "./components/layout/AdminRoute";
 import AdminRedirect from "./components/layout/AdminRedirect";
@@ -112,6 +113,7 @@ const AppContent = () => {
                         <Route path="/profile" element={<Profile />} />
                         <Route path="/payment-settings" element={<PaymentSettings />} />
                         <Route path="/metas" element={<Metas />} />
+                        <Route path="/comissoes" element={<ComissoesColaboradoras />} />
                         <Route path="*" element={<Navigate to="/dashboard" replace />} />
                       </Routes>
                     </main>
